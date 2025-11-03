@@ -26,6 +26,7 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
   const [overallResults, setOverallResults] = useState<any>(null);
   const [showWelcome, setShowWelcome] = useState(true);
   const [isReady, setIsReady] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const maxQuestions = 5;
   const socketRef = useRef<any>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -214,12 +215,41 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
   
   const startTimer = () => {
     setTimeLeft(30);
+    setIsPaused(false);
     
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(timerRef.current!);
           // Auto-generate next question only if analysis is still showing
+          if (analysis && questionCount < maxQuestions) {
+            setAnalysis(null);
+            setTimeout(() => {
+              setQuestionCount(prev => prev + 1);
+              generateQuestion();
+            }, 100);
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+  
+  const pauseTimer = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    setIsPaused(true);
+  };
+  
+  const resumeTimer = () => {
+    setIsPaused(false);
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current!);
           if (analysis && questionCount < maxQuestions) {
             setAnalysis(null);
             setTimeout(() => {
@@ -421,38 +451,116 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
       <AnalysisDisplay analysis={analysis} />
       
       {analysis && questionCount < maxQuestions && (
-        <div style={{ textAlign: 'center', margin: '20px 0' }}>
+        <div style={{
+          margin: '30px 0',
+          padding: '0'
+        }}>
+          {/* Timer Section */}
           {timeLeft > 0 && (
             <div style={{
-              fontSize: '18px',
-              color: '#FF9800',
-              marginBottom: '15px',
-              fontWeight: 'bold'
+              textAlign: 'center',
+              marginBottom: '20px',
+              padding: '15px',
+              backgroundColor: '#2a2a2a',
+              borderRadius: '12px',
+              border: '2px solid #444'
             }}>
-              Next question in: {timeLeft}s
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '20px'
+              }}>
+                <div style={{
+                  fontSize: '18px',
+                  color: timeLeft <= 10 ? '#f44336' : '#FF9800',
+                  fontWeight: 'bold',
+                  padding: '12px 24px',
+                  backgroundColor: timeLeft <= 10 ? 'rgba(244, 67, 54, 0.1)' : 'rgba(255, 152, 0, 0.1)',
+                  borderRadius: '25px',
+                  border: `2px solid ${timeLeft <= 10 ? '#f44336' : '#FF9800'}`,
+                  minWidth: '140px'
+                }}>
+                  ⏱️ Next in {timeLeft}s
+                </div>
+                
+                <button
+                  onClick={isPaused ? resumeTimer : pauseTimer}
+                  style={{
+                    padding: '12px 20px',
+                    backgroundColor: isPaused ? '#4CAF50' : '#FF9800',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '10px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+                  }}
+                >
+                  {isPaused ? '▶️ Resume' : '⏸️ Pause'}
+                </button>
+              </div>
             </div>
           )}
           
-          <button 
-            onClick={() => {
-              speechSynthesis.cancel();
-              stopTimer();
-              setAnalysis(null);
-              setQuestionCount(prev => prev + 1);
-              generateQuestion();
-            }}
-            style={{
-              padding: '12px 24px',
-              backgroundColor: '#4CAF50',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              cursor: 'pointer'
-            }}
-          >
-            Next Question → {timeLeft > 0 ? `(${timeLeft}s)` : ''}
-          </button>
+          {/* Action Buttons Section */}
+          <div style={{
+            textAlign: 'center',
+            padding: '20px',
+            backgroundColor: '#2a2a2a',
+            borderRadius: '12px',
+            border: '2px solid #4CAF50'
+          }}>
+            <h4 style={{ color: '#4CAF50', marginBottom: '15px', fontSize: '16px' }}>Ready for next question?</h4>
+            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button 
+                onClick={() => {
+                  speechSynthesis.cancel();
+                  stopTimer();
+                  setAnalysis(null);
+                  setQuestionCount(prev => prev + 1);
+                  generateQuestion();
+                }}
+                style={{
+                  padding: '15px 25px',
+                  backgroundColor: '#4CAF50',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 15px rgba(76, 175, 80, 0.3)',
+                  minWidth: '160px'
+                }}
+              >
+                ➡️ Next Question
+              </button>
+              
+              <button 
+                onClick={() => {
+                  stopTimer();
+                  setAnalysis(null);
+                  generateQuestion();
+                }}
+                style={{
+                  padding: '15px 25px',
+                  backgroundColor: '#2196F3',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 15px rgba(33, 150, 243, 0.3)',
+                  minWidth: '160px'
+                }}
+              >
+                🔄 Retry Question
+              </button>
+            </div>
+          </div>
         </div>
       )}
       

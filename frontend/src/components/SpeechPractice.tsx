@@ -30,6 +30,7 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [currentAnswer, setCurrentAnswer] = useState('');
+  const [selectedCompany, setSelectedCompany] = useState('google');
 
   const [isRecording, setIsRecording] = useState(false);
   const [spokenLines, setSpokenLines] = useState<Set<number>>(new Set());
@@ -51,7 +52,7 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
         videoStream.getTracks().forEach(track => track.stop());
       }
     };
-  }, [topic, field, level]);
+  }, [topic, field, level, selectedCompany]);
 
   useEffect(() => {
     if (questions.length > 0 && !showAnswer) {
@@ -62,7 +63,7 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
   const fetchQuestions = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`http://localhost:5002/api/learn/topic/${encodeURIComponent(topic)}/questions?level=${level}&field=${field}`);
+      const response = await fetch(`http://localhost:5002/api/learn/topic/${encodeURIComponent(topic)}/questions?level=${level}&field=${field}&company=${selectedCompany}`);
       const data = await response.json();
       setQuestions(data.questions || []);
     } catch (error) {
@@ -77,7 +78,7 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
       const response = await fetch('http://localhost:5002/api/learn/question/answer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, level, field, topic })
+        body: JSON.stringify({ question, level, field, topic, company: selectedCompany })
       });
       const data = await response.json();
       setCurrentAnswer(data.answer);
@@ -154,42 +155,23 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
   };
 
   const processSpokenText = (transcript: string) => {
-    const spokenText = transcript.toLowerCase().replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
-    
-    // Sequential line matching - line by line practice
+    // Just for visual feedback - no automatic progression
+    console.log('User spoke:', transcript);
+  };
+  
+  const handleNextLine = () => {
     if (currentLineIndex < lines.length) {
-      const currentLine = lines[currentLineIndex].text.toLowerCase().replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
-      const currentLineWords = currentLine.split(' ').filter(w => w.length > 2);
-      const spokenWords = spokenText.split(' ').filter(w => w.length > 2);
+      const newSpokenLines = new Set(spokenLines);
+      newSpokenLines.add(currentLineIndex);
+      setSpokenLines(newSpokenLines);
+      setCurrentLineIndex(prev => prev + 1);
       
-      // Check if most words from current line are spoken
-      let matchedWords = 0;
-      currentLineWords.forEach(lineWord => {
-        if (spokenWords.some(spokenWord => 
-          spokenWord.includes(lineWord) || lineWord.includes(spokenWord) ||
-          (lineWord.length > 3 && spokenWord.length > 3 && 
-           (lineWord.substring(0, 4) === spokenWord.substring(0, 4)))
-        )) {
-          matchedWords++;
-        }
-      });
+      const newAccuracy = ((currentLineIndex + 1) / lines.length) * 100;
+      setAccuracy(newAccuracy);
       
-      const lineAccuracy = currentLineWords.length > 0 ? (matchedWords / currentLineWords.length) : 0;
-      
-      // If 70% of line words are matched, consider line complete
-      if (lineAccuracy >= 0.7) {
-        const newSpokenLines = new Set(spokenLines);
-        newSpokenLines.add(currentLineIndex);
-        setSpokenLines(newSpokenLines);
-        setCurrentLineIndex(prev => prev + 1);
-        
-        const newAccuracy = ((currentLineIndex + 1) / lines.length) * 100;
-        setAccuracy(newAccuracy);
-        
-        // Auto-complete if all lines spoken
-        if (currentLineIndex + 1 >= lines.length) {
-          setTimeout(() => completeQuestion(), 1500);
-        }
+      // Complete if all lines done
+      if (currentLineIndex + 1 >= lines.length) {
+        setTimeout(() => completeQuestion(), 500);
       }
     }
   };
@@ -287,6 +269,34 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
           <h2 style={{ color: '#4CAF50', marginBottom: '10px' }}>
             📝 {topic}
           </h2>
+          
+          {/* Company Selection */}
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ color: '#ccc', fontSize: '14px', marginBottom: '8px', display: 'block' }}>
+              🏢 Company Focus:
+            </label>
+            <select
+              value={selectedCompany}
+              onChange={(e) => setSelectedCompany(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px',
+                backgroundColor: '#1a1a1a',
+                color: 'white',
+                border: '2px solid #4CAF50',
+                borderRadius: '8px',
+                fontSize: '16px'
+              }}
+            >
+              <option value="google">🔍 Google</option>
+              <option value="microsoft">🪟 Microsoft</option>
+              <option value="amazon">📦 Amazon</option>
+              <option value="meta">👥 Meta (Facebook)</option>
+              <option value="apple">🍎 Apple</option>
+              <option value="netflix">🎬 Netflix</option>
+            </select>
+          </div>
+          
           <div style={{ 
             display: 'flex', 
             justifyContent: 'space-between',
@@ -316,7 +326,21 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
           marginBottom: '30px',
           border: '2px solid #4CAF50'
         }}>
-          <h3 style={{ color: '#4CAF50', marginBottom: '15px' }}>Question:</h3>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '15px' }}>
+            <h3 style={{ color: '#4CAF50', margin: 0 }}>Interview Question:</h3>
+            <span style={{
+              backgroundColor: '#4CAF50',
+              color: 'white',
+              padding: '4px 12px',
+              borderRadius: '12px',
+              fontSize: '12px',
+              fontWeight: 'bold',
+              marginLeft: '10px',
+              textTransform: 'capitalize'
+            }}>
+              {selectedCompany}
+            </span>
+          </div>
           <p style={{ fontSize: '18px', lineHeight: '1.6', color: 'white' }}>
             {currentQuestion.question}
           </p>
@@ -343,6 +367,57 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
           />
         </div>
         
+        {/* AI Analysis & Progress */}
+        {currentLineIndex > 0 && (
+          <div style={{
+            backgroundColor: '#1a1a1a',
+            padding: '20px',
+            borderRadius: '10px',
+            marginBottom: '20px',
+            border: '2px solid #4CAF50'
+          }}>
+            <h4 style={{ color: '#4CAF50', marginBottom: '15px' }}>🤖 AI Analysis</h4>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '15px',
+              marginBottom: '15px'
+            }}>
+              <div style={{
+                backgroundColor: '#2a2a2a',
+                padding: '12px',
+                borderRadius: '8px',
+                textAlign: 'center'
+              }}>
+                <div style={{ color: '#4CAF50', fontSize: '24px', fontWeight: 'bold' }}>
+                  {Math.round(accuracy)}%
+                </div>
+                <div style={{ color: '#ccc', fontSize: '12px' }}>Progress</div>
+              </div>
+              <div style={{
+                backgroundColor: '#2a2a2a',
+                padding: '12px',
+                borderRadius: '8px',
+                textAlign: 'center'
+              }}>
+                <div style={{ color: '#FF9800', fontSize: '24px', fontWeight: 'bold' }}>
+                  {currentLineIndex}
+                </div>
+                <div style={{ color: '#ccc', fontSize: '12px' }}>Lines Read</div>
+              </div>
+            </div>
+            <div style={{
+              backgroundColor: '#2a2a2a',
+              padding: '12px',
+              borderRadius: '8px',
+              fontSize: '14px',
+              color: '#ccc'
+            }}>
+              💡 {currentLineIndex >= lines.length ? 'Excellent! You completed all lines.' : `Keep going! ${lines.length - currentLineIndex} lines remaining.`}
+            </div>
+          </div>
+        )}
+
         {/* Controls */}
         <div style={{ textAlign: 'center' }}>
           <button
@@ -358,7 +433,8 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
               cursor: 'pointer',
               marginBottom: '20px',
               boxShadow: isRecording ? '0 0 20px rgba(244, 67, 54, 0.5)' : '0 0 20px rgba(76, 175, 80, 0.3)',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              width: '100%'
             }}
           >
             {isRecording ? '🛑 Stop Practice' : '🎤 Start Speaking'}
@@ -372,16 +448,17 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
                 backgroundColor: '#FF9800',
                 color: 'white',
                 border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer'
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '14px'
               }}
             >
               🔄 Reset
             </button>
             
-            {currentLineIndex >= lines.length && (
+            {currentLineIndex < lines.length ? (
               <button
-                onClick={completeQuestion}
+                onClick={handleNextLine}
                 style={{
                   padding: '12px 24px',
                   backgroundColor: '#4CAF50',
@@ -391,11 +468,30 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
                   cursor: 'pointer',
                   fontSize: '16px',
                   fontWeight: 'bold',
-                  boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
-                  animation: 'pulse 1s infinite'
+                  flex: '1'
                 }}
               >
-                🎉 Perfect! Next Question
+                ➡️ Next Line
+              </button>
+            ) : (
+              <button
+                onClick={completeQuestion}
+                style={{
+                  padding: '15px 30px',
+                  backgroundColor: '#4CAF50',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  boxShadow: '0 6px 20px rgba(76, 175, 80, 0.4)',
+                  animation: 'pulse 2s infinite',
+                  flex: '1',
+                  background: 'linear-gradient(45deg, #4CAF50, #66BB6A)'
+                }}
+              >
+                🎉 Ready for Next Question!
               </button>
             )}
           </div>
@@ -492,33 +588,66 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
           </div>
         )}
         
-        {isRecording && (
-          <div style={{
-            marginTop: '20px',
-            padding: '15px',
-            backgroundColor: 'rgba(244, 67, 54, 0.1)',
-            borderRadius: '8px',
-            border: '2px solid #f44336',
-            textAlign: 'center'
+        {/* Interactive Status Bar */}
+        <div style={{
+          marginTop: '20px',
+          padding: '15px',
+          backgroundColor: isRecording ? 'rgba(244, 67, 54, 0.1)' : 'rgba(76, 175, 80, 0.1)',
+          borderRadius: '12px',
+          border: `2px solid ${isRecording ? '#f44336' : '#4CAF50'}`,
+          textAlign: 'center'
+        }}>
+          <div style={{ 
+            color: isRecording ? '#f44336' : '#4CAF50', 
+            fontWeight: 'bold', 
+            fontSize: '16px',
+            marginBottom: '8px'
           }}>
-            <div style={{ color: '#f44336', fontWeight: 'bold', fontSize: '16px' }}>
-              🔴 RECORDING - Read the script aloud
-            </div>
-            <div style={{ fontSize: '14px', color: '#ccc', marginTop: '8px' }}>
-              🎯 Current line: <span style={{color: '#FF9800', fontWeight: 'bold'}}>ORANGE</span> | Completed: <span style={{color: '#4CAF50', fontWeight: 'bold'}}>GREEN</span>
-            </div>
-            <div style={{ fontSize: '12px', color: '#FF9800', marginTop: '5px' }}>
-              💡 Read each line completely before moving to the next!
-            </div>
-            <style>{`
-              @keyframes pulse {
-                0% { transform: scale(1); }
-                50% { transform: scale(1.1); }
-                100% { transform: scale(1); }
-              }
-            `}</style>
+            {isRecording ? '🔴 RECORDING' : '⏸️ READY'} - {currentLineIndex >= lines.length ? 'All lines completed!' : 'Read the highlighted line'}
           </div>
-        )}
+          
+          {currentLineIndex < lines.length && (
+            <div style={{
+              backgroundColor: 'rgba(255, 152, 0, 0.2)',
+              padding: '10px',
+              borderRadius: '8px',
+              margin: '10px 0',
+              border: '1px solid #FF9800'
+            }}>
+              <div style={{ color: '#FF9800', fontWeight: 'bold', fontSize: '14px' }}>
+                📍 Current Line {currentLineIndex + 1} of {lines.length}
+              </div>
+              <div style={{ fontSize: '12px', color: '#ccc', marginTop: '5px' }}>
+                💡 Read aloud, then click "Next Line" to continue
+              </div>
+            </div>
+          )}
+          
+          {currentLineIndex >= lines.length && (
+            <div style={{
+              backgroundColor: 'rgba(76, 175, 80, 0.2)',
+              padding: '15px',
+              borderRadius: '8px',
+              margin: '10px 0',
+              border: '2px solid #4CAF50'
+            }}>
+              <div style={{ color: '#4CAF50', fontWeight: 'bold', fontSize: '16px' }}>
+                🎉 Perfect! All lines completed!
+              </div>
+              <div style={{ fontSize: '14px', color: '#ccc', marginTop: '5px' }}>
+                Click "Ready for Next Question" to continue your learning journey
+              </div>
+            </div>
+          )}
+          
+          <style>{`
+            @keyframes pulse {
+              0% { transform: scale(1); }
+              50% { transform: scale(1.05); }
+              100% { transform: scale(1); }
+            }
+          `}</style>
+        </div>
       </div>
     </div>
   );
