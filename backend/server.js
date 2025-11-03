@@ -8,6 +8,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const interviewRoutes = require('./routes/interview');
 const aiRoutes = require('./routes/ai');
+const learnRoutes = require('./routes/learn');
 
 const app = express();
 const server = http.createServer(app);
@@ -23,6 +24,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/interview', interviewRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/learn', learnRoutes);
 
 // Socket.io for real-time features
 io.on('connection', (socket) => {
@@ -46,7 +48,7 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5002;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

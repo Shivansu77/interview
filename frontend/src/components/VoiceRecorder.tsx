@@ -90,22 +90,39 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
 
   return (
     <div className="voice-recorder">
-      <button 
-        onClick={toggleRecording}
-        className={`record-btn ${isRecording ? 'recording' : ''}`}
-        style={{
-          padding: '15px 30px',
-          borderRadius: '50px',
-          border: 'none',
-          backgroundColor: isRecording ? '#f44336' : '#4CAF50',
-          color: 'white',
-          fontSize: '16px',
-          cursor: 'pointer',
-          transition: 'all 0.3s ease'
-        }}
-      >
-        {isRecording ? '🛑 Stop Recording' : '🎤 Start Recording'}
-      </button>
+      <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+        <button 
+          onClick={toggleRecording}
+          className={`record-btn ${isRecording ? 'recording' : ''}`}
+          style={{
+            padding: '20px 40px',
+            borderRadius: '50px',
+            border: 'none',
+            backgroundColor: isRecording ? '#f44336' : '#4CAF50',
+            color: 'white',
+            fontSize: '18px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            boxShadow: isRecording ? '0 0 20px rgba(244, 67, 54, 0.5)' : '0 0 20px rgba(76, 175, 80, 0.3)',
+            transform: isRecording ? 'scale(1.05)' : 'scale(1)'
+          }}
+        >
+          {isRecording ? '🛑 Stop & Submit' : '🎤 Record Answer'}
+        </button>
+        
+        {!isRecording && !transcript && (
+          <div style={{ 
+            marginTop: '15px', 
+            fontSize: '14px', 
+            color: '#ccc',
+            maxWidth: '400px',
+            margin: '15px auto 0'
+          }}>
+            💡 <strong>Tip:</strong> Click the microphone, then speak your answer clearly. Click "Stop & Submit" when done.
+          </div>
+        )}
+      </div>
       
       {transcript && (
         <div className="transcript-preview" style={{ 
@@ -123,8 +140,21 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
       )}
       
       {isRecording && (
-        <div className="recording-indicator" style={{ marginTop: '10px', color: '#f44336' }}>
-          🔴 Recording... Speak your answer
+        <div className="recording-indicator" style={{ 
+          marginTop: '15px', 
+          textAlign: 'center',
+          padding: '15px',
+          backgroundColor: 'rgba(244, 67, 54, 0.1)',
+          borderRadius: '8px',
+          border: '2px solid #f44336',
+          animation: 'pulse 1.5s infinite'
+        }}>
+          <div style={{ fontSize: '18px', color: '#f44336', fontWeight: 'bold' }}>
+            🔴 RECORDING
+          </div>
+          <div style={{ fontSize: '14px', color: '#fff', marginTop: '5px' }}>
+            Speak clearly and take your time...
+          </div>
         </div>
       )}
     </div>
