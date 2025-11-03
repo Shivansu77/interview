@@ -19,19 +19,38 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
       const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
       
-      recognitionRef.current.continuous = true;
+      recognitionRef.current.continuous = false;
       recognitionRef.current.interimResults = true;
       recognitionRef.current.lang = 'en-US';
+      recognitionRef.current.maxAlternatives = 1;
 
       recognitionRef.current.onresult = (event: any) => {
         let finalTranscript = '';
+        
         for (let i = event.resultIndex; i < event.results.length; i++) {
           if (event.results[i].isFinal) {
             finalTranscript += event.results[i][0].transcript;
           }
         }
+        
         if (finalTranscript) {
-          setTranscript(finalTranscript);
+          setTranscript(prev => {
+            const newText = prev ? prev + ' ' + finalTranscript : finalTranscript;
+            return newText;
+          });
+        }
+      };
+      
+      recognitionRef.current.onend = () => {
+        // Only restart if still recording and no final result received
+        if (isRecording && !transcript.trim()) {
+          setTimeout(() => {
+            try {
+              recognitionRef.current.start();
+            } catch (error) {
+              console.log('Recognition restart failed:', error);
+            }
+          }, 100);
         }
       };
 
@@ -51,10 +70,13 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
     if (recognitionRef.current) {
       recognitionRef.current.stop();
       setIsRecording(false);
-      if (transcript) {
-        onTranscript(transcript);
-        setTranscript('');
+      
+      // Clean up transcript and submit
+      const cleanTranscript = transcript.replace(/\.\.\.+/g, '').trim();
+      if (cleanTranscript) {
+        onTranscript(cleanTranscript);
       }
+      setTranscript('');
     }
   };
 
