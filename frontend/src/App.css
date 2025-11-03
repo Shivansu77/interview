@@ -1,0 +1,127 @@
+.App {
+  text-align: center;
+}
+
+.App-header {
+  background-color: #1a1a1a;
+  padding: 20px;
+  color: #ffffff;
+  min-height: 100vh;
+}
+
+.start-screen {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.start-screen ul {
+  text-align: left;
+  display: inline-block;
+  margin: 20px 0;
+}
+
+.start-screen li {
+  margin: 10px 0;
+  font-size: 16px;
+}
+
+.interview-container {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.interview-room {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 20px;
+  padding: 20px;
+}
+
+.video-section {
+  background: #1a1a1a;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.question-section {
+  background: #2a2a2a;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: left;
+  color: #ffffff;
+  border: 2px solid #4CAF50;
+}
+
+.question-section h2 {
+  color: #4CAF50;
+  margin-bottom: 15px;
+}
+
+.question-section p {
+  font-size: 18px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.controls {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 20px;
+  background: #2a2a2a;
+  border-radius: 10px;
+}
+
+.stats {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-around;
+  background: #1a1a1a;
+  padding: 15px;
+  border-radius: 10px;
+}
+
+.stats div {
+  font-weight: bold;
+  color: #4CAF50;
+}
+
+.face-monitor {
+  text-align: center;
+}
+
+.face-monitor video {
+  border-radius: 10px;
+  margin-bottom: 15px;
+}
+
+.eye-contact-indicator {
+  color: white;
+  font-weight: bold;
+}
+
+.voice-recorder {
+  text-align: center;
+}
+
+.record-btn:hover {
+  transform: scale(1.05);
+}
+
+.recording {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@media (max-width: 768px) {
+  .interview-room {
+    grid-template-columns: 1fr;
+  }
+}
