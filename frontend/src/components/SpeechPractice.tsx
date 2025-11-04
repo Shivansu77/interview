@@ -478,7 +478,7 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
                 onClick={completeQuestion}
                 style={{
                   padding: '15px 30px',
-                  backgroundColor: '#4CAF50',
+                  backgroundImage: 'linear-gradient(45deg, #4CAF50, #66BB6A)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '12px',
@@ -487,8 +487,7 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
                   fontWeight: 'bold',
                   boxShadow: '0 6px 20px rgba(76, 175, 80, 0.4)',
                   animation: 'pulse 2s infinite',
-                  flex: '1',
-                  background: 'linear-gradient(45deg, #4CAF50, #66BB6A)'
+                  flex: '1'
                 }}
               >
                 🎉 Ready for Next Question!

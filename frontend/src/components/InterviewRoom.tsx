@@ -64,7 +64,8 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
         body: JSON.stringify({ 
           type: interviewType, 
           company: company,
-          difficulty: 'medium' 
+          difficulty: 'medium',
+          context: 'interview'
         })
       });
       const data = await response.json();

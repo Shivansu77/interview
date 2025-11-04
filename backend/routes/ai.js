@@ -65,7 +65,12 @@ const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemi
 
 router.post('/generate-question', async (req, res) => {
   try {
-    const { type = 'technical', company = 'general', difficulty = 'medium', previousQuestions } = req.body;
+    const { type = 'technical', company = 'general', difficulty = 'medium', previousQuestions, context = 'interview' } = req.body;
+    
+    // Only allow question generation for actual interview sessions
+    if (context !== 'interview') {
+      return res.status(400).json({ error: 'Question generation only available during interview sessions' });
+    }
     
     let prompt = '';
     
@@ -94,13 +99,13 @@ router.post('/generate-question', async (req, res) => {
     });
     
     const question = response.data.candidates[0].content.parts[0].text.trim();
-    res.json({ question });
+    res.json({ question, type, company, context });
   } catch (error) {
     console.error('Gemini API Error:', error.response?.data || error.message);
     const fallback = type === 'english' ? 
       'Tell me about a time when you had to work with a difficult team member.' :
       'What is your experience with JavaScript and how would you explain closures to a beginner?';
-    res.json({ question: fallback });
+    res.json({ question: fallback, type, company, context });
   }
 });
 

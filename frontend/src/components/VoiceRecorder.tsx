@@ -14,22 +14,33 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
   const [transcript, setTranscript] = useState('');
   const recognitionRef = useRef<any>(null);
 
-  const startRecording = () => {
+  const startRecording = async () => {
+    // Check microphone permission first
+    try {
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (error) {
+      alert('Microphone access is required. Please allow microphone access and try again.');
+      return;
+    }
+    
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
       
-      recognitionRef.current.continuous = false;
+      recognitionRef.current.continuous = true;
       recognitionRef.current.interimResults = true;
       recognitionRef.current.lang = 'en-US';
       recognitionRef.current.maxAlternatives = 1;
 
       recognitionRef.current.onresult = (event: any) => {
         let finalTranscript = '';
+        let interimTranscript = '';
         
         for (let i = event.resultIndex; i < event.results.length; i++) {
           if (event.results[i].isFinal) {
             finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
           }
         }
         
@@ -46,7 +57,9 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
         if (isRecording && !transcript.trim()) {
           setTimeout(() => {
             try {
-              recognitionRef.current.start();
+              if (recognitionRef.current && isRecording) {
+                recognitionRef.current.start();
+              }
             } catch (error) {
               console.log('Recognition restart failed:', error);
             }
@@ -56,7 +69,30 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
 
       recognitionRef.current.onerror = (event: any) => {
         console.error('Speech recognition error:', event.error);
-        setIsRecording(false);
+        
+        // Handle specific error types
+        if (event.error === 'no-speech') {
+          // Don't stop recording for no-speech, just continue listening
+          console.log('No speech detected, continuing to listen...');
+          if (isRecording) {
+            setTimeout(() => {
+              try {
+                if (recognitionRef.current && isRecording) {
+                  recognitionRef.current.start();
+                }
+              } catch (error) {
+                console.log('Failed to restart after no-speech:', error);
+                setIsRecording(false);
+              }
+            }, 100);
+          }
+        } else if (event.error === 'audio-capture' || event.error === 'not-allowed') {
+          alert('Microphone access denied. Please allow microphone access and try again.');
+          setIsRecording(false);
+        } else {
+          // For other errors, stop recording
+          setIsRecording(false);
+        }
       };
 
       recognitionRef.current.start();
