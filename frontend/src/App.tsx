@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import InterviewRoom from './components/InterviewRoom';
 import LearnSection from './components/LearnSection';
+import EnglishPractice from './components/EnglishPractice';
+import VocabularyChallenge from './components/VocabularyChallenge';
 import './App.css';
 
 function App() {
-  const [currentSection, setCurrentSection] = useState<'home' | 'learn' | 'interview'>('home');
+  const [currentSection, setCurrentSection] = useState<'home' | 'learn' | 'interview' | 'english' | 'vocabulary'>('home');
   const [isInterviewActive, setIsInterviewActive] = useState(false);
   const [sessionId, setSessionId] = useState('');
   const [userId] = useState('demo-user-123');
@@ -21,7 +23,7 @@ function App() {
       // Add a small delay for better UX
       await new Promise(resolve => setTimeout(resolve, 800));
       
-      const response = await fetch('http://localhost:5002/api/interview/start-session', {
+      const response = await fetch('http://localhost:5003/api/interview/start-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -91,11 +93,41 @@ function App() {
               >
                 📚 Learn & Practice
               </button>
+              <button
+                onClick={() => setCurrentSection('english')}
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: '#2196F3',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: 'bold'
+                }}
+              >
+                🗣️ English Practice
+              </button>
+              <button
+                onClick={() => setCurrentSection('vocabulary')}
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: '#FF9800',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: 'bold'
+                }}
+              >
+                📚 Vocabulary
+              </button>
             </div>
           </div>
         )}
         
-        {currentSection === 'learn' && (
+        {(currentSection === 'learn' || currentSection === 'english' || currentSection === 'vocabulary') && (
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -126,6 +158,10 @@ function App() {
         
         {currentSection === 'learn' ? (
           <LearnSection userId={userId} />
+        ) : currentSection === 'english' ? (
+          <EnglishPractice onBack={() => setCurrentSection('home')} />
+        ) : currentSection === 'vocabulary' ? (
+          <VocabularyChallenge onBack={() => setCurrentSection('home')} />
         ) : isLoading ? (
           <div className="loading-screen" style={{
             textAlign: 'center',

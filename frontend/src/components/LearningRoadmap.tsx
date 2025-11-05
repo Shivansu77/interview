@@ -24,7 +24,7 @@ const LearningRoadmap: React.FC<LearningRoadmapProps> = ({
 
   const fetchRoadmap = async () => {
     try {
-      const response = await fetch(`http://localhost:5002/api/learn/roadmap/${field}?level=${level}`);
+      const response = await fetch(`http://localhost:5003/api/learn/roadmap/${field}?level=${level}`);
       const data = await response.json();
       setTopics(data.topics || []);
     } catch (error) {
@@ -36,7 +36,7 @@ const LearningRoadmap: React.FC<LearningRoadmapProps> = ({
 
   const fetchProgress = async () => {
     try {
-      const response = await fetch(`http://localhost:5002/api/learn/progress/${userId}`);
+      const response = await fetch(`http://localhost:5003/api/learn/progress/${userId}`);
       const data = await response.json();
       setProgress(data.progress || {});
     } catch (error) {

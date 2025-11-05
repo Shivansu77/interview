@@ -15,7 +15,7 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
   const [currentQuestion, setCurrentQuestion] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [eyeContactScore, setEyeContactScore] = useState(0);
-  const [eyeContactFeedback, setEyeContactFeedback] = useState('');
+
   const [questionCount, setQuestionCount] = useState(1);
   const [analysis, setAnalysis] = useState<any>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -25,21 +25,20 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
   const [allScores, setAllScores] = useState<any[]>([]);
   const [overallResults, setOverallResults] = useState<any>(null);
   const [showWelcome, setShowWelcome] = useState(true);
-  const [isReady, setIsReady] = useState(false);
+
   const [isPaused, setIsPaused] = useState(false);
   const maxQuestions = 5;
   const socketRef = useRef<any>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    socketRef.current = io('http://localhost:5002');
+    socketRef.current = io('http://localhost:5003');
     socketRef.current.emit('join-interview', sessionId);
     
     // Show welcome message first
     if (!hasGeneratedFirst) {
       setTimeout(() => {
         setShowWelcome(false);
-        setIsReady(true);
         setHasGeneratedFirst(true);
         generateQuestion();
       }, 3000);
@@ -58,7 +57,7 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
       // Stop any ongoing speech first
       speechSynthesis.cancel();
       
-      const response = await fetch('http://localhost:5002/api/ai/generate-question', {
+      const response = await fetch('http://localhost:5003/api/ai/generate-question', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -101,7 +100,7 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
     
     try {
       console.log('Submitting answer:', transcript);
-      const response = await fetch('http://localhost:5002/api/ai/analyze-answer', {
+      const response = await fetch('http://localhost:5003/api/ai/analyze-answer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -196,7 +195,7 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
       };
       
       // Save to backend
-      await fetch('http://localhost:5002/api/interview/complete', {
+      await fetch('http://localhost:5003/api/interview/complete', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

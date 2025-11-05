@@ -29,7 +29,7 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
 }) => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [currentAnswer, setCurrentAnswer] = useState('');
+
   const [selectedCompany, setSelectedCompany] = useState('google');
 
   const [isRecording, setIsRecording] = useState(false);
@@ -63,7 +63,7 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
   const fetchQuestions = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`http://localhost:5002/api/learn/topic/${encodeURIComponent(topic)}/questions?level=${level}&field=${field}&company=${selectedCompany}`);
+      const response = await fetch(`http://localhost:5003/api/learn/topic/${encodeURIComponent(topic)}/questions?level=${level}&field=${field}&company=${selectedCompany}`);
       const data = await response.json();
       setQuestions(data.questions || []);
     } catch (error) {
@@ -75,13 +75,13 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
 
   const fetchAnswer = async (question: string) => {
     try {
-      const response = await fetch('http://localhost:5002/api/learn/question/answer', {
+      const response = await fetch('http://localhost:5003/api/learn/question/answer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question, level, field, topic, company: selectedCompany })
       });
       const data = await response.json();
-      setCurrentAnswer(data.answer);
+
       setLines(data.lines || []);
       setShowAnswer(true);
       setSpokenLines(new Set());
@@ -181,7 +181,7 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
     
     // Update progress
     try {
-      await fetch('http://localhost:5002/api/learn/progress/update', {
+      await fetch('http://localhost:5003/api/learn/progress/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

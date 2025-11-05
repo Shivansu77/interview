@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import LearningRoadmap from './LearningRoadmap';
 import SpeechPractice from './SpeechPractice';
 
@@ -9,7 +9,7 @@ interface LearnSectionProps {
 const LearnSection: React.FC<LearnSectionProps> = ({ userId }) => {
   const [currentView, setCurrentView] = useState<'roadmap' | 'practice'>('roadmap');
   const [selectedTopic, setSelectedTopic] = useState<string>('');
-  const [selectedQuestion, setSelectedQuestion] = useState<any>(null);
+
   const [learningField, setLearningField] = useState<'webdev' | 'datascience' | 'ml' | 'behavioral'>('webdev');
   const [level, setLevel] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner');
 
@@ -21,7 +21,6 @@ const LearnSection: React.FC<LearnSectionProps> = ({ userId }) => {
   const handleBackToRoadmap = () => {
     setCurrentView('roadmap');
     setSelectedTopic('');
-    setSelectedQuestion(null);
   };
 
   return (
