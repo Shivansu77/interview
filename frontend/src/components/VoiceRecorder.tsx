@@ -158,17 +158,75 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
       </div>
       
       {transcript && (
-        <div className="transcript-preview" style={{ 
-          marginTop: '10px', 
-          padding: '15px', 
-          backgroundColor: '#2a2a2a', 
-          borderRadius: '8px',
-          color: '#ffffff',
-          border: '2px solid #4CAF50',
-          fontSize: '16px',
-          lineHeight: '1.5'
-        }}>
-          <strong style={{ color: '#4CAF50' }}>Your answer:</strong> <span style={{ color: '#ffffff' }}>{transcript}</span>
+        <div>
+          <div className="transcript-preview" style={{ 
+            marginTop: '10px', 
+            padding: '15px', 
+            backgroundColor: '#2a2a2a', 
+            borderRadius: '8px',
+            color: '#ffffff',
+            border: '2px solid #4CAF50',
+            fontSize: '16px',
+            lineHeight: '1.5'
+          }}>
+            <strong style={{ color: '#4CAF50' }}>Your answer:</strong> <span style={{ color: '#ffffff' }}>{transcript}</span>
+          </div>
+          
+          {/* Action Buttons */}
+          <div style={{
+            display: 'flex',
+            gap: '12px',
+            justifyContent: 'center',
+            marginTop: '16px'
+          }}>
+            <button
+              onClick={() => onTranscript(transcript)}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: '#4CAF50',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#45a049'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#4CAF50'}
+            >
+              🤖 Submit for AI Feedback
+            </button>
+            
+            <button
+              onClick={() => {
+                setTranscript('');
+                setIsRecording(false);
+              }}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: '#1a1a1a',
+                color: '#ccc',
+                border: '1px solid #555',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = '#333';
+                e.currentTarget.style.borderColor = '#666';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = '#1a1a1a';
+                e.currentTarget.style.borderColor = '#555';
+              }}
+            >
+              🔄 Retry
+            </button>
+          </div>
         </div>
       )}
       
@@ -185,7 +243,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
           <div style={{ fontSize: '18px', color: '#f44336', fontWeight: 'bold' }}>
             🔴 RECORDING
           </div>
-          <div style={{ fontSize: '14px', color: '#fff', marginTop: '5px' }}>
+          <div style={{ fontSize: '14px', color: '#ccc', marginTop: '5px' }}>
             Speak clearly and take your time...
           </div>
         </div>

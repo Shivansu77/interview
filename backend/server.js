@@ -5,6 +5,7 @@ const http = require('http');
 const socketIo = require('socket.io');
 require('dotenv').config();
 
+// Import routes
 const authRoutes = require('./routes/auth');
 const interviewRoutes = require('./routes/interview');
 const aiRoutes = require('./routes/ai');
@@ -19,7 +20,8 @@ const io = socketIo(server, {
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -27,6 +29,11 @@ app.use('/api/interview', interviewRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/learn', learnRoutes);
 app.use('/api/english', englishRoutes);
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
 
 // Socket.io for real-time features
 io.on('connection', (socket) => {
@@ -50,7 +57,7 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-const PORT = process.env.PORT || 5002;
+const PORT = process.env.PORT || 5003;
 
 // Graceful shutdown handling
 process.on('SIGTERM', () => {
@@ -69,12 +76,13 @@ process.on('SIGINT', () => {
   });
 });
 
+// Start server
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 }).on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
     console.log(`Port ${PORT} is already in use. Please kill the existing process or use a different port.`);
-    console.log('To kill existing process: lsof -ti:5002 | xargs kill -9');
+    console.log('To kill existing process: lsof -ti:' + PORT + ' | xargs kill -9');
     process.exit(1);
   } else {
     console.error('Server error:', err);

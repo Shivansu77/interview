@@ -11,6 +11,8 @@ const EnglishPractice: React.FC<EnglishPracticeProps> = ({ onBack }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [selectedWord, setSelectedWord] = useState('');
   const [wordInfo, setWordInfo] = useState<any>(null);
+  const [transcription, setTranscription] = useState('');
+  const [recordingStep, setRecordingStep] = useState<'ready' | 'recording' | 'processing' | 'complete'>('ready');
   
   const recognitionRef = useRef<any>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -25,85 +27,87 @@ const EnglishPractice: React.FC<EnglishPracticeProps> = ({ onBack }) => {
 
   const startRecording = async () => {
     try {
+      setRecordingStep('recording');
+      setTranscription('');
+      setAssessment(null);
+      
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream);
+      mediaRecorderRef.current = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       audioChunksRef.current = [];
 
       mediaRecorderRef.current.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
       };
 
       mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         await processRecording(audioBlob);
+        stream.getTracks().forEach(track => track.stop());
       };
-
-      // Start speech recognition
-      if ('webkitSpeechRecognition' in window) {
-        const SpeechRecognition = (window as any).webkitSpeechRecognition;
-        recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.continuous = true;
-        recognitionRef.current.interimResults = true;
-        recognitionRef.current.lang = 'en-US';
-
-        recognitionRef.current.onresult = (event: any) => {
-          let transcript = '';
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            if (event.results[i].isFinal) {
-              transcript += event.results[i][0].transcript;
-            }
-          }
-          if (transcript) {
-            setPracticeText(transcript);
-          }
-        };
-
-        recognitionRef.current.start();
-      }
 
       mediaRecorderRef.current.start();
       setIsRecording(true);
     } catch (error) {
       console.error('Recording error:', error);
-      alert('Microphone access required for pronunciation assessment');
+      alert('Microphone access required for speech analysis');
+      setRecordingStep('ready');
     }
   };
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      setIsRecording(false);
+      setRecordingStep('processing');
     }
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-    }
-    setIsRecording(false);
   };
 
   const processRecording = async (audioBlob: Blob) => {
-    setIsAnalyzing(true);
     try {
       // Convert audio to base64
       const reader = new FileReader();
       reader.onloadend = async () => {
         const audioData = reader.result?.toString().split(',')[1];
         
-        // Get comprehensive assessment
-        const response = await fetch('http://localhost:5003/api/english/assess/comprehensive', {
+        // First, get speech-to-text transcription
+        const transcriptResponse = await fetch('http://localhost:5003/api/ai/speech-to-text', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            text: practiceText,
-            audioData: audioData
-          })
+          body: JSON.stringify({ audioData })
         });
         
-        const result = await response.json();
-        setAssessment(result.assessment);
+        const transcriptResult = await transcriptResponse.json();
+        
+        if (transcriptResult.success && transcriptResult.transcript) {
+          setTranscription(transcriptResult.transcript);
+          setPracticeText(transcriptResult.transcript);
+          
+          // Then get AI analysis of the transcribed text
+          setIsAnalyzing(true);
+          const assessmentResponse = await fetch('http://localhost:5003/api/english/assess/comprehensive', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              text: transcriptResult.transcript,
+              audioData: audioData
+            })
+          });
+          
+          const assessmentResult = await assessmentResponse.json();
+          setAssessment(assessmentResult.assessment);
+          setRecordingStep('complete');
+        } else {
+          alert('Could not transcribe audio. Please try speaking more clearly.');
+          setRecordingStep('ready');
+        }
       };
       reader.readAsDataURL(audioBlob);
     } catch (error) {
-      console.error('Assessment error:', error);
+      console.error('Processing error:', error);
+      alert('Error processing recording. Please try again.');
+      setRecordingStep('ready');
     } finally {
       setIsAnalyzing(false);
     }
@@ -215,42 +219,116 @@ const EnglishPractice: React.FC<EnglishPracticeProps> = ({ onBack }) => {
           />
 
           {/* Controls */}
+          {/* Recording Status */}
+          {recordingStep !== 'ready' && (
+            <div style={{
+              marginTop: '20px',
+              padding: '15px',
+              backgroundColor: recordingStep === 'recording' ? 'rgba(244, 67, 54, 0.1)' : 
+                             recordingStep === 'processing' ? 'rgba(255, 152, 0, 0.1)' : 
+                             'rgba(76, 175, 80, 0.1)',
+              borderRadius: '10px',
+              border: `2px solid ${recordingStep === 'recording' ? '#f44336' : 
+                                   recordingStep === 'processing' ? '#FF9800' : 
+                                   '#4CAF50'}`,
+              textAlign: 'center'
+            }}>
+              <div style={{
+                color: recordingStep === 'recording' ? '#f44336' : 
+                       recordingStep === 'processing' ? '#FF9800' : 
+                       '#4CAF50',
+                fontWeight: 'bold',
+                fontSize: '16px',
+                marginBottom: '8px'
+              }}>
+                {recordingStep === 'recording' && '🔴 Recording... Speak clearly'}
+                {recordingStep === 'processing' && '⏳ Processing your speech...'}
+                {recordingStep === 'complete' && '✅ Analysis complete!'}
+              </div>
+            </div>
+          )}
+
+          {/* Transcription Display */}
+          {transcription && (
+            <div style={{
+              marginTop: '20px',
+              padding: '15px',
+              backgroundColor: '#2a2a2a',
+              borderRadius: '10px',
+              border: '2px solid #2196F3'
+            }}>
+              <h4 style={{ color: '#2196F3', marginBottom: '10px' }}>🎤 What you said:</h4>
+              <p style={{ fontSize: '16px', lineHeight: '1.5', color: 'white', fontStyle: 'italic' }}>
+                "{transcription}"
+              </p>
+            </div>
+          )}
+
           <div style={{ marginTop: '20px', textAlign: 'center' }}>
             <button
               onClick={isRecording ? stopRecording : startRecording}
-              disabled={!practiceText.trim()}
+              disabled={recordingStep === 'processing'}
               style={{
                 padding: '15px 30px',
                 fontSize: '18px',
                 fontWeight: 'bold',
                 borderRadius: '50px',
                 border: 'none',
-                backgroundColor: isRecording ? '#f44336' : '#4CAF50',
+                backgroundColor: isRecording ? '#f44336' : 
+                               recordingStep === 'processing' ? '#666' : '#4CAF50',
                 color: 'white',
-                cursor: practiceText.trim() ? 'pointer' : 'not-allowed',
+                cursor: recordingStep === 'processing' ? 'not-allowed' : 'pointer',
                 marginRight: '15px',
                 boxShadow: isRecording ? '0 0 20px rgba(244, 67, 54, 0.5)' : '0 0 20px rgba(76, 175, 80, 0.3)'
               }}
             >
-              {isRecording ? '🛑 Stop & Analyze' : '🎤 Start Speaking'}
+              {isRecording ? '🛑 Stop Recording' : 
+               recordingStep === 'processing' ? '⏳ Processing...' : 
+               '🎤 Start Recording'}
             </button>
 
-            <button
-              onClick={checkGrammar}
-              disabled={!practiceText.trim() || isAnalyzing}
-              style={{
-                padding: '15px 30px',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                borderRadius: '8px',
-                border: 'none',
-                backgroundColor: '#2196F3',
-                color: 'white',
-                cursor: practiceText.trim() && !isAnalyzing ? 'pointer' : 'not-allowed'
-              }}
-            >
-              ✓ Check Grammar
-            </button>
+            {recordingStep === 'complete' && (
+              <button
+                onClick={() => {
+                  setRecordingStep('ready');
+                  setTranscription('');
+                  setPracticeText('');
+                  setAssessment(null);
+                }}
+                style={{
+                  padding: '15px 30px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  borderRadius: '8px',
+                  border: 'none',
+                  backgroundColor: '#FF9800',
+                  color: 'white',
+                  cursor: 'pointer'
+                }}
+              >
+                🔄 Record Again
+              </button>
+            )}
+
+            {practiceText && !isRecording && recordingStep !== 'processing' && (
+              <button
+                onClick={checkGrammar}
+                disabled={isAnalyzing}
+                style={{
+                  padding: '15px 30px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  borderRadius: '8px',
+                  border: 'none',
+                  backgroundColor: '#2196F3',
+                  color: 'white',
+                  cursor: isAnalyzing ? 'not-allowed' : 'pointer',
+                  marginLeft: '15px'
+                }}
+              >
+                ✓ Check Grammar Only
+              </button>
+            )}
           </div>
 
           {/* Word Lookup */}

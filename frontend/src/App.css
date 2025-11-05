@@ -1,129 +1,218 @@
+/* Dark Theme App Styles */
 .App {
   text-align: center;
+  background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #0f0f0f 100%);
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .App-header {
-  background-color: #1a1a1a;
   padding: 20px;
-  color: #ffffff;
+  color: white;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
 }
 
-.start-screen {
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.start-screen ul {
-  text-align: left;
-  display: inline-block;
-  margin: 20px 0;
-}
-
-.start-screen li {
-  margin: 10px 0;
-  font-size: 16px;
-}
-
-.interview-container {
-  position: relative;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
+/* Interview Room Styles */
 .interview-room {
   display: grid;
   grid-template-columns: 1fr 2fr;
-  gap: 20px;
-  padding: 20px;
-  max-width: 1600px;
+  gap: 24px;
+  max-width: 1400px;
   margin: 0 auto;
+  padding: 24px;
+  background: #1a1a1a;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  color: white;
+  border: 1px solid #333;
 }
 
 .video-section {
-  background: #1a1a1a;
-  border-radius: 10px;
+  background: #2a2a2a;
+  border-radius: 12px;
   padding: 20px;
+  border: 1px solid #444;
 }
 
 .question-section {
-  background: #2a2a2a;
-  border-radius: 10px;
-  padding: 20px;
-  text-align: left;
-  color: #ffffff;
-  border: 2px solid #4CAF50;
+  background: #1a1a1a;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #333;
 }
 
 .question-section h2 {
   color: #4CAF50;
-  margin-bottom: 15px;
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 16px;
 }
 
 .question-section p {
-  font-size: 18px;
+  color: #ccc;
+  font-size: 16px;
   line-height: 1.6;
   margin-bottom: 20px;
-  color: #ffffff;
-  font-weight: 500;
 }
 
 .controls {
   grid-column: 1 / -1;
-  text-align: center;
+  display: flex;
+  justify-content: center;
   padding: 20px;
-  background: #2a2a2a;
-  border-radius: 10px;
 }
 
 .stats {
   grid-column: 1 / -1;
   display: flex;
   justify-content: space-around;
-  background: #1a1a1a;
-  padding: 15px;
-  border-radius: 10px;
+  padding: 20px;
+  background: #2a2a2a;
+  border-radius: 12px;
+  border: 1px solid #444;
+  margin-top: 20px;
 }
 
-.stats div {
-  font-weight: bold;
+.stats > div {
+  text-align: center;
+  color: #ccc;
+}
+
+/* Start Screen Styles */
+.start-screen {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px;
+  background: #1a1a1a;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  color: white;
+  border: 1px solid #333;
+}
+
+.start-screen h2 {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 16px;
   color: #4CAF50;
 }
 
-.face-monitor {
-  text-align: center;
+.start-screen p {
+  font-size: 16px;
+  color: #ccc;
+  margin-bottom: 24px;
 }
 
-.face-monitor video {
-  border-radius: 10px;
-  margin-bottom: 15px;
+.start-screen ul {
+  text-align: left;
+  max-width: 400px;
+  margin: 0 auto 32px;
+  color: #ccc;
 }
 
-.eye-contact-indicator {
+.start-screen li {
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+/* Interview Dashboard */
+.interview-dashboard {
+  background: #1a1a1a;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
   color: white;
-  font-weight: bold;
+  border: 1px solid #333;
 }
 
-.voice-recorder {
-  text-align: center;
+.interview-dashboard h1 {
+  color: #4CAF50;
+  font-size: 28px;
+  font-weight: 700;
 }
 
-.record-btn:hover {
-  transform: scale(1.05);
+/* Loading Screen */
+.loading-screen {
+  background: #1a1a1a;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  color: white;
+  border: 1px solid #333;
 }
 
-.recording {
-  animation: pulse 1.5s infinite;
+/* Button Styles */
+button {
+  font-family: inherit;
+  transition: all 0.2s ease;
 }
 
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+button:hover {
+  transform: translateY(-1px);
 }
 
+button:active {
+  transform: translateY(0);
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
   .interview-room {
     grid-template-columns: 1fr;
+    padding: 16px;
   }
+  
+  .App-header {
+    padding: 16px;
+  }
+  
+  .start-screen {
+    margin: 16px;
+    padding: 24px;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.interview-room,
+.start-screen,
+.loading-screen {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Focus States */
+button:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid #3B82F6;
+  outline-offset: 2px;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }

@@ -74,21 +74,38 @@ function App() {
             alignItems: 'center',
             width: '100%',
             maxWidth: '1200px',
-            margin: '0 auto 30px'
+            margin: '0 auto 40px',
+            padding: '0 20px'
           }}>
-            <h1>AI Interview Platform</h1>
-            <div style={{ display: 'flex', gap: '15px' }}>
+            <h1 style={{
+              fontSize: '32px',
+              fontWeight: '700',
+              margin: 0,
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
+            }}>AI Interview Platform</h1>
+            <div style={{ display: 'flex', gap: '12px' }}>
               <button
                 onClick={() => setCurrentSection('learn')}
                 style={{
-                  padding: '12px 24px',
-                  backgroundColor: '#4CAF50',
-                  color: 'white',
-                  border: 'none',
+                  padding: '12px 20px',
+                  backgroundColor: 'white',
+                  color: '#374151',
+                  border: '1px solid #D1D5DB',
                   borderRadius: '8px',
                   cursor: 'pointer',
-                  fontSize: '16px',
-                  fontWeight: 'bold'
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = '#F9FAFB';
+                  e.currentTarget.style.borderColor = '#9CA3AF';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = 'white';
+                  e.currentTarget.style.borderColor = '#D1D5DB';
                 }}
               >
                 📚 Learn & Practice
@@ -96,14 +113,23 @@ function App() {
               <button
                 onClick={() => setCurrentSection('english')}
                 style={{
-                  padding: '12px 24px',
-                  backgroundColor: '#2196F3',
-                  color: 'white',
-                  border: 'none',
+                  padding: '12px 20px',
+                  backgroundColor: 'white',
+                  color: '#374151',
+                  border: '1px solid #D1D5DB',
                   borderRadius: '8px',
                   cursor: 'pointer',
-                  fontSize: '16px',
-                  fontWeight: 'bold'
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = '#F9FAFB';
+                  e.currentTarget.style.borderColor = '#9CA3AF';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = 'white';
+                  e.currentTarget.style.borderColor = '#D1D5DB';
                 }}
               >
                 🗣️ English Practice
@@ -111,14 +137,23 @@ function App() {
               <button
                 onClick={() => setCurrentSection('vocabulary')}
                 style={{
-                  padding: '12px 24px',
-                  backgroundColor: '#FF9800',
-                  color: 'white',
-                  border: 'none',
+                  padding: '12px 20px',
+                  backgroundColor: 'white',
+                  color: '#374151',
+                  border: '1px solid #D1D5DB',
                   borderRadius: '8px',
                   cursor: 'pointer',
-                  fontSize: '16px',
-                  fontWeight: 'bold'
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = '#F9FAFB';
+                  e.currentTarget.style.borderColor = '#9CA3AF';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = 'white';
+                  e.currentTarget.style.borderColor = '#D1D5DB';
                 }}
               >
                 📚 Vocabulary
@@ -213,16 +248,23 @@ function App() {
                   onClick={() => startInterview('technical')}
                   disabled={isLoading}
                   style={{
-                    padding: '15px 30px',
+                    padding: '16px 32px',
                     fontSize: '16px',
-                    backgroundColor: isLoading ? '#666' : '#4CAF50',
+                    backgroundColor: isLoading ? '#9CA3AF' : '#3B82F6',
                     color: 'white',
                     border: 'none',
-                    borderRadius: '8px',
+                    borderRadius: '12px',
                     cursor: isLoading ? 'not-allowed' : 'pointer',
-                    width: '200px',
-                    transition: 'all 0.3s ease',
-                    transform: isLoading ? 'scale(0.95)' : 'scale(1)'
+                    width: '220px',
+                    fontWeight: '600',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                  onMouseOver={(e) => {
+                    if (!isLoading) e.currentTarget.style.backgroundColor = '#2563EB';
+                  }}
+                  onMouseOut={(e) => {
+                    if (!isLoading) e.currentTarget.style.backgroundColor = '#3B82F6';
                   }}
                 >
                   {isLoading ? '🔄 Starting...' : '🚀 Start Technical'}
@@ -239,16 +281,23 @@ function App() {
                   }}
                   disabled={isLoading}
                   style={{
-                    padding: '15px 30px',
+                    padding: '16px 32px',
                     fontSize: '16px',
-                    backgroundColor: isLoading ? '#666' : '#2196F3',
+                    backgroundColor: isLoading ? '#9CA3AF' : '#10B981',
                     color: 'white',
                     border: 'none',
-                    borderRadius: '8px',
+                    borderRadius: '12px',
                     cursor: isLoading ? 'not-allowed' : 'pointer',
-                    width: '200px',
-                    transition: 'all 0.3s ease',
-                    transform: isLoading ? 'scale(0.95)' : 'scale(1)'
+                    width: '220px',
+                    fontWeight: '600',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                  onMouseOver={(e) => {
+                    if (!isLoading) e.currentTarget.style.backgroundColor = '#059669';
+                  }}
+                  onMouseOut={(e) => {
+                    if (!isLoading) e.currentTarget.style.backgroundColor = '#10B981';
                   }}
                 >
                   {isLoading ? '🔄 Starting...' : '💬 Start English'}

@@ -458,108 +458,112 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
           {/* Timer Section */}
           {timeLeft > 0 && (
             <div style={{
-              textAlign: 'center',
-              marginBottom: '20px',
-              padding: '15px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '16px',
+              padding: '16px',
               backgroundColor: '#2a2a2a',
               borderRadius: '12px',
-              border: '2px solid #444'
+              border: '1px solid #444',
+              marginBottom: '16px',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
             }}>
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                gap: '20px'
+                gap: '8px',
+                color: timeLeft <= 10 ? '#f44336' : '#4CAF50',
+                fontSize: '16px',
+                fontWeight: '600'
               }}>
-                <div style={{
-                  fontSize: '18px',
-                  color: timeLeft <= 10 ? '#f44336' : '#FF9800',
-                  fontWeight: 'bold',
-                  padding: '12px 24px',
-                  backgroundColor: timeLeft <= 10 ? 'rgba(244, 67, 54, 0.1)' : 'rgba(255, 152, 0, 0.1)',
-                  borderRadius: '25px',
-                  border: `2px solid ${timeLeft <= 10 ? '#f44336' : '#FF9800'}`,
-                  minWidth: '140px'
-                }}>
-                  ⏱️ Next in {timeLeft}s
-                </div>
-                
-                <button
-                  onClick={isPaused ? resumeTimer : pauseTimer}
-                  style={{
-                    padding: '12px 20px',
-                    backgroundColor: isPaused ? '#4CAF50' : '#FF9800',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '10px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
-                  }}
-                >
-                  {isPaused ? '▶️ Resume' : '⏸️ Pause'}
-                </button>
+                <span>⏱️</span>
+                <span>Next in {timeLeft}s</span>
               </div>
+              
+              <button
+                onClick={isPaused ? resumeTimer : pauseTimer}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: isPaused ? '#4CAF50' : '#FF9800',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600'
+                }}
+              >
+                {isPaused ? '▶️ Resume' : '⏸️ Pause'}
+              </button>
             </div>
           )}
           
-          {/* Action Buttons Section */}
+          {/* Action Buttons */}
           <div style={{
-            textAlign: 'center',
+            display: 'flex',
+            gap: '12px',
+            justifyContent: 'center',
             padding: '20px',
             backgroundColor: '#2a2a2a',
             borderRadius: '12px',
-            border: '2px solid #4CAF50'
+            border: '1px solid #444',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
           }}>
-            <h4 style={{ color: '#4CAF50', marginBottom: '15px', fontSize: '16px' }}>Ready for next question?</h4>
-            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <button 
-                onClick={() => {
-                  speechSynthesis.cancel();
-                  stopTimer();
-                  setAnalysis(null);
-                  setQuestionCount(prev => prev + 1);
-                  generateQuestion();
-                }}
-                style={{
-                  padding: '15px 25px',
-                  backgroundColor: '#4CAF50',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '10px',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 15px rgba(76, 175, 80, 0.3)',
-                  minWidth: '160px'
-                }}
-              >
-                ➡️ Next Question
-              </button>
-              
-              <button 
-                onClick={() => {
-                  stopTimer();
-                  setAnalysis(null);
-                  generateQuestion();
-                }}
-                style={{
-                  padding: '15px 25px',
-                  backgroundColor: '#2196F3',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '10px',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 15px rgba(33, 150, 243, 0.3)',
-                  minWidth: '160px'
-                }}
-              >
-                🔄 Retry Question
-              </button>
-            </div>
+            <button 
+              onClick={() => {
+                speechSynthesis.cancel();
+                stopTimer();
+                setAnalysis(null);
+                setQuestionCount(prev => prev + 1);
+                generateQuestion();
+              }}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: '#4CAF50',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#45a049'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#4CAF50'}
+            >
+              Next Question →
+            </button>
+            
+            <button 
+              onClick={() => {
+                stopTimer();
+                setAnalysis(null);
+                generateQuestion();
+              }}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: '#1a1a1a',
+                color: '#ccc',
+                border: '1px solid #555',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = '#333';
+                e.currentTarget.style.borderColor = '#666';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = '#1a1a1a';
+                e.currentTarget.style.borderColor = '#555';
+              }}
+            >
+              🔄 Retry Question
+            </button>
           </div>
         </div>
       )}
