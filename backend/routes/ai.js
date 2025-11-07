@@ -167,46 +167,263 @@ Return ONLY this JSON format:
   }
 });
 
+// Character Chat
+router.post('/character-chat', async (req, res) => {
+  try {
+    const { userId, character, userMessage } = req.body;
+    
+    if (!userId || !character || !userMessage) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const characterPrompts = {
+      'Jesse Pinkman': 'You are Jesse Pinkman from Breaking Bad. Talk like him naturally: use "yo", "man", "dude" casually. Be loyal, emotional, and speak like a real person having a conversation. Keep responses conversational and natural. Help with English by explaining difficult words simply in parentheses.',
+      'Walter White': 'You are Walter White from Breaking Bad. Speak precisely and scientifically like him, but naturally as if having a real conversation. Be methodical and sometimes condescending. Use chemistry knowledge. Help with English by explaining complex terms clearly in parentheses.',
+      'Cillian Murphy': 'You are Cillian Murphy, the Irish actor. Speak thoughtfully and poetically like him in natural conversation. Use Irish expressions like "brilliant" and "lovely" naturally. Reference your acting work. Help with English by explaining advanced words in parentheses.',
+      'Tom Holland': 'You are Tom Holland, the Spider-Man actor. Be enthusiastic and British in natural conversation. Use "mate", "brilliant" naturally. Be humble, funny, and energetic like in real interviews. Help with English by explaining words simply in parentheses.',
+      'Deadpool': 'You are Deadpool, the sarcastic anti-hero. Break the fourth wall and make jokes naturally in conversation. Be witty and inappropriate but conversational. Help with English by explaining words with humor in parentheses.'
+    };
+
+    const systemPrompt = characterPrompts[character] || characterPrompts['Tom Holland'];
+    const fullPrompt = `${systemPrompt}\n\nUser said: "${userMessage}"\n\nRespond as this character, stay 100% in character with their speech patterns and personality.`;
+
+    const response = await axios.post(GEMINI_URL, {
+      contents: [{ parts: [{ text: fullPrompt }] }]
+    }, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    const characterReply = response.data.candidates[0].content.parts[0].text.trim();
+    res.json({ reply: characterReply });
+  } catch (error) {
+    console.error('Character chat error:', error);
+    res.status(500).json({ error: 'Failed to generate response' });
+  }
+});
+
 // Speech-to-Text Conversion
 router.post('/speech-to-text', async (req, res) => {
   try {
     const { audioData } = req.body;
     
     if (!audioData) {
-      return res.status(400).json({ error: 'Audio data is required' });
+      return res.json({
+        success: false,
+        error: 'No audio data received',
+        transcript: '',
+        confidence: 0
+      });
+    }
+
+    if (!process.env.GOOGLE_CLOUD_API_KEY || process.env.GOOGLE_CLOUD_API_KEY === 'your_google_cloud_api_key_here') {
+      console.error('Google Cloud API key not configured properly');
+      return res.json({
+        success: false,
+        error: 'Speech recognition service not configured',
+        transcript: '',
+        confidence: 0
+      });
     }
     
-    const response = await axios.post(
-      `https://speech.googleapis.com/v1/speech:recognize?key=${process.env.GOOGLE_CLOUD_API_KEY}`,
-      {
-        config: {
-          encoding: 'WEBM_OPUS',
-          sampleRateHertz: 48000,
-          languageCode: 'en-US',
-          enableAutomaticPunctuation: true,
-          model: 'latest_long'
-        },
-        audio: { content: audioData }
+    const encodingConfigs = [
+      { encoding: 'WEBM_OPUS', sampleRateHertz: 48000 },
+      { encoding: 'OGG_OPUS', sampleRateHertz: 48000 },
+      { encoding: 'LINEAR16', sampleRateHertz: 16000 }
+    ];
+    
+    let lastError = null;
+    
+    for (const config of encodingConfigs) {
+      try {
+        const response = await axios.post(
+          `https://speech.googleapis.com/v1/speech:recognize?key=${process.env.GOOGLE_CLOUD_API_KEY}`,
+          {
+            config: {
+              ...config,
+              languageCode: 'en-US',
+              enableAutomaticPunctuation: true,
+              model: 'latest_short',
+              useEnhanced: true,
+              alternativeLanguageCodes: ['en-GB', 'en-AU']
+            },
+            audio: { content: audioData }
+          },
+          {
+            timeout: 15000
+          }
+        );
+        
+        const results = response.data.results;
+        if (results && results.length > 0) {
+          const transcript = results[0]?.alternatives?.[0]?.transcript || '';
+          const confidence = results[0]?.alternatives?.[0]?.confidence || 0;
+          
+          if (transcript.trim().length > 0) {
+            return res.json({
+              success: true,
+              transcript: transcript.trim(),
+              confidence: Math.round(confidence * 100),
+              wordCount: transcript.trim().split(' ').length
+            });
+          }
+        }
+      } catch (configError) {
+        lastError = configError;
+        console.log(`Failed with ${config.encoding}, trying next...`);
+        continue;
       }
-    );
+    }
     
-    const transcript = response.data.results?.[0]?.alternatives?.[0]?.transcript || '';
-    const confidence = response.data.results?.[0]?.alternatives?.[0]?.confidence || 0;
+    throw lastError || new Error('No valid audio detected');
     
-    res.json({
-      success: true,
-      transcript: transcript.trim(),
-      confidence: Math.round(confidence * 100),
-      wordCount: transcript.trim().split(' ').length
-    });
   } catch (error) {
     console.error('Speech-to-Text Error:', error.response?.data || error.message);
-    res.status(500).json({ 
+    
+    let errorMessage = 'Speech recognition failed';
+    if (error.response?.data?.error?.message) {
+      const apiError = error.response.data.error.message;
+      if (apiError.includes('audio')) {
+        errorMessage = 'Audio format not supported';
+      } else if (apiError.includes('quota')) {
+        errorMessage = 'Service temporarily unavailable';
+      } else if (apiError.includes('invalid')) {
+        errorMessage = 'Invalid audio data';
+      }
+    }
+    
+    res.json({ 
       success: false,
-      error: 'Speech recognition failed',
+      error: errorMessage,
       transcript: '',
       confidence: 0
     });
+  }
+});
+
+// Google Cloud Text-to-Speech
+router.post('/text-to-speech', async (req, res) => {
+  try {
+    const { text, voice } = req.body;
+    
+    if (!text) {
+      return res.status(400).json({ error: 'Text is required' });
+    }
+
+    if (!process.env.GOOGLE_CLOUD_API_KEY) {
+      throw new Error('Google Cloud API key not configured');
+    }
+    
+    const response = await axios.post(
+      `https://texttospeech.googleapis.com/v1/text:synthesize?key=${process.env.GOOGLE_CLOUD_API_KEY}`,
+      {
+        input: { text: text },
+        voice: {
+          languageCode: voice?.name?.includes('GB') ? 'en-GB' : 'en-US',
+          name: voice?.name || 'en-US-Standard-D',
+          ssmlGender: voice?.gender || 'MALE'
+        },
+        audioConfig: {
+          audioEncoding: 'MP3',
+          pitch: voice?.pitch || 0,
+          speakingRate: voice?.speakingRate || 1.0
+        }
+      },
+      {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 10000
+      }
+    );
+    
+    const audioContent = response.data.audioContent;
+    const audioBuffer = Buffer.from(audioContent, 'base64');
+    
+    res.set({
+      'Content-Type': 'audio/mpeg',
+      'Content-Length': audioBuffer.length
+    });
+    
+    res.send(audioBuffer);
+  } catch (error) {
+    console.error('Google TTS Error:', error.message);
+    res.status(500).json({ 
+      error: 'Text-to-speech failed',
+      message: error.message
+    });
+  }
+});
+
+// Simple speech-to-text fallback (for testing without Google API)
+router.post('/speech-to-text-fallback', async (req, res) => {
+  res.json({
+    success: true,
+    transcript: 'Hello, this is a test message from the fallback service.',
+    confidence: 85,
+    wordCount: 10
+  });
+});
+
+// Test endpoint for audio processing
+router.post('/speech-to-text-test', async (req, res) => {
+  const { audioData } = req.body;
+  
+  if (!audioData || audioData.length < 1000) {
+    return res.json({
+      success: false,
+      error: 'Audio data too short or missing',
+      transcript: '',
+      confidence: 0
+    });
+  }
+  
+  res.json({
+    success: true,
+    transcript: 'Test audio processed successfully',
+    confidence: 90,
+    wordCount: 4,
+    audioSize: audioData.length
+  });
+});
+
+
+
+// Get Character Chat History (simple in-memory for now)
+let chatHistory = {};
+
+router.get('/character-chat/history', async (req, res) => {
+  try {
+    const { userId, character } = req.query;
+    
+    if (!userId || !character) {
+      return res.status(400).json({ error: 'Missing userId or character' });
+    }
+
+    const key = `${userId}_${character}`;
+    res.json({ messages: chatHistory[key] || [] });
+  } catch (error) {
+    console.error('Get chat history error:', error);
+    res.status(500).json({ error: 'Failed to get chat history' });
+  }
+});
+
+// Save chat message
+router.post('/character-chat/save', async (req, res) => {
+  try {
+    const { userId, character, userMessage, characterReply } = req.body;
+    
+    const key = `${userId}_${character}`;
+    if (!chatHistory[key]) {
+      chatHistory[key] = [];
+    }
+    
+    chatHistory[key].push(
+      { sender: 'user', text: userMessage, timestamp: new Date() },
+      { sender: 'character', text: characterReply, timestamp: new Date() }
+    );
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Save chat error:', error);
+    res.status(500).json({ error: 'Failed to save chat' });
   }
 });
 
