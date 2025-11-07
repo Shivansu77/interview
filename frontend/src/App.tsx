@@ -3,10 +3,11 @@ import InterviewRoom from './components/InterviewRoom';
 import LearnSection from './components/LearnSection';
 import EnglishPractice from './components/EnglishPractice';
 import VocabularyChallenge from './components/VocabularyChallenge';
+import CharacterChat from './components/CharacterChat';
 import './App.css';
 
 function App() {
-  const [currentSection, setCurrentSection] = useState<'home' | 'learn' | 'interview' | 'english' | 'vocabulary'>('home');
+  const [currentSection, setCurrentSection] = useState<'home' | 'learn' | 'interview' | 'english' | 'vocabulary' | 'character-chat'>('home');
   const [isInterviewActive, setIsInterviewActive] = useState(false);
   const [sessionId, setSessionId] = useState('');
   const [userId] = useState('demo-user-123');
@@ -158,11 +159,35 @@ function App() {
               >
                 📚 Vocabulary
               </button>
+              <button
+                onClick={() => setCurrentSection('character-chat')}
+                style={{
+                  padding: '12px 20px',
+                  backgroundColor: 'white',
+                  color: '#374151',
+                  border: '1px solid #D1D5DB',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = '#F9FAFB';
+                  e.currentTarget.style.borderColor = '#9CA3AF';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = 'white';
+                  e.currentTarget.style.borderColor = '#D1D5DB';
+                }}
+              >
+                🎭 Character Chat
+              </button>
             </div>
           </div>
         )}
         
-        {(currentSection === 'learn' || currentSection === 'english' || currentSection === 'vocabulary') && (
+        {(currentSection === 'learn' || currentSection === 'english' || currentSection === 'vocabulary' || currentSection === 'character-chat') && (
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -197,6 +222,8 @@ function App() {
           <EnglishPractice onBack={() => setCurrentSection('home')} />
         ) : currentSection === 'vocabulary' ? (
           <VocabularyChallenge onBack={() => setCurrentSection('home')} />
+        ) : currentSection === 'character-chat' ? (
+          <CharacterChat />
         ) : isLoading ? (
           <div className="loading-screen" style={{
             textAlign: 'center',
