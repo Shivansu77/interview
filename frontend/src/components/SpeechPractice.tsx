@@ -420,26 +420,6 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
 
         {/* Controls */}
         <div style={{ textAlign: 'center' }}>
-          <button
-            onClick={isRecording ? stopRecording : startRecording}
-            style={{
-              padding: '15px 30px',
-              fontSize: '18px',
-              fontWeight: 'bold',
-              borderRadius: '50px',
-              border: 'none',
-              backgroundColor: isRecording ? '#f44336' : '#4CAF50',
-              color: 'white',
-              cursor: 'pointer',
-              marginBottom: '20px',
-              boxShadow: isRecording ? '0 0 20px rgba(244, 67, 54, 0.5)' : '0 0 20px rgba(76, 175, 80, 0.3)',
-              transition: 'all 0.3s ease',
-              width: '100%'
-            }}
-          >
-            {isRecording ? '🛑 Stop Practice' : '🎤 Start Speaking'}
-          </button>
-          
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
             <button
               onClick={resetQuestion}
