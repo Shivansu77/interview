@@ -1,227 +1,224 @@
 import React from 'react';
 
 interface AnalysisDisplayProps {
-  analysis: any;
+  analysis: {
+    contentScore: number;
+    clarityScore: number;
+    completenessScore: number;
+    fluencyScore?: number;
+    isCorrect?: boolean;
+    isAdequate?: boolean;
+    feedback: string;
+    speechIssues?: string;
+    corrections?: string;
+    betterAnswer?: string;
+    wordSuggestions?: Array<{
+      original: string;
+      suggestion: string;
+      reason: string;
+    }>;
+    addWords?: string[];
+    removeWords?: string[];
+  } | null;
 }
 
 const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({ analysis }) => {
   if (!analysis) return null;
 
-  const getScoreColor = (score: number) => {
-    if (score >= 8) return '#4CAF50'; // Green
-    if (score >= 6) return '#FF9800'; // Orange
-    return '#f44336'; // Red
-  };
-
-  const getScoreIcon = (score: number) => {
-    if (score >= 8) return '✅';
-    if (score >= 6) return '⚠️';
-    return '❌';
-  };
-
   return (
-    <div style={{
-      backgroundColor: '#1a1a1a',
-      borderRadius: '16px',
-      padding: '24px',
-      marginTop: '24px',
-      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-      border: '1px solid #333'
+    <div className="analysis-display" style={{
+      background: 'linear-gradient(135deg, #2a2a2a 0%, #1e1e1e 100%)',
+      padding: '25px',
+      borderRadius: '15px',
+      margin: '20px 0',
+      border: '2px solid #ea9f2eff',
+      width: '100%',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
     }}>
-      {/* Header */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        marginBottom: '20px',
-        paddingBottom: '16px',
-        borderBottom: '1px solid #333'
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between', 
+        marginBottom: '25px',
+        paddingBottom: '15px',
+        borderBottom: '2px solid #444'
       }}>
-        <div style={{
-          width: '32px',
-          height: '32px',
-          backgroundColor: '#4CAF50',
-          borderRadius: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginRight: '12px'
-        }}>
-          <span style={{ fontSize: '16px' }}>🤖</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ fontSize: '28px' }}>🤖</div>
+          <h3 style={{ color: '#FF9800', margin: 0, fontSize: '22px', fontWeight: 'bold' }}>AI Analysis Results</h3>
         </div>
-        <h3 style={{
-          margin: 0,
-          fontSize: '18px',
-          fontWeight: '600',
-          color: 'white'
-        }}>
-          AI Analysis Results
-        </h3>
-      </div>
-
-      {/* Overall Status */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        marginBottom: '24px',
-        padding: '16px',
-        backgroundColor: analysis.isCorrect ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 152, 0, 0.1)',
-        borderRadius: '12px',
-        border: `1px solid ${analysis.isCorrect ? '#4CAF50' : '#FF9800'}`
-      }}>
-        <span style={{ fontSize: '20px', marginRight: '12px' }}>
-          {analysis.isCorrect ? '✅' : '⚠️'}
-        </span>
-        <span style={{
-          fontSize: '16px',
-          fontWeight: '600',
-          color: analysis.isCorrect ? '#4CAF50' : '#FF9800'
-        }}>
-          {analysis.isCorrect ? 'EXCELLENT ANSWER' : 'NEEDS IMPROVEMENT'}
-        </span>
-      </div>
-
-      {/* Score Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(2, 1fr)',
-        gap: '16px',
-        marginBottom: '24px'
-      }}>
-        {[
-          { label: 'Content', score: analysis.contentScore, icon: '📝' },
-          { label: 'Clarity', score: analysis.clarityScore, icon: '🗣️' },
-          { label: 'Completeness', score: analysis.completenessScore, icon: '✅' },
-          { label: 'Fluency', score: analysis.fluencyScore, icon: '🎤' }
-        ].map((item, index) => (
-          <div key={index} style={{
-            padding: '16px',
-            backgroundColor: '#2a2a2a',
-            borderRadius: '12px',
-            border: '1px solid #444',
-            textAlign: 'center'
-          }}>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          {analysis.isCorrect !== undefined && (
             <div style={{
+              padding: '8px 16px',
+              borderRadius: '25px',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              backgroundColor: analysis.isCorrect ? '#4CAF50' : '#f44336',
+              color: 'white',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: '8px'
+              gap: '6px'
             }}>
-              <span style={{ fontSize: '16px', marginRight: '8px' }}>{item.icon}</span>
-              <span style={{
-                fontSize: '24px',
-                fontWeight: '700',
-                color: getScoreColor(item.score)
-              }}>
-                {item.score}/10
-              </span>
+              {analysis.isCorrect ? '✅ CORRECT' : '❌ INCORRECT'}
             </div>
+          )}
+          {analysis.isAdequate !== undefined && (
             <div style={{
+              padding: '8px 16px',
+              borderRadius: '25px',
               fontSize: '14px',
-              color: '#ccc',
-              fontWeight: '500'
+              fontWeight: 'bold',
+              backgroundColor: analysis.isAdequate ? '#2196F3' : '#FF9800',
+              color: 'white',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
             }}>
-              {item.label}
+              {analysis.isAdequate ? '👍 ADEQUATE' : '⚠️ NEEDS IMPROVEMENT'}
+            </div>
+          )}
+        </div>
+      </div>
+      
+      <div className="scores" style={{ 
+        display: 'grid', 
+        gridTemplateColumns: analysis.fluencyScore ? 'repeat(4, 1fr)' : 'repeat(3, 1fr)', 
+        gap: '20px', 
+        marginBottom: '25px',
+        width: '100%'
+      }}>
+        <div style={{ 
+          textAlign: 'center',
+          backgroundColor: '#1a1a1a',
+          padding: '20px',
+          borderRadius: '12px',
+          border: '2px solid #4CAF50',
+          boxShadow: '0 4px 15px rgba(76, 175, 80, 0.2)'
+        }}>
+          <div style={{ fontSize: '32px', marginBottom: '8px' }}>📝</div>
+          <div style={{ color: '#4CAF50', fontSize: '28px', fontWeight: 'bold', marginBottom: '5px' }}>{analysis.contentScore}/10</div>
+          <div style={{ color: '#ffffff', fontSize: '16px', fontWeight: '500' }}>Content</div>
+        </div>
+        <div style={{ 
+          textAlign: 'center',
+          backgroundColor: '#1a1a1a',
+          padding: '20px',
+          borderRadius: '12px',
+          border: '2px solid #2196F3',
+          boxShadow: '0 4px 15px rgba(33, 150, 243, 0.2)'
+        }}>
+          <div style={{ fontSize: '32px', marginBottom: '8px' }}>🗣️</div>
+          <div style={{ color: '#2196F3', fontSize: '28px', fontWeight: 'bold', marginBottom: '5px' }}>{analysis.clarityScore}/10</div>
+          <div style={{ color: '#ffffff', fontSize: '16px', fontWeight: '500' }}>Clarity</div>
+        </div>
+        <div style={{ 
+          textAlign: 'center',
+          backgroundColor: '#1a1a1a',
+          padding: '20px',
+          borderRadius: '12px',
+          border: '2px solid #9C27B0',
+          boxShadow: '0 4px 15px rgba(156, 39, 176, 0.2)'
+        }}>
+          <div style={{ fontSize: '32px', marginBottom: '8px' }}>✅</div>
+          <div style={{ color: '#9C27B0', fontSize: '28px', fontWeight: 'bold', marginBottom: '5px' }}>{analysis.completenessScore}/10</div>
+          <div style={{ color: '#ffffff', fontSize: '16px', fontWeight: '500' }}>Completeness</div>
+        </div>
+        {analysis.fluencyScore && (
+          <div style={{ 
+            textAlign: 'center',
+            backgroundColor: '#1a1a1a',
+            padding: '20px',
+            borderRadius: '12px',
+            border: '2px solid #FF5722',
+            boxShadow: '0 4px 15px rgba(255, 87, 34, 0.2)'
+          }}>
+            <div style={{ fontSize: '32px', marginBottom: '8px' }}>🎤</div>
+            <div style={{ color: '#FF5722', fontSize: '28px', fontWeight: 'bold', marginBottom: '5px' }}>{analysis.fluencyScore}/10</div>
+            <div style={{ color: '#ffffff', fontSize: '16px', fontWeight: '500' }}>Fluency</div>
+          </div>
+        )}
+      </div>
+      
+      <div className="feedback" style={{
+        background: 'linear-gradient(135deg, #333 0%, #2a2a2a 100%)',
+        padding: '25px',
+        borderRadius: '12px',
+        color: '#ffffff',
+        fontSize: '16px',
+        lineHeight: '1.6',
+        width: '100%',
+        border: '1px solid #444',
+        boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)'
+      }}>
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+            <span style={{ fontSize: '20px' }}>💬</span>
+            <strong style={{ color: '#FF9800', fontSize: '18px' }}>AI Feedback</strong>
+          </div>
+          <div style={{ 
+            marginTop: '8px', 
+            padding: '15px',
+            backgroundColor: 'rgba(255, 152, 0, 0.1)',
+            borderRadius: '8px',
+            borderLeft: '4px solid #FF9800'
+          }}>{analysis.feedback}</div>
+        </div>
+        
+        {analysis.speechIssues && (
+          <div style={{ marginBottom: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+              <span style={{ fontSize: '20px' }}>🎯</span>
+              <strong style={{ color: '#FF5722', fontSize: '18px' }}>Speech Analysis</strong>
+            </div>
+            <div style={{ 
+              marginTop: '8px', 
+              padding: '15px',
+              backgroundColor: 'rgba(255, 87, 34, 0.1)',
+              borderRadius: '8px',
+              borderLeft: '4px solid #FF5722'
+            }}>{analysis.speechIssues}</div>
+          </div>
+        )}
+        
+        {analysis.corrections && (
+          <div style={{ marginBottom: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+              <span style={{ fontSize: '20px' }}>🔧</span>
+              <strong style={{ color: '#f44336', fontSize: '18px' }}>Improvements</strong>
+            </div>
+            <div style={{ 
+              marginTop: '8px', 
+              padding: '15px',
+              backgroundColor: 'rgba(244, 67, 54, 0.1)',
+              borderRadius: '8px',
+              borderLeft: '4px solid #f44336'
+            }}>{analysis.corrections}</div>
+          </div>
+        )}
+        
+        {analysis.betterAnswer && (
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+              <span style={{ fontSize: '20px' }}>💡</span>
+              <strong style={{ color: '#4CAF50', fontSize: '18px' }}>Suggested Answer</strong>
+            </div>
+            <div style={{ 
+              marginTop: '8px', 
+              padding: '18px', 
+              backgroundColor: 'rgba(76, 175, 80, 0.1)', 
+              borderRadius: '8px',
+              borderLeft: '4px solid #4CAF50',
+              fontStyle: 'italic'
+            }}>
+              {analysis.betterAnswer}
             </div>
           </div>
-        ))}
-      </div>
+        )}
+        
 
-      {/* Feedback Section */}
-      <div style={{
-        padding: '20px',
-        backgroundColor: '#2a2a2a',
-        borderRadius: '12px',
-        border: '1px solid #444',
-        marginBottom: '20px'
-      }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          marginBottom: '12px'
-        }}>
-          <span style={{ fontSize: '16px', marginRight: '8px' }}>💬</span>
-          <h4 style={{
-            margin: 0,
-            fontSize: '16px',
-            fontWeight: '600',
-            color: '#4CAF50'
-          }}>
-            AI Feedback
-          </h4>
-        </div>
-        <p style={{
-          margin: 0,
-          fontSize: '14px',
-          lineHeight: '1.6',
-          color: '#ccc'
-        }}>
-          {analysis.feedback}
-        </p>
-      </div>
-
-      {/* Improvements */}
-      <div style={{
-        padding: '20px',
-        backgroundColor: 'rgba(255, 152, 0, 0.1)',
-        borderRadius: '12px',
-        border: '1px solid #FF9800',
-        marginBottom: '20px'
-      }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          marginBottom: '12px'
-        }}>
-          <span style={{ fontSize: '16px', marginRight: '8px' }}>🔧</span>
-          <h4 style={{
-            margin: 0,
-            fontSize: '16px',
-            fontWeight: '600',
-            color: '#FF9800'
-          }}>
-            Improvements
-          </h4>
-        </div>
-        <p style={{
-          margin: 0,
-          fontSize: '14px',
-          lineHeight: '1.6',
-          color: '#FFB74D'
-        }}>
-          {analysis.corrections}
-        </p>
-      </div>
-
-      {/* Suggested Answer */}
-      <div style={{
-        padding: '20px',
-        backgroundColor: 'rgba(76, 175, 80, 0.1)',
-        borderRadius: '12px',
-        border: '1px solid #4CAF50'
-      }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          marginBottom: '12px'
-        }}>
-          <span style={{ fontSize: '16px', marginRight: '8px' }}>💡</span>
-          <h4 style={{
-            margin: 0,
-            fontSize: '16px',
-            fontWeight: '600',
-            color: '#4CAF50'
-          }}>
-            Suggested Answer
-          </h4>
-        </div>
-        <p style={{
-          margin: 0,
-          fontSize: '14px',
-          lineHeight: '1.6',
-          color: '#81C784'
-        }}>
-          {analysis.betterAnswer}
-        </p>
       </div>
     </div>
   );

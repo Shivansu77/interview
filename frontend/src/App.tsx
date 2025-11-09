@@ -4,6 +4,7 @@ import LearnSection from './components/LearnSection';
 import EnglishPractice from './components/EnglishPractice';
 import VocabularyChallenge from './components/VocabularyChallenge';
 import CharacterChat from './components/CharacterChat';
+
 import './App.css';
 
 function App() {
@@ -78,110 +79,19 @@ function App() {
             margin: '0 auto 40px',
             padding: '0 20px'
           }}>
-            <h1 style={{
-              fontSize: '32px',
-              fontWeight: '700',
-              margin: 0,
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent'
-            }}>AI Interview Platform</h1>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button
-                onClick={() => setCurrentSection('learn')}
-                style={{
-                  padding: '12px 20px',
-                  backgroundColor: 'white',
-                  color: '#374151',
-                  border: '1px solid #D1D5DB',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  transition: 'all 0.2s'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = '#F9FAFB';
-                  e.currentTarget.style.borderColor = '#9CA3AF';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor = 'white';
-                  e.currentTarget.style.borderColor = '#D1D5DB';
-                }}
-              >
-                📚 Learn & Practice
+            <h1>AI Interview Platform</h1>
+            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <button onClick={() => setCurrentSection('learn')} className="nav-button">
+                <span className="icon">📚</span> Learn & Practice
               </button>
-              <button
-                onClick={() => setCurrentSection('english')}
-                style={{
-                  padding: '12px 20px',
-                  backgroundColor: 'white',
-                  color: '#374151',
-                  border: '1px solid #D1D5DB',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  transition: 'all 0.2s'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = '#F9FAFB';
-                  e.currentTarget.style.borderColor = '#9CA3AF';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor = 'white';
-                  e.currentTarget.style.borderColor = '#D1D5DB';
-                }}
-              >
-                🗣️ English Practice
+              <button onClick={() => setCurrentSection('english')} className="nav-button">
+                <span className="icon">🎤</span> English Practice
               </button>
-              <button
-                onClick={() => setCurrentSection('vocabulary')}
-                style={{
-                  padding: '12px 20px',
-                  backgroundColor: 'white',
-                  color: '#374151',
-                  border: '1px solid #D1D5DB',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  transition: 'all 0.2s'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = '#F9FAFB';
-                  e.currentTarget.style.borderColor = '#9CA3AF';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor = 'white';
-                  e.currentTarget.style.borderColor = '#D1D5DB';
-                }}
-              >
-                📚 Vocabulary
+              <button onClick={() => setCurrentSection('vocabulary')} className="nav-button">
+                <span className="icon">📖</span> Vocabulary
               </button>
-              <button
-                onClick={() => setCurrentSection('character-chat')}
-                style={{
-                  padding: '12px 20px',
-                  backgroundColor: 'white',
-                  color: '#374151',
-                  border: '1px solid #D1D5DB',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  transition: 'all 0.2s'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = '#F9FAFB';
-                  e.currentTarget.style.borderColor = '#9CA3AF';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor = 'white';
-                  e.currentTarget.style.borderColor = '#D1D5DB';
-                }}
-              >
-                🎭 Character Chat
+              <button onClick={() => setCurrentSection('character-chat')} className="nav-button">
+                <span className="icon">🎭</span> Character Chat
               </button>
             </div>
           </div>
@@ -206,10 +116,13 @@ function App() {
                 border: 'none',
                 borderRadius: '8px',
                 cursor: 'pointer',
-                fontSize: '16px'
+                fontSize: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
               }}
             >
-              ← Back to Home
+              <span className="icon">←</span> Back to Home
             </button>
           </div>
         )}
@@ -230,31 +143,13 @@ function App() {
             padding: '50px',
             color: '#4CAF50'
           }}>
-            <div style={{ fontSize: '48px', marginBottom: '20px' }}>🤖</div>
+            <div style={{ fontSize: '48px', marginBottom: '20px', color: '#7877c6' }}>🤖</div>
             <h2>Preparing Your AI Interview...</h2>
-            <div style={{ 
-              width: '200px', 
-              height: '4px', 
-              backgroundColor: '#333', 
-              borderRadius: '2px', 
-              margin: '20px auto',
-              overflow: 'hidden'
-            }}>
-              <div style={{
-                width: '100%',
-                height: '100%',
-                backgroundColor: '#4CAF50',
-                animation: 'loading 1.5s ease-in-out infinite'
-              }} />
+            <div className="loading-bar">
+              <div className="loading-progress" />
             </div>
             <p>Setting up camera, microphone, and AI systems...</p>
-            <style>{`
-              @keyframes loading {
-                0% { transform: translateX(-100%); }
-                50% { transform: translateX(0%); }
-                100% { transform: translateX(100%); }
-              }
-            `}</style>
+
           </div>
         ) : currentSection === 'home' && !isInterviewActive ? (
           <div className="start-screen">
@@ -267,87 +162,49 @@ function App() {
               <li>✅ Voice interaction</li>
             </ul>
             
-            <div style={{ margin: '30px 0', display: 'flex', gap: '20px', justifyContent: 'center' }}>
-              <div style={{ textAlign: 'center' }}>
-                <h3 style={{ color: '#4CAF50', marginBottom: '15px' }}>🔧 Technical Interview</h3>
-                <p style={{ fontSize: '14px', marginBottom: '15px' }}>Programming, algorithms, system design</p>
+            <div className="interview-types">
+              <div className="interview-card">
+                <h3><span className="icon">💻</span>Technical Interview</h3>
+                <p>Programming, algorithms, system design, and technical problem-solving</p>
                 <button 
                   onClick={() => startInterview('technical')}
                   disabled={isLoading}
-                  style={{
-                    padding: '16px 32px',
-                    fontSize: '16px',
-                    backgroundColor: isLoading ? '#9CA3AF' : '#3B82F6',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '12px',
-                    cursor: isLoading ? 'not-allowed' : 'pointer',
-                    width: '220px',
-                    fontWeight: '600',
-                    transition: 'all 0.2s ease',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                  }}
-                  onMouseOver={(e) => {
-                    if (!isLoading) e.currentTarget.style.backgroundColor = '#2563EB';
-                  }}
-                  onMouseOut={(e) => {
-                    if (!isLoading) e.currentTarget.style.backgroundColor = '#3B82F6';
-                  }}
+                  className="primary-button"
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 >
-                  {isLoading ? '🔄 Starting...' : '🚀 Start Technical'}
+                  {isLoading ? (
+                    <><span className="icon spin">⟳</span> Starting...</>
+                  ) : (
+                    <><span className="icon">🚀</span> Start Technical</>
+                  )}
                 </button>
               </div>
               
-              <div style={{ textAlign: 'center' }}>
-                <h3 style={{ color: '#2196F3', marginBottom: '15px' }}>💬 English Interview</h3>
-                <p style={{ fontSize: '14px', marginBottom: '15px' }}>Communication, behavioral questions</p>
+              <div className="interview-card">
+                <h3><span className="icon">💬</span>English Interview</h3>
+                <p>Communication skills, behavioral questions, and professional conversation</p>
                 <button 
-                  onClick={() => {
-                    console.log('English button clicked');
-                    startInterview('english');
-                  }}
+                  onClick={() => startInterview('english')}
                   disabled={isLoading}
-                  style={{
-                    padding: '16px 32px',
-                    fontSize: '16px',
-                    backgroundColor: isLoading ? '#9CA3AF' : '#10B981',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '12px',
-                    cursor: isLoading ? 'not-allowed' : 'pointer',
-                    width: '220px',
-                    fontWeight: '600',
-                    transition: 'all 0.2s ease',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                  }}
-                  onMouseOver={(e) => {
-                    if (!isLoading) e.currentTarget.style.backgroundColor = '#059669';
-                  }}
-                  onMouseOut={(e) => {
-                    if (!isLoading) e.currentTarget.style.backgroundColor = '#10B981';
-                  }}
+                  className="secondary-button"
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 >
-                  {isLoading ? '🔄 Starting...' : '💬 Start English'}
+                  {isLoading ? (
+                    <><span className="icon spin">⟳</span> Starting...</>
+                  ) : (
+                    <><span className="icon">💬</span> Start English</>
+                  )}
                 </button>
               </div>
             </div>
             
-            <div style={{ marginTop: '30px' }}>
-              <label style={{ color: '#FF9800', fontSize: '16px', fontWeight: 'bold' }}>Company Focus:</label>
+            <div className="company-selector">
+              <label><span className="icon">🏢</span>Company Focus:</label>
               <select 
                 value={selectedCompany}
                 onChange={(e) => setSelectedCompany(e.target.value)}
-                style={{
-                  marginLeft: '10px',
-                  padding: '8px 15px',
-                  fontSize: '16px',
-                  borderRadius: '5px',
-                  border: '2px solid #FF9800',
-                  backgroundColor: '#2a2a2a',
-                  color: 'white'
-                }}
               >
-                <option value="general">General Questions</option>
+                <option value="general">🌐 General Questions</option>
                 <option value="google">Google</option>
                 <option value="microsoft">Microsoft</option>
                 <option value="amazon">Amazon</option>

@@ -1,6 +1,52 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './CharacterChat.css';
 
+
+
+// Professional character data with enhanced styling
+const CHARACTERS = [
+  { 
+    name: 'Jesse Pinkman', 
+    voice: 'male', 
+    accent: 'american', 
+    avatar: '🧪',
+    color: '#ff6b6b',
+    description: 'Chemistry Expert'
+  },
+  { 
+    name: 'Walter White', 
+    voice: 'male', 
+    accent: 'american', 
+    avatar: '👨🏫',
+    color: '#4ecdc4',
+    description: 'Science Teacher'
+  },
+  { 
+    name: 'Cillian Murphy', 
+    voice: 'male', 
+    accent: 'irish', 
+    avatar: '🎭',
+    color: '#45b7d1',
+    description: 'Actor & Artist'
+  },
+  { 
+    name: 'Tom Holland', 
+    voice: 'male', 
+    accent: 'british', 
+    avatar: '🕷️',
+    color: '#f39c12',
+    description: 'British Actor'
+  },
+  { 
+    name: 'Deadpool', 
+    voice: 'male', 
+    accent: 'american', 
+    avatar: '🦸♂️',
+    color: '#e74c3c',
+    description: 'Anti-Hero'
+  }
+];
+
 interface Message {
   sender: 'user' | 'character';
   text: string;
@@ -207,7 +253,7 @@ const CharacterChat: React.FC = () => {
 
   const getCharacterVoice = (characterName: string) => {
     const voices = speechSynthesis.getVoices();
-    const character = characters.find(c => c.name === characterName);
+    const character = CHARACTERS.find(c => c.name === characterName);
     
     if (!character) return voices[0];
     
@@ -447,18 +493,22 @@ const CharacterChat: React.FC = () => {
     <div className="character-chat">
       <div className="chat-header">
         <div className="header-left">
-          <h2>🎭 Voice Character Chat</h2>
+          <h2><span className="icon">🎭</span>Voice Character Chat</h2>
           <div className="character-info">
-            <span className="character-avatar">
-              {characters.find(c => c.name === selectedCharacter)?.avatar || '🎭'}
-            </span>
+            <div className="character-avatar-container">
+              <span className="character-avatar">
+                {CHARACTERS.find(c => c.name === selectedCharacter)?.avatar || '🎭'}
+              </span>
+            </div>
             <select 
               value={selectedCharacter} 
               onChange={(e) => setSelectedCharacter(e.target.value)}
               className="character-select"
             >
-              {characters.map(char => (
-                <option key={char.name} value={char.name}>{char.name}</option>
+              {CHARACTERS.map(char => (
+                <option key={char.name} value={char.name}>
+                  {char.name} - {char.description}
+                </option>
               ))}
             </select>
           </div>
@@ -469,13 +519,14 @@ const CharacterChat: React.FC = () => {
             onClick={() => setVoiceMode(!voiceMode)}
             className={`voice-toggle ${voiceMode ? 'active' : ''}`}
             title={voiceMode ? 'Voice Mode ON' : 'Voice Mode OFF'}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
           >
-            {voiceMode ? '🔊' : '🔇'} Voice {voiceMode ? 'ON' : 'OFF'}
+            <span className="icon">{voiceMode ? '🔊' : '🔇'}</span> Voice {voiceMode ? 'ON' : 'OFF'}
           </button>
           
           {isSpeaking && (
-            <button onClick={stopSpeaking} className="stop-speaking">
-              ⏹️ Stop
+            <button onClick={stopSpeaking} className="stop-speaking" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span className="icon">⏹️</span> Stop
             </button>
           )}
           
@@ -484,8 +535,9 @@ const CharacterChat: React.FC = () => {
             className="test-voice"
             disabled={isSpeaking}
             title="Test voice"
+            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
           >
-            🎵 Test
+            <span className="icon">▶️</span> Test
           </button>
         </div>
       </div>
@@ -497,7 +549,7 @@ const CharacterChat: React.FC = () => {
               {msg.sender === 'character' && (
                 <div className="character-header">
                   <span className="character-avatar">
-                    {characters.find(c => c.name === selectedCharacter)?.avatar || '🎭'}
+                    {CHARACTERS.find(c => c.name === selectedCharacter)?.avatar || '🎭'}
                   </span>
                   <span className="character-name">{selectedCharacter}</span>
                   <button
@@ -505,8 +557,9 @@ const CharacterChat: React.FC = () => {
                     className="speak-button"
                     disabled={isSpeaking}
                     title="Listen to message"
+                    style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
                   >
-                    {isSpeaking ? '🔊' : '🎵'}
+                    <span className="icon">{isSpeaking ? '🔊' : '▶️'}</span>
                   </button>
                 </div>
               )}
@@ -525,7 +578,7 @@ const CharacterChat: React.FC = () => {
             <div className="message-bubble">
               <div className="character-header">
                 <span className="character-avatar">
-                  {characters.find(c => c.name === selectedCharacter)?.avatar || '🎭'}
+                  {CHARACTERS.find(c => c.name === selectedCharacter)?.avatar || '🎭'}
                 </span>
                 <span className="character-name">{selectedCharacter}</span>
               </div>
@@ -541,7 +594,7 @@ const CharacterChat: React.FC = () => {
             <div className="sound-waves">
               <span></span><span></span><span></span><span></span>
             </div>
-            <span>🎵 {selectedCharacter} is speaking...</span>
+            <span><span className="icon">🔊</span>{selectedCharacter} is speaking...</span>
           </div>
         )}
         <div ref={messagesEndRef} />
@@ -562,11 +615,20 @@ const CharacterChat: React.FC = () => {
             disabled={loading}
             className={`record-btn ${isRecording ? 'recording' : ''}`}
             title={isRecording ? 'Click to stop recording' : 'Hold and speak clearly'}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
           >
-            {isRecording ? `🔴 ${formatTime(recordingTime)}` : '🎤 Record (2min max)'}
+            {isRecording ? (
+              <><span className="icon spin">⟳</span> {formatTime(recordingTime)}</>
+            ) : (
+              <><span className="icon">🎤</span> Record (2min max)</>
+            )}
           </button>
-          <button onClick={sendMessage} disabled={loading || !inputMessage.trim() || isRecording}>
-            Send
+          <button 
+            onClick={sendMessage} 
+            disabled={loading || !inputMessage.trim() || isRecording}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+          >
+            <span className="icon">📤</span> Send
           </button>
         </div>
       </div>
