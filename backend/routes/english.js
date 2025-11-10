@@ -410,7 +410,7 @@ router.get('/vocabulary/random/:type?', async (req, res) => {
   }
 });
 
-// Daily Vocabulary Challenge with dynamic content
+// Daily Vocabulary Challenge with API integration
 router.get('/vocabulary/daily-challenge', async (req, res) => {
   try {
     const today = new Date().toDateString();
@@ -420,59 +420,54 @@ router.get('/vocabulary/daily-challenge', async (req, res) => {
       return res.json(cached);
     }
     
-    // Dynamic word sets that rotate daily
+    let dailyWord = null;
+    
+    // WordsAPI not configured, skip API call
+    
+    // Fallback word sets that rotate daily
     const wordSets = [
-      {
-        vocabulary: { word: 'Eloquent', definition: 'Fluent or persuasive in speaking or writing', pronunciation: 'El-uh-kwuhnt' },
-        idiom: { phrase: 'Break the ice', definition: 'To initiate conversation in a social setting', pronunciation: 'Brayk thee ahys' },
-        sentence: { text: 'Effective communication requires practice and confidence.', definition: 'Good speaking skills need regular training' }
-      },
-      {
-        vocabulary: { word: 'Articulate', definition: 'Having or showing the ability to speak fluently and coherently', pronunciation: 'Ar-tik-yuh-lit' },
-        idiom: { phrase: 'Think outside the box', definition: 'To think creatively and unconventionally', pronunciation: 'Thingk owt-sahyd thee boks' },
-        sentence: { text: 'Innovation comes from challenging conventional wisdom.', definition: 'New ideas emerge when we question standard approaches' }
-      },
-      {
-        vocabulary: { word: 'Proficient', definition: 'Competent or skilled in doing or using something', pronunciation: 'Pruh-fish-uhnt' },
-        idiom: { phrase: 'Hit the ground running', definition: 'To start something energetically and successfully', pronunciation: 'Hit thee grownd ruhn-ing' },
-        sentence: { text: 'Success requires dedication and continuous improvement.', definition: 'Achievement demands commitment and ongoing development' }
-      },
-      {
-        vocabulary: { word: 'Versatile', definition: 'Able to adapt or be adapted to many different functions', pronunciation: 'Vur-suh-tl' },
-        idiom: { phrase: 'Go the extra mile', definition: 'To make a special effort to achieve something', pronunciation: 'Goh thee ek-struh mahyl' },
-        sentence: { text: 'Excellence is achieved through attention to detail.', definition: 'High quality results from careful focus on specifics' }
-      },
-      {
-        vocabulary: { word: 'Resilient', definition: 'Able to withstand or recover quickly from difficult conditions', pronunciation: 'Ri-zil-yuhnt' },
-        idiom: { phrase: 'Rome wasn\'t built in a day', definition: 'Important work takes time and cannot be rushed', pronunciation: 'Rohm wah-zuhnt bilt in uh day' },
-        sentence: { text: 'Persistence and patience are keys to mastering any skill.', definition: 'Consistent effort and time lead to expertise' }
-      }
+      { word: 'Eloquent', definition: 'Fluent or persuasive in speaking or writing', pronunciation: 'El-uh-kwuhnt' },
+      { word: 'Articulate', definition: 'Having or showing the ability to speak fluently and coherently', pronunciation: 'Ar-tik-yuh-lit' },
+      { word: 'Proficient', definition: 'Competent or skilled in doing or using something', pronunciation: 'Pruh-fish-uhnt' },
+      { word: 'Versatile', definition: 'Able to adapt or be adapted to many different functions', pronunciation: 'Vur-suh-tl' },
+      { word: 'Resilient', definition: 'Able to withstand or recover quickly from difficult conditions', pronunciation: 'Ri-zil-yuhnt' },
+      { word: 'Innovative', definition: 'Featuring new methods; advanced and original', pronunciation: 'In-uh-vay-tiv' },
+      { word: 'Meticulous', definition: 'Showing great attention to detail; very careful', pronunciation: 'Mi-tik-yuh-luhs' }
     ];
     
-    // Select word set based on day of year for daily consistency
+    // Use API word or fallback based on day
     const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
-    const selectedSet = wordSets[dayOfYear % wordSets.length];
+    const vocabularyWord = dailyWord || wordSets[dayOfYear % wordSets.length];
     
-    const result = { success: true, dailyChallenge: selectedSet };
+    const dailyChallenge = {
+      vocabulary: vocabularyWord,
+      idiom: {
+        phrase: 'Break the ice',
+        definition: 'To initiate conversation in a social setting'
+      },
+      sentence: {
+        text: 'Continuous learning leads to personal growth and success.',
+        definition: 'Regular education helps you improve and achieve goals'
+      }
+    };
     
-    // Cache for the whole day
+    const result = { success: true, dailyChallenge };
     cache.set(cacheKey, result);
-    
     res.json(result);
   } catch (error) {
     console.error('Daily challenge error:', error.message);
     res.json({
       success: true,
       dailyChallenge: {
-        vocabulary: { word: 'Fluent', definition: 'Able to speak smoothly and easily', pronunciation: 'Floo-uhnt' },
-        idiom: { phrase: 'Practice makes perfect', definition: 'Regular practice leads to improvement', pronunciation: 'Prak-tis mayks pur-fikt' },
-        sentence: { text: 'Keep practicing every day for better results.', definition: 'Consistency is key to learning and improvement' }
+        vocabulary: { word: 'Excellence', definition: 'The quality of being outstanding', pronunciation: 'Ek-suh-luhns' },
+        idiom: { phrase: 'Practice makes perfect', definition: 'Regular practice leads to improvement' },
+        sentence: { text: 'Keep practicing every day for better results.', definition: 'Consistency is key to improvement' }
       }
     });
   }
 });
 
-// Word search with Dictionary API
+// Word search with Dictionary API and synonyms
 router.get('/vocabulary/search/:word', async (req, res) => {
   try {
     const { word } = req.params;
@@ -488,6 +483,15 @@ router.get('/vocabulary/search/:word', async (req, res) => {
     });
     
     const data = response.data[0];
+    
+    // Get synonyms from all definitions
+    let allSynonyms = [];
+    data.meanings?.forEach(meaning => {
+      meaning.definitions?.forEach(def => {
+        if (def.synonyms) allSynonyms.push(...def.synonyms);
+      });
+    });
+    
     const result = {
       success: true,
       word: data.word,
@@ -502,6 +506,7 @@ router.get('/vocabulary/search/:word', async (req, res) => {
           antonyms: d.antonyms?.slice(0, 3) || []
         }))
       })) || [],
+      synonyms: [...new Set(allSynonyms)].slice(0, 5),
       origin: data.origin || ''
     };
     

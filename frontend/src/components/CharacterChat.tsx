@@ -188,9 +188,9 @@ const CharacterChat: React.FC = () => {
 
       recordingTimerRef.current = setInterval(() => {
         setRecordingTime(prev => {
-          if (prev >= 120) {
+          if (prev >= 30) {
             stopRecording();
-            return 120;
+            return 30;
           }
           return prev + 1;
         });
@@ -200,7 +200,7 @@ const CharacterChat: React.FC = () => {
         if (mediaRecorderRef.current?.state === 'recording') {
           stopRecording();
         }
-      }, 120000);
+      }, 30000);
     } catch (error) {
       console.error('Error starting recording:', error);
       alert('Could not access microphone. Please check permissions.');
@@ -253,91 +253,55 @@ const CharacterChat: React.FC = () => {
 
   const getCharacterVoice = (characterName: string) => {
     const voices = speechSynthesis.getVoices();
-    const character = CHARACTERS.find(c => c.name === characterName);
     
-    if (!character) return voices[0];
-    
-    // Enhanced male voice detection patterns
-    const malePatterns = [
-      'male', 'man', 'masculine', 'deep', 'low',
-      'david', 'daniel', 'alex', 'tom', 'fred', 'arthur', 'james', 'john', 'michael',
-      'google male', 'microsoft david', 'apple alex', 'samantha', 'karen'
+    // Prioritize male voices for all characters
+    const maleVoices = [
+      'Daniel', 'Aaron', 'Fred', 'Arthur', 'Gordon', 'Albert',
+      'Eddy', 'Grandpa', 'Junior', 'Alex'
     ];
     
-    // Priority 1: High-quality male voices (Google, Microsoft, Apple)
-    let preferredVoice = voices.find(voice => {
-      const name = voice.name.toLowerCase();
-      const lang = voice.lang.toLowerCase();
-      const isHighQuality = name.includes('google') || name.includes('microsoft') || name.includes('apple') || name.includes('enhanced');
-      const isMale = malePatterns.some(pattern => name.includes(pattern));
-      
-      if (isHighQuality && isMale && voice.lang.startsWith('en')) return true;
-      return false;
-    });
+    // Find best male voice
+    let preferredVoice = voices.find(voice => 
+      maleVoices.some(male => voice.name.includes(male)) && voice.lang.startsWith('en')
+    );
     
-    // Priority 2: Male voices with accent match
-    if (!preferredVoice) {
-      preferredVoice = voices.find(voice => {
-        const name = voice.name.toLowerCase();
-        const lang = voice.lang.toLowerCase();
-        const isMale = malePatterns.some(pattern => name.includes(pattern));
-        
-        if (character.accent === 'british' && (lang.includes('gb') || lang.includes('uk')) && isMale) return true;
-        if (character.accent === 'american' && (lang.includes('us') || lang.includes('en-us')) && isMale) return true;
-        if (character.accent === 'irish' && lang.includes('ie') && isMale) return true;
-        
-        return false;
-      });
+    // Character-specific voice preferences
+    if (characterName === 'Tom Holland') {
+      preferredVoice = voices.find(voice => 
+        (voice.name.includes('Daniel') || voice.name.includes('Arthur')) && voice.lang.includes('GB')
+      ) || preferredVoice;
+    } else if (characterName === 'Cillian Murphy') {
+      preferredVoice = voices.find(voice => 
+        voice.name.includes('Daniel') && voice.lang.includes('GB')
+      ) || preferredVoice;
     }
     
-    // Priority 3: Any male English voice
+    // Fallback to any English male voice
     if (!preferredVoice) {
-      preferredVoice = voices.find(voice => {
-        const name = voice.name.toLowerCase();
-        const isMale = malePatterns.some(pattern => name.includes(pattern));
-        return voice.lang.startsWith('en') && isMale;
-      });
+      preferredVoice = voices.find(voice => 
+        voice.lang.startsWith('en') && !voice.name.toLowerCase().includes('female')
+      );
     }
     
-    // Priority 4: Best quality English voice (any gender)
-    if (!preferredVoice) {
-      preferredVoice = voices.find(voice => {
-        const name = voice.name.toLowerCase();
-        const isHighQuality = name.includes('google') || name.includes('microsoft') || name.includes('enhanced') || name.includes('premium');
-        return voice.lang.startsWith('en') && isHighQuality;
-      });
-    }
-    
-    // Priority 5: Any English voice
-    if (!preferredVoice) {
-      preferredVoice = voices.find(voice => voice.lang.startsWith('en'));
-    }
-    
-    return preferredVoice || voices[0];
+    return preferredVoice || voices.find(voice => voice.lang.startsWith('en')) || voices[0];
   };
 
   const cleanTextForSpeech = (text: string) => {
     return text
-      // Remove markdown-style links and keep only the word
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-      // Remove URLs
-      .replace(/https?:\/\/[^\s]+/g, '')
-      // Replace common abbreviations with full words
-      .replace(/\bpplx\b/gi, '')
+      .replace(/\*\*(.*?)\*\*/g, '$1')  // Remove **bold**
+      .replace(/\*(.*?)\*/g, '$1')     // Remove *italic*
+      .replace(/\{(.*?)\}/g, '$1')     // Remove {curly braces}
+      .replace(/\[(.*?)\]/g, '$1')     // Remove [square brackets]
+      .replace(/`(.*?)`/g, '$1')       // Remove `code`
+      .replace(/#{1,6}\s/g, '')        // Remove # headers
+      .replace(/https?:\/\/[^\s]+/g, '') // Remove URLs
       .replace(/\bAPI\b/g, 'A P I')
       .replace(/\bURL\b/g, 'U R L')
       .replace(/\bHTML\b/g, 'H T M L')
       .replace(/\bCSS\b/g, 'C S S')
       .replace(/\bJS\b/g, 'JavaScript')
-      // Add natural pauses
-      .replace(/\./g, '. ')
-      .replace(/\!/g, '! ')
-      .replace(/\?/g, '? ')
-      .replace(/\,/g, ', ')
-      .replace(/\;/g, '; ')
-      .replace(/\:/g, ': ')
-      // Remove extra spaces
-      .replace(/\s+/g, ' ')
+      .replace(/\n+/g, '. ')           // Replace newlines with periods
+      .replace(/\s+/g, ' ')            // Clean multiple spaces
       .trim();
   };
 
@@ -349,8 +313,6 @@ const CharacterChat: React.FC = () => {
       return;
     }
     
-    // Stop any ongoing speech
-    speechSynthesis.cancel();
     setIsSpeaking(true);
     
     // Clean the text for natural speech
@@ -365,13 +327,13 @@ const CharacterChat: React.FC = () => {
     
     utterance.voice = voice;
     
-    // Slower, more natural character-specific settings
+    // Character-specific voice settings for male voices
     const settings = {
-      'Jesse Pinkman': { rate: 0.85, pitch: 1.0, volume: 1 },
-      'Walter White': { rate: 0.75, pitch: 0.9, volume: 1 },
-      'Tom Holland': { rate: 0.8, pitch: 1.0, volume: 1 },
-      'Cillian Murphy': { rate: 0.8, pitch: 0.95, volume: 1 },
-      'Deadpool': { rate: 0.9, pitch: 1.0, volume: 1 }
+      'Jesse Pinkman': { rate: 0.9, pitch: 1.1, volume: 1 },
+      'Walter White': { rate: 0.75, pitch: 0.8, volume: 1 },
+      'Tom Holland': { rate: 0.85, pitch: 1.0, volume: 1 },
+      'Cillian Murphy': { rate: 0.8, pitch: 0.9, volume: 1 },
+      'Deadpool': { rate: 0.95, pitch: 1.1, volume: 1 }
     };
     
     const config = settings[characterName as keyof typeof settings] || { rate: 0.8, pitch: 1.0, volume: 1 };
@@ -620,7 +582,7 @@ const CharacterChat: React.FC = () => {
             {isRecording ? (
               <><span className="icon spin">⟳</span> {formatTime(recordingTime)}</>
             ) : (
-              <><span className="icon">🎤</span> Record (2min max)</>
+              <><span className="icon">🎤</span> Record (30s max)</>
             )}
           </button>
           <button 

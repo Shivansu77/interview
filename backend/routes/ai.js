@@ -89,6 +89,7 @@ router.post('/generate-question', async (req, res) => {
     res.json({ question, type, company, context });
   } catch (error) {
     console.error('Gemini API Error:', error.response?.data || error.message);
+    const { type = 'technical', company = 'general', context = 'interview' } = req.body;
     const fallback = type === 'english' 
       ? 'Tell me about a time when you had to work with a difficult team member.'
       : 'What is your experience with JavaScript and how would you explain closures to a beginner?';
@@ -201,7 +202,7 @@ router.post('/character-chat', async (req, res) => {
   }
 });
 
-// Speech-to-Text Conversion
+// Speech-to-Text Conversion (Browser fallback)
 router.post('/speech-to-text', async (req, res) => {
   try {
     const { audioData } = req.body;
@@ -211,91 +212,28 @@ router.post('/speech-to-text', async (req, res) => {
         success: false,
         error: 'No audio data received',
         transcript: '',
-        confidence: 0
+        confidence: 0,
+        useBrowserSpeech: true
       });
     }
 
-    if (!process.env.GOOGLE_CLOUD_API_KEY || process.env.GOOGLE_CLOUD_API_KEY === 'your_google_cloud_api_key_here') {
-      console.error('Google Cloud API key not configured properly');
-      return res.json({
-        success: false,
-        error: 'Speech recognition service not configured',
-        transcript: '',
-        confidence: 0
-      });
-    }
-    
-    const encodingConfigs = [
-      { encoding: 'WEBM_OPUS', sampleRateHertz: 48000 },
-      { encoding: 'OGG_OPUS', sampleRateHertz: 48000 },
-      { encoding: 'LINEAR16', sampleRateHertz: 16000 }
-    ];
-    
-    let lastError = null;
-    
-    for (const config of encodingConfigs) {
-      try {
-        const response = await axios.post(
-          `https://speech.googleapis.com/v1/speech:recognize?key=${process.env.GOOGLE_CLOUD_API_KEY}`,
-          {
-            config: {
-              ...config,
-              languageCode: 'en-US',
-              enableAutomaticPunctuation: true,
-              model: 'latest_short',
-              useEnhanced: true,
-              alternativeLanguageCodes: ['en-GB', 'en-AU']
-            },
-            audio: { content: audioData }
-          },
-          {
-            timeout: 15000
-          }
-        );
-        
-        const results = response.data.results;
-        if (results && results.length > 0) {
-          const transcript = results[0]?.alternatives?.[0]?.transcript || '';
-          const confidence = results[0]?.alternatives?.[0]?.confidence || 0;
-          
-          if (transcript.trim().length > 0) {
-            return res.json({
-              success: true,
-              transcript: transcript.trim(),
-              confidence: Math.round(confidence * 100),
-              wordCount: transcript.trim().split(' ').length
-            });
-          }
-        }
-      } catch (configError) {
-        lastError = configError;
-        console.log(`Failed with ${config.encoding}, trying next...`);
-        continue;
-      }
-    }
-    
-    throw lastError || new Error('No valid audio detected');
+    // Google Cloud Speech API is disabled, return fallback response
+    res.json({
+      success: false,
+      error: 'Please use browser speech recognition',
+      transcript: '',
+      confidence: 0,
+      useBrowserSpeech: true
+    });
     
   } catch (error) {
-    console.error('Speech-to-Text Error:', error.response?.data || error.message);
-    
-    let errorMessage = 'Speech recognition failed';
-    if (error.response?.data?.error?.message) {
-      const apiError = error.response.data.error.message;
-      if (apiError.includes('audio')) {
-        errorMessage = 'Audio format not supported';
-      } else if (apiError.includes('quota')) {
-        errorMessage = 'Service temporarily unavailable';
-      } else if (apiError.includes('invalid')) {
-        errorMessage = 'Invalid audio data';
-      }
-    }
-    
+    console.error('Speech-to-Text Error:', error.message);
     res.json({ 
       success: false,
-      error: errorMessage,
+      error: 'Speech recognition service unavailable',
       transcript: '',
-      confidence: 0
+      confidence: 0,
+      useBrowserSpeech: true
     });
   }
 });

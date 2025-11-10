@@ -146,41 +146,13 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
     setIsProcessing(true);
     
     try {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        try {
-          const base64Audio = (reader.result as string).split(',')[1];
-          
-          const response = await fetch('http://localhost:5003/api/ai/speech-to-text', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ audioData: base64Audio })
-          });
-          
-          const data = await response.json();
-          
-          if (data.success && data.transcript) {
-            // Use the more accurate server transcript if available
-            const finalTranscript = data.transcript.trim() || transcript.trim();
-            if (finalTranscript) {
-              setTranscript(finalTranscript);
-            }
-          } else {
-            // Fallback to live transcript if server processing failed
-            console.log('Server processing failed, using live transcript');
-            if (!transcript.trim()) {
-              setTranscript('Audio processing unavailable. Please type your answer or try recording again.');
-            }
-          }
-        } catch (apiError) {
-          console.error('API Error:', apiError);
-          // Use live transcript as fallback
-          if (!transcript.trim()) {
-            setTranscript('Speech recognition service unavailable. You can type your answer instead.');
-          }
-        }
-      };
-      reader.readAsDataURL(audioBlob);
+      // Since Google Cloud Speech API is disabled, just use the live transcript
+      console.log('Using browser speech recognition transcript');
+      
+      if (!transcript.trim()) {
+        setTranscript('No speech detected. Please try speaking more clearly or check your microphone.');
+      }
+      
     } catch (error) {
       console.error('Error processing audio:', error);
       if (!transcript.trim()) {

@@ -4,11 +4,12 @@ import LearnSection from './components/LearnSection';
 import EnglishPractice from './components/EnglishPractice';
 import VocabularyChallenge from './components/VocabularyChallenge';
 import CharacterChat from './components/CharacterChat';
+import MLComponent from './components/MLComponent';
 
 import './App.css';
 
 function App() {
-  const [currentSection, setCurrentSection] = useState<'home' | 'learn' | 'interview' | 'english' | 'vocabulary' | 'character-chat'>('home');
+  const [currentSection, setCurrentSection] = useState<'home' | 'learn' | 'interview' | 'english' | 'vocabulary' | 'character-chat' | 'ml'>('home');
   const [isInterviewActive, setIsInterviewActive] = useState(false);
   const [sessionId, setSessionId] = useState('');
   const [userId] = useState('demo-user-123');
@@ -93,11 +94,14 @@ function App() {
               <button onClick={() => setCurrentSection('character-chat')} className="nav-button">
                 <span className="icon">🎭</span> Character Chat
               </button>
+              <button onClick={() => setCurrentSection('ml')} className="nav-button">
+                <span className="icon">🤖</span> ML Classifier
+              </button>
             </div>
           </div>
         )}
         
-        {(currentSection === 'learn' || currentSection === 'english' || currentSection === 'vocabulary' || currentSection === 'character-chat') && (
+        {(currentSection === 'learn' || currentSection === 'english' || currentSection === 'vocabulary' || currentSection === 'character-chat' || currentSection === 'ml') && (
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -137,6 +141,8 @@ function App() {
           <VocabularyChallenge onBack={() => setCurrentSection('home')} />
         ) : currentSection === 'character-chat' ? (
           <CharacterChat />
+        ) : currentSection === 'ml' ? (
+          <MLComponent onBack={() => setCurrentSection('home')} />
         ) : isLoading ? (
           <div className="loading-screen" style={{
             textAlign: 'center',

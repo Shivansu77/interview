@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import io from 'socket.io-client';
-import FaceMonitor from './FaceMonitor';
+import MediaPipeFaceMonitor from './MediaPipeFaceMonitor';
 import VoiceRecorder from './VoiceRecorder';
 import AnalysisDisplay from './AnalysisDisplay';
 
@@ -25,6 +25,8 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
   const [allScores, setAllScores] = useState<any[]>([]);
   const [overallResults, setOverallResults] = useState<any>(null);
   const [showWelcome, setShowWelcome] = useState(true);
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const [isPaused, setIsPaused] = useState(false);
   const maxQuestions = 5;
@@ -34,6 +36,29 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
   useEffect(() => {
     socketRef.current = io('http://localhost:5003');
     socketRef.current.emit('join-interview', sessionId);
+    
+    // Stop audio when page becomes hidden
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        speechSynthesis.cancel();
+        setIsSpeaking(false);
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', () => speechSynthesis.cancel());
+    
+    // Initialize speech synthesis
+    const initSpeech = () => {
+      if (speechSynthesis) {
+        speechSynthesis.cancel();
+        // Load voices
+        speechSynthesis.getVoices();
+        console.log('🔊 Speech synthesis initialized');
+      }
+    };
+    
+    initSpeech();
     
     // Show welcome message first
     if (!hasGeneratedFirst) {
@@ -45,10 +70,11 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
     }
     
     return () => {
-      // Cleanup on unmount
+      document.removeEventListener('visibilitychange', () => {});
       speechSynthesis.cancel();
+      setIsSpeaking(false);
       stopTimer();
-      socketRef.current.disconnect();
+      socketRef.current?.disconnect();
     };
   }, [sessionId]);
 
@@ -75,8 +101,9 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
         setQuestionCount(prev => prev + 1);
       }
       
-      // Small delay before speaking to ensure clean state
+      // Always speak the question automatically
       setTimeout(() => {
+        console.log('🤖 Auto-speaking question:', data.question);
         speakQuestion(data.question);
       }, 500);
     } catch (error) {
@@ -84,12 +111,48 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
     }
   };
 
+  const cleanTextForSpeech = (text: string): string => {
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '$1')  // Remove **bold**
+      .replace(/\*(.*?)\*/g, '$1')     // Remove *italic*
+      .replace(/\{(.*?)\}/g, '$1')     // Remove {curly braces}
+      .replace(/\[(.*?)\]/g, '$1')     // Remove [square brackets]
+      .replace(/`(.*?)`/g, '$1')       // Remove `code`
+      .replace(/#{1,6}\s/g, '')        // Remove # headers
+      .replace(/\n+/g, '. ')           // Replace newlines with periods
+      .replace(/\s+/g, ' ')            // Clean multiple spaces
+      .trim();
+  };
+
   const speakQuestion = (text: string) => {
-    // Stop any ongoing speech first
-    speechSynthesis.cancel();
+    if (!speechSynthesis) return;
     
-    const utterance = new SpeechSynthesisUtterance(text);
+    const cleanText = cleanTextForSpeech(text);
+    console.log('🔊 Speaking cleaned text:', cleanText);
+    
+    const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.rate = 0.8;
+    utterance.volume = 1.0;
+    utterance.lang = 'en-US';
+    
+    // Select a better voice
+    const voices = speechSynthesis.getVoices();
+    const preferredVoice = voices.find(voice => 
+      voice.name.includes('Samantha') || 
+      voice.name.includes('Daniel') ||
+      voice.name.includes('Aaron') ||
+      voice.name.includes('Fred')
+    ) || voices.find(voice => voice.lang === 'en-US');
+    
+    if (preferredVoice) {
+      utterance.voice = preferredVoice;
+      console.log('🎤 Using voice:', preferredVoice.name);
+    }
+    
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    
     speechSynthesis.speak(utterance);
   };
 
@@ -307,6 +370,51 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
         <div style={{ marginTop: '20px', color: '#FF9800' }}>
           🔄 Preparing your first question...
         </div>
+        <div style={{ marginTop: '15px', fontSize: '14px', color: '#FF9800', textAlign: 'center', padding: '10px', backgroundColor: '#2a2a2a', borderRadius: '8px' }}>
+          ⚠️ <strong>Important:</strong> Click "Test Audio" first to enable voice in your browser!
+        </div>
+        <div style={{ marginTop: '15px', padding: '15px', backgroundColor: '#2a2a2a', borderRadius: '8px', fontSize: '12px', color: '#ccc' }}>
+          <div><strong>🔊 Audio Status:</strong></div>
+          <div>• Speech Synthesis: {typeof speechSynthesis !== 'undefined' ? '✅ Ready' : '❌ Not Available'}</div>
+          <div>• Voice Auto-Play: ✅ Enabled (Questions will be spoken automatically)</div>
+          <div>• Browser Support: {speechSynthesis?.getVoices()?.length > 0 ? '✅ Good' : '⚠️ Loading...'}</div>
+        </div>
+        <div style={{ marginTop: '15px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
+          <button
+            onClick={() => {
+              const testText = 'Hello! Audio test successful. Your AI interviewer is ready!';
+              speakQuestion(testText);
+            }}
+            style={{
+              padding: '12px 24px',
+              backgroundColor: '#2196F3',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              boxShadow: '0 4px 12px rgba(33, 150, 243, 0.3)'
+            }}
+          >
+            🔊 Test Audio & Enable Voice
+          </button>
+          <button
+            onClick={() => setVoiceEnabled(!voiceEnabled)}
+            style={{
+              padding: '12px 24px',
+              backgroundColor: voiceEnabled ? '#4CAF50' : '#f44336',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '16px',
+              fontWeight: 'bold'
+            }}
+          >
+            {voiceEnabled ? '🔊 Voice ON' : '🔇 Voice OFF'}
+          </button>
+        </div>
       </div>
     );
   }
@@ -391,70 +499,110 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
   }
   
   return (
-    <div className="interview-room">
-      <div className="video-section">
-        <FaceMonitor onEyeContactUpdate={setEyeContactScore} />
-      </div>
-      
-      <div className="question-section">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-          <h2>Question {questionCount} of {maxQuestions}</h2>
-          <div style={{ 
-            backgroundColor: '#4CAF50', 
-            color: 'white', 
-            padding: '5px 15px', 
-            borderRadius: '20px', 
-            fontSize: '14px',
-            fontWeight: 'bold'
-          }}>
-            {Math.round((questionCount / maxQuestions) * 100)}% Complete
+    <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: '20px', height: '100vh', padding: '20px' }}>
+      {/* Left Side - Camera */}
+      <div style={{ backgroundColor: '#2a2a2a', borderRadius: '12px', padding: '20px' }}>
+        <h3 style={{ color: '#4CAF50', marginBottom: '15px' }}>📹 Camera Monitor</h3>
+        <MediaPipeFaceMonitor onEyeContactUpdate={setEyeContactScore} />
+        <div style={{ marginTop: '15px', textAlign: 'center', fontSize: '14px' }}>
+          <div style={{ color: eyeContactScore > 70 ? '#4CAF50' : '#FF9800' }}>
+            Eye Contact: {eyeContactScore}%
           </div>
         </div>
-        <p style={{ fontSize: '18px', lineHeight: '1.6' }}>{currentQuestion}</p>
-        {!analysis && (
-          <div style={{ 
-            marginTop: '15px', 
-            padding: '10px', 
-            backgroundColor: '#2a2a2a', 
-            borderRadius: '5px',
-            fontSize: '14px',
-            color: '#4CAF50'
-          }}>
-            🎤 <strong>Tip:</strong> Click the microphone and speak your answer clearly. Take your time!
+      </div>
+      
+      {/* Right Side - Question & Content */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {/* Question Section */}
+        <div style={{ backgroundColor: '#2a2a2a', borderRadius: '12px', padding: '20px', flex: '1' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+            <h2 style={{ color: '#4CAF50' }}>Question {questionCount} of {maxQuestions}</h2>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <button
+                onClick={() => speakQuestion(currentQuestion)}
+                disabled={isSpeaking}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: isSpeaking ? '#666' : '#2196F3',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: isSpeaking ? 'not-allowed' : 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                {isSpeaking ? '🔊 Speaking...' : '🔁 Repeat'}
+              </button>
+              <div style={{
+                padding: '8px 16px',
+                backgroundColor: '#4CAF50',
+                color: 'white',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: 'bold'
+              }}>
+                🔊 AUTO
+              </div>
+              <div style={{ 
+                backgroundColor: '#4CAF50', 
+                color: 'white', 
+                padding: '8px 16px', 
+                borderRadius: '20px', 
+                fontSize: '14px',
+                fontWeight: 'bold'
+              }}>
+                {Math.round((questionCount / maxQuestions) * 100)}%
+              </div>
+            </div>
+          </div>
+          <p style={{ fontSize: '20px', lineHeight: '1.6', color: 'white' }}>{currentQuestion}</p>
+          {!analysis && (
+            <div style={{ 
+              marginTop: '15px', 
+              padding: '15px', 
+              backgroundColor: '#1a1a1a', 
+              borderRadius: '8px',
+              fontSize: '14px',
+              color: '#4CAF50',
+              border: '1px solid #4CAF50'
+            }}>
+              🎤 <strong>Tip:</strong> Click the microphone below and speak your answer clearly.
+            </div>
+          )}
+        </div>
+        
+        {/* Voice Recorder */}
+        <div style={{ backgroundColor: '#2a2a2a', borderRadius: '12px', padding: '20px' }}>
+          <VoiceRecorder 
+            onTranscript={handleAnswerSubmit}
+            isRecording={isRecording}
+            setIsRecording={setIsRecording}
+          />
+        </div>
+        
+        {/* Analysis Section */}
+        {(isAnalyzing || analysis) && (
+          <div style={{ backgroundColor: '#2a2a2a', borderRadius: '12px', padding: '20px' }}>
+            {isAnalyzing && (
+              <div style={{
+                textAlign: 'center',
+                padding: '20px',
+                border: '2px solid #FF9800',
+                borderRadius: '8px',
+                backgroundColor: '#1a1a1a'
+              }}>
+                <div style={{ color: '#FF9800', fontSize: '18px' }}>
+                  🤖 Analyzing your answer...
+                </div>
+              </div>
+            )}
+            <AnalysisDisplay analysis={analysis} />
           </div>
         )}
-      </div>
-      
-      <div className="controls">
-        <VoiceRecorder 
-          onTranscript={handleAnswerSubmit}
-          isRecording={isRecording}
-          setIsRecording={setIsRecording}
-        />
-      </div>
-      
-      {isAnalyzing && (
-        <div style={{
-          background: '#1a1a1a',
-          padding: '15px',
-          borderRadius: '8px',
-          margin: '15px 0',
-          border: '2px solid #FF9800',
-          textAlign: 'center'
-        }}>
-          <div style={{ color: '#FF9800', fontSize: '16px' }}>
-            🤖 Analyzing...
-          </div>
-        </div>
-      )}
-      
-      <AnalysisDisplay analysis={analysis} />
-      
-      {analysis && questionCount < maxQuestions && (
-        <div style={{
-          margin: '30px 0',
-          padding: '0'
-        }}>
+        
+        {/* Next Question Controls */}
+        {analysis && questionCount < maxQuestions && (
+          <div style={{ backgroundColor: '#2a2a2a', borderRadius: '12px', padding: '20px' }}>
           {/* Timer Section */}
           {timeLeft > 0 && (
             <div style={{
@@ -565,29 +713,8 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
               🔄 Retry Question
             </button>
           </div>
-        </div>
-      )}
-      
-      <div className="stats">
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <div style={{ fontSize: '16px', fontWeight: 'bold' }}>Eye Contact: {eyeContactScore}%</div>
-          <div style={{ 
-            fontSize: '12px', 
-            color: eyeContactScore > 70 ? '#4CAF50' : eyeContactScore > 40 ? '#FF9800' : '#f44336', 
-            marginTop: '5px',
-            textAlign: 'center'
-          }}>
-            {eyeContactScore > 70 ? '✓ Excellent! Keep it up' : eyeContactScore > 40 ? '⚠ Good, look directly at camera' : '✗ Look at the camera lens'}
           </div>
-        </div>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '16px', fontWeight: 'bold' }}>Progress</div>
-          <div style={{ fontSize: '14px', color: '#4CAF50' }}>{questionCount}/{maxQuestions} Questions</div>
-        </div>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '16px', fontWeight: 'bold' }}>Interview Type</div>
-          <div style={{ fontSize: '14px', color: '#FF9800', textTransform: 'capitalize' }}>{interviewType}</div>
-        </div>
+        )}
       </div>
     </div>
   );
