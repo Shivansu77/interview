@@ -94,14 +94,12 @@ function App() {
               <button onClick={() => setCurrentSection('character-chat')} className="nav-button">
                 <span className="icon">🎭</span> Character Chat
               </button>
-              <button onClick={() => setCurrentSection('ml')} className="nav-button">
-                <span className="icon">🤖</span> ML Classifier
-              </button>
+
             </div>
           </div>
         )}
         
-        {(currentSection === 'learn' || currentSection === 'english' || currentSection === 'vocabulary' || currentSection === 'character-chat' || currentSection === 'ml') && (
+        {(currentSection === 'learn' || currentSection === 'english' || currentSection === 'vocabulary' || currentSection === 'character-chat') && (
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -141,8 +139,7 @@ function App() {
           <VocabularyChallenge onBack={() => setCurrentSection('home')} />
         ) : currentSection === 'character-chat' ? (
           <CharacterChat />
-        ) : currentSection === 'ml' ? (
-          <MLComponent onBack={() => setCurrentSection('home')} />
+
         ) : isLoading ? (
           <div className="loading-screen" style={{
             textAlign: 'center',

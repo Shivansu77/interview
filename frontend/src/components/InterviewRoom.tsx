@@ -96,11 +96,6 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
       const data = await response.json();
       setCurrentQuestion(data.question);
       
-      // Only increment count for subsequent questions
-      if (hasGeneratedFirst && questionCount > 1) {
-        setQuestionCount(prev => prev + 1);
-      }
-      
       // Always speak the question automatically
       setTimeout(() => {
         console.log('🤖 Auto-speaking question:', data.question);
@@ -663,8 +658,10 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
                 speechSynthesis.cancel();
                 stopTimer();
                 setAnalysis(null);
-                setQuestionCount(prev => prev + 1);
-                generateQuestion();
+                if (questionCount < maxQuestions) {
+                  setQuestionCount(prev => prev + 1);
+                  generateQuestion();
+                }
               }}
               style={{
                 padding: '12px 24px',
@@ -686,6 +683,7 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
             
             <button 
               onClick={() => {
+                speechSynthesis.cancel();
                 stopTimer();
                 setAnalysis(null);
                 generateQuestion();

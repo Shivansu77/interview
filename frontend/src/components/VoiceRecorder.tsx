@@ -34,27 +34,18 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
   };
 
   const startRecording = async () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert('Speech recognition not supported in this browser. Please use Chrome or Edge.');
+      return;
+    }
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Request microphone permission first
+      await navigator.mediaDevices.getUserMedia({ audio: true });
       
-      // Start MediaRecorder for audio capture
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
-      };
-
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-        await processAudioToText(audioBlob);
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      mediaRecorder.start();
       setIsRecording(true);
       setRecordingTime(0);
+      setTranscript('');
 
       // Start timer
       recordingTimerRef.current = setInterval(() => {
@@ -69,12 +60,12 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
 
       // Auto-stop after 2 minutes
       setTimeout(() => {
-        if (mediaRecorderRef.current?.state === 'recording') {
+        if (isRecording) {
           stopRecording();
         }
       }, 120000);
 
-      // Also start speech recognition for real-time transcript
+      // Start speech recognition
       startSpeechRecognition();
     } catch (error) {
       console.error('Error starting recording:', error);
@@ -83,99 +74,78 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
   };
 
   const startSpeechRecognition = () => {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
-      
-      recognitionRef.current.continuous = true;
-      recognitionRef.current.interimResults = true;
-      recognitionRef.current.lang = 'en-US';
-      recognitionRef.current.maxAlternatives = 1;
-
-      recognitionRef.current.onresult = (event: any) => {
-        let finalTranscript = '';
-        
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript;
-          }
-        }
-        
-        if (finalTranscript) {
-          setTranscript(prev => {
-            const newText = prev ? prev + ' ' + finalTranscript : finalTranscript;
-            return newText;
-          });
-        }
-      };
-      
-      recognitionRef.current.onend = () => {
-        if (isRecording) {
-          setTimeout(() => {
-            try {
-              if (recognitionRef.current && isRecording) {
-                recognitionRef.current.start();
-              }
-            } catch (error) {
-              console.log('Recognition restart failed:', error);
-            }
-          }, 100);
-        }
-      };
-
-      recognitionRef.current.onerror = (event: any) => {
-        console.error('Speech recognition error:', event.error);
-        if (event.error === 'no-speech' && isRecording) {
-          setTimeout(() => {
-            try {
-              if (recognitionRef.current && isRecording) {
-                recognitionRef.current.start();
-              }
-            } catch (error) {
-              console.log('Failed to restart after no-speech:', error);
-            }
-          }, 100);
-        }
-      };
-
-      recognitionRef.current.start();
-    }
-  };
-
-  const processAudioToText = async (audioBlob: Blob) => {
-    setIsProcessing(true);
+    const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+    recognitionRef.current = new SpeechRecognition();
     
-    try {
-      // Since Google Cloud Speech API is disabled, just use the live transcript
-      console.log('Using browser speech recognition transcript');
+    recognitionRef.current.continuous = true;
+    recognitionRef.current.interimResults = false;
+    recognitionRef.current.lang = 'en-US';
+    recognitionRef.current.maxAlternatives = 1;
+
+    recognitionRef.current.onresult = (event: any) => {
+      let finalTranscript = '';
       
-      if (!transcript.trim()) {
-        setTranscript('No speech detected. Please try speaking more clearly or check your microphone.');
+      for (let i = 0; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript + ' ';
+        }
       }
       
-    } catch (error) {
-      console.error('Error processing audio:', error);
-      if (!transcript.trim()) {
-        setTranscript('Recording failed. Please try again.');
+      if (finalTranscript.trim()) {
+        setTranscript(prev => {
+          const newText = prev ? prev + ' ' + finalTranscript.trim() : finalTranscript.trim();
+          return newText;
+        });
       }
-    } finally {
-      setIsProcessing(false);
-    }
+    };
+    
+    recognitionRef.current.onend = () => {
+      if (isRecording) {
+        setTimeout(() => {
+          try {
+            if (recognitionRef.current && isRecording) {
+              recognitionRef.current.start();
+            }
+          } catch (error) {
+            console.log('Recognition restart failed:', error);
+          }
+        }, 100);
+      }
+    };
+
+    recognitionRef.current.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error);
+      if (event.error === 'not-allowed') {
+        alert('Microphone access denied. Please allow microphone access and try again.');
+        setIsRecording(false);
+        return;
+      }
+    };
+
+    recognitionRef.current.start();
   };
+
+
 
   const stopRecording = () => {
+    setIsRecording(false);
+    
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
     }
     
     if (recognitionRef.current) {
-      recognitionRef.current.stop();
+      try {
+        recognitionRef.current.stop();
+        recognitionRef.current = null;
+      } catch (error) {
+        console.log('Error stopping recognition:', error);
+      }
     }
-    
-    setIsRecording(false);
     
     if (recordingTimerRef.current) {
       clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
     }
   };
 

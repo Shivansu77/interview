@@ -188,7 +188,8 @@ const MediaPipeFaceMonitor: React.FC<MediaPipeFaceMonitorProps> = ({ onEyeContac
           height: 'auto',
           borderRadius: '8px',
           backgroundColor: '#000',
-          border: faceDetected ? '3px solid #00ff00' : '3px solid #ff0000'
+          border: faceDetected ? '3px solid #00ff00' : '3px solid #ff0000',
+          transform: 'scaleX(-1)'
         }}
       />
       

@@ -54,7 +54,7 @@ interface Message {
 }
 
 const CharacterChat: React.FC = () => {
-  const [selectedCharacter, setSelectedCharacter] = useState('Tom Holland');
+  const [selectedCharacter, setSelectedCharacter] = useState('Jesse Pinkman');
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -143,113 +143,69 @@ const CharacterChat: React.FC = () => {
     }
   };
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          sampleRate: 48000
-        }
-      });
-      
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
-      });
-      
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
+  const startRecording = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert('Speech recognition not supported in this browser');
+      return;
+    }
 
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+    recognition.maxAlternatives = 1;
 
-      mediaRecorder.onstop = async () => {
-        if (audioChunksRef.current.length > 0) {
-          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm;codecs=opus' });
-          
-          if (recordingTime >= 1) {
-            await processAudioMessage(audioBlob);
-          } else {
-            alert('Recording too short. Please speak for at least 1 second.');
-          }
-        } else {
-          alert('No audio recorded. Please try again.');
-        }
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      mediaRecorder.start(1000);
+    recognition.onstart = () => {
       setIsRecording(true);
       setRecordingTime(0);
-
+      
       recordingTimerRef.current = setInterval(() => {
         setRecordingTime(prev => {
           if (prev >= 30) {
-            stopRecording();
+            recognition.stop();
             return 30;
           }
           return prev + 1;
         });
       }, 1000);
+    };
 
-      setTimeout(() => {
-        if (mediaRecorderRef.current?.state === 'recording') {
-          stopRecording();
-        }
-      }, 30000);
-    } catch (error) {
-      console.error('Error starting recording:', error);
-      alert('Could not access microphone. Please check permissions.');
-    }
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      if (transcript.trim()) {
+        sendTextMessage(transcript);
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error);
+      setIsRecording(false);
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+      }
+      alert('Speech recognition failed. Please try again.');
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+      }
+    };
+
+    recognition.start();
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      mediaRecorderRef.current.stop();
-    }
     setIsRecording(false);
     if (recordingTimerRef.current) {
       clearInterval(recordingTimerRef.current);
     }
   };
 
-  const processAudioMessage = async (audioBlob: Blob) => {
-    setLoading(true);
-    
-    try {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64Audio = (reader.result as string).split(',')[1];
-        
-        const speechResponse = await fetch('http://localhost:5003/api/ai/speech-to-text', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ audioData: base64Audio })
-        });
-        
-        const speechData = await speechResponse.json();
-        
-        if (speechData.success && speechData.transcript && speechData.transcript.trim().length > 0) {
-          await sendTextMessage(speechData.transcript);
-        } else if (speechData.transcript && speechData.transcript.trim().length > 0) {
-          await sendTextMessage(speechData.transcript);
-        } else {
-          const errorMsg = speechData.error || 'Could not understand the audio';
-          alert(`${errorMsg}. Try speaking more clearly or check your microphone.`);
-        }
-      };
-      reader.readAsDataURL(audioBlob);
-    } catch (error) {
-      console.error('Error processing audio:', error);
-      alert('Network error. Please check your connection and try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   const getCharacterVoice = (characterName: string) => {
     const voices = speechSynthesis.getVoices();
@@ -287,6 +243,9 @@ const CharacterChat: React.FC = () => {
   };
 
   const cleanTextForSpeech = (text: string) => {
+    if (!text || typeof text !== 'string') {
+      return '';
+    }
     return text
       .replace(/\*\*(.*?)\*\*/g, '$1')  // Remove **bold**
       .replace(/\*(.*?)\*/g, '$1')     // Remove *italic*
@@ -308,8 +267,8 @@ const CharacterChat: React.FC = () => {
   const speakMessage = (text: string, characterName: string) => {
     console.log('Speaking:', text, 'Character:', characterName, 'Voice Mode:', voiceMode);
     
-    if (!voiceMode) {
-      console.log('Voice mode is off');
+    if (!voiceMode || !text) {
+      console.log('Voice mode is off or no text');
       return;
     }
     
@@ -318,6 +277,11 @@ const CharacterChat: React.FC = () => {
     // Clean the text for natural speech
     const cleanText = cleanTextForSpeech(text);
     console.log('Cleaned text:', cleanText);
+    
+    if (!cleanText) {
+      setIsSpeaking(false);
+      return;
+    }
     
     // Use browser TTS directly for reliability
     const utterance = new SpeechSynthesisUtterance(cleanText);
@@ -452,145 +416,261 @@ const CharacterChat: React.FC = () => {
   };
 
   return (
-    <div className="character-chat">
-      <div className="chat-header">
-        <div className="header-left">
-          <h2><span className="icon">🎭</span>Voice Character Chat</h2>
-          <div className="character-info">
-            <div className="character-avatar-container">
-              <span className="character-avatar">
-                {CHARACTERS.find(c => c.name === selectedCharacter)?.avatar || '🎭'}
-              </span>
-            </div>
-            <select 
-              value={selectedCharacter} 
-              onChange={(e) => setSelectedCharacter(e.target.value)}
-              className="character-select"
-            >
-              {CHARACTERS.map(char => (
-                <option key={char.name} value={char.name}>
-                  {char.name} - {char.description}
-                </option>
-              ))}
-            </select>
+    <div style={{
+      maxWidth: '1200px',
+      margin: '0 auto',
+      padding: '20px',
+      backgroundColor: '#1a1a1a',
+      borderRadius: '12px',
+      color: 'white',
+      minHeight: '80vh'
+    }}>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '20px',
+        padding: '20px',
+        backgroundColor: '#2a2a2a',
+        borderRadius: '12px',
+        border: '1px solid #444'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <span style={{ fontSize: '32px' }}>
+            {CHARACTERS.find(c => c.name === selectedCharacter)?.avatar || '🧪'}
+          </span>
+          <div>
+            <h2 style={{ margin: '0', color: '#4CAF50' }}>Character Chat</h2>
+            <p style={{ margin: '5px 0 0 0', color: '#ccc', fontSize: '14px' }}>
+              Chatting with {selectedCharacter}
+            </p>
           </div>
         </div>
         
-        <div className="header-controls">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <select 
+            value={selectedCharacter} 
+            onChange={(e) => setSelectedCharacter(e.target.value)}
+            style={{
+              padding: '10px 15px',
+              borderRadius: '8px',
+              border: '1px solid #444',
+              backgroundColor: '#333',
+              color: 'white',
+              fontSize: '14px',
+              minWidth: '180px'
+            }}
+          >
+            {CHARACTERS.map(char => (
+              <option key={char.name} value={char.name}>
+                {char.avatar} {char.name}
+              </option>
+            ))}
+          </select>
+          
           <button
             onClick={() => setVoiceMode(!voiceMode)}
-            className={`voice-toggle ${voiceMode ? 'active' : ''}`}
-            title={voiceMode ? 'Voice Mode ON' : 'Voice Mode OFF'}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+            style={{
+              padding: '10px 20px',
+              borderRadius: '8px',
+              border: 'none',
+              backgroundColor: voiceMode ? '#4CAF50' : '#666',
+              color: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '14px',
+              fontWeight: 'bold'
+            }}
           >
-            <span className="icon">{voiceMode ? '🔊' : '🔇'}</span> Voice {voiceMode ? 'ON' : 'OFF'}
-          </button>
-          
-          {isSpeaking && (
-            <button onClick={stopSpeaking} className="stop-speaking" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span className="icon">⏹️</span> Stop
-            </button>
-          )}
-          
-          <button
-            onClick={() => speakMessage('Hello, this is a test message', selectedCharacter)}
-            className="test-voice"
-            disabled={isSpeaking}
-            title="Test voice"
-            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-          >
-            <span className="icon">▶️</span> Test
+            {voiceMode ? '🔊 Voice ON' : '🔇 Voice OFF'}
           </button>
         </div>
       </div>
 
-      <div className="chat-messages">
+      <div style={{
+        backgroundColor: '#2a2a2a',
+        borderRadius: '12px',
+        padding: '20px',
+        marginBottom: '20px',
+        minHeight: '400px',
+        maxHeight: '500px',
+        overflowY: 'auto',
+        border: '1px solid #444'
+      }}>
         {messages.map((msg, index) => (
-          <div key={index} className={`message ${msg.sender}`}>
-            <div className="message-bubble">
+          <div key={index} style={{
+            display: 'flex',
+            justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start',
+            marginBottom: '15px'
+          }}>
+            <div style={{
+              maxWidth: '70%',
+              padding: '15px',
+              borderRadius: '12px',
+              backgroundColor: msg.sender === 'user' ? '#4CAF50' : '#333',
+              color: 'white'
+            }}>
               {msg.sender === 'character' && (
-                <div className="character-header">
-                  <span className="character-avatar">
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  marginBottom: '8px',
+                  paddingBottom: '8px',
+                  borderBottom: '1px solid #555'
+                }}>
+                  <span style={{ fontSize: '20px' }}>
                     {CHARACTERS.find(c => c.name === selectedCharacter)?.avatar || '🎭'}
                   </span>
-                  <span className="character-name">{selectedCharacter}</span>
+                  <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{selectedCharacter}</span>
                   <button
                     onClick={() => speakMessage(msg.text, selectedCharacter)}
-                    className="speak-button"
                     disabled={isSpeaking}
-                    title="Listen to message"
-                    style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+                    style={{
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      border: 'none',
+                      backgroundColor: '#4CAF50',
+                      color: 'white',
+                      cursor: 'pointer',
+                      fontSize: '12px'
+                    }}
                   >
-                    <span className="icon">{isSpeaking ? '🔊' : '▶️'}</span>
+                    {isSpeaking ? '🔊' : '▶️'}
                   </button>
                 </div>
               )}
-              <div 
-                className="message-text"
-                dangerouslySetInnerHTML={{ __html: renderMessageText(msg.text) }}
-              />
-              <div className="message-time">
+              <div style={{ lineHeight: '1.5' }}>
+                {msg.text}
+              </div>
+              <div style={{
+                fontSize: '11px',
+                color: '#ccc',
+                marginTop: '8px',
+                textAlign: 'right'
+              }}>
                 {new Date(msg.timestamp).toLocaleTimeString()}
               </div>
             </div>
           </div>
         ))}
         {loading && (
-          <div className="message character">
-            <div className="message-bubble">
-              <div className="character-header">
-                <span className="character-avatar">
+          <div style={{
+            display: 'flex',
+            justifyContent: 'flex-start',
+            marginBottom: '15px'
+          }}>
+            <div style={{
+              padding: '15px',
+              borderRadius: '12px',
+              backgroundColor: '#333',
+              color: 'white'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}>
+                <span style={{ fontSize: '20px' }}>
                   {CHARACTERS.find(c => c.name === selectedCharacter)?.avatar || '🎭'}
                 </span>
-                <span className="character-name">{selectedCharacter}</span>
-              </div>
-              <div className="typing-indicator">
-                <span></span><span></span><span></span>
+                <span>Typing...</span>
               </div>
             </div>
           </div>
         )}
         
         {isSpeaking && (
-          <div className="speaking-indicator">
-            <div className="sound-waves">
-              <span></span><span></span><span></span><span></span>
-            </div>
-            <span><span className="icon">🔊</span>{selectedCharacter} is speaking...</span>
+          <div style={{
+            textAlign: 'center',
+            padding: '10px',
+            backgroundColor: '#444',
+            borderRadius: '8px',
+            color: '#4CAF50',
+            fontSize: '14px'
+          }}>
+            🔊 {selectedCharacter} is speaking...
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="chat-input">
+      <div style={{
+        backgroundColor: '#2a2a2a',
+        borderRadius: '12px',
+        padding: '20px',
+        border: '1px solid #444'
+      }}>
         <textarea
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyPress={handleKeyPress}
           placeholder={`Chat with ${selectedCharacter}...`}
-          rows={2}
+          rows={3}
           disabled={isRecording}
+          style={{
+            width: 'calc(100% - 30px)',
+            padding: '15px',
+            borderRadius: '8px',
+            border: '1px solid #444',
+            backgroundColor: '#333',
+            color: 'white',
+            fontSize: '14px',
+            resize: 'none',
+            marginBottom: '15px',
+            boxSizing: 'border-box'
+          }}
         />
-        <div className="input-buttons">
+        <div style={{
+          display: 'flex',
+          gap: '10px',
+          justifyContent: 'space-between'
+        }}>
           <button 
             onClick={isRecording ? stopRecording : startRecording}
             disabled={loading}
-            className={`record-btn ${isRecording ? 'recording' : ''}`}
-            title={isRecording ? 'Click to stop recording' : 'Hold and speak clearly'}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+            style={{
+              padding: '12px 20px',
+              borderRadius: '8px',
+              border: 'none',
+              backgroundColor: isRecording ? '#f44336' : '#FF9800',
+              color: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              flex: '1'
+            }}
           >
             {isRecording ? (
-              <><span className="icon spin">⟳</span> {formatTime(recordingTime)}</>
+              <>⏹️ Stop ({formatTime(recordingTime)})</>
             ) : (
-              <><span className="icon">🎤</span> Record (30s max)</>
+              <>🎤 Record Voice</>
             )}
           </button>
           <button 
             onClick={sendMessage} 
             disabled={loading || !inputMessage.trim() || isRecording}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+            style={{
+              padding: '12px 20px',
+              borderRadius: '8px',
+              border: 'none',
+              backgroundColor: '#4CAF50',
+              color: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              flex: '1'
+            }}
           >
-            <span className="icon">📤</span> Send
+            📤 Send Message
           </button>
         </div>
       </div>

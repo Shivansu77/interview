@@ -379,7 +379,7 @@ router.post('/question/answer', async (req, res) => {
       behavioral: 'This requires strong communication skills, collaborative teamwork, and the ability to adapt to changing requirements while maintaining professional relationships and delivering quality results.'
     };
     
-    const fallbackAnswer = fallbackAnswers[field] || 'This requires understanding the fundamental concepts. You should apply best practices consistently. Continuous learning helps you stay updated with industry standards.';
+    const fallbackAnswer = fallbackAnswers[req.body.field] || 'This requires understanding the fundamental concepts. You should apply best practices consistently. Continuous learning helps you stay updated with industry standards.';
     
     const fallbackLines = fallbackAnswer.split(/[.!?]+/).filter(line => line.trim().length > 0).map(line => line.trim() + '.');
     

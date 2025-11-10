@@ -7,8 +7,10 @@ const router = express.Router();
 function analyzeTextQuality(text) {
   if (!text || text.trim().length === 0) return { score: 4, issues: ['Please provide an answer'] };
   
-  const words = natural.WordTokenizer().tokenize(text.toLowerCase());
-  const sentences = natural.SentenceTokenizer().tokenize(text);
+  const tokenizer = new natural.WordTokenizer();
+  const sentenceTokenizer = new natural.SentenceTokenizer();
+  const words = tokenizer.tokenize(text.toLowerCase());
+  const sentences = sentenceTokenizer.tokenize(text);
   
   const positives = [];
   const suggestions = [];
