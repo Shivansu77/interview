@@ -155,57 +155,84 @@ function App() {
 
           </div>
         ) : currentSection === 'home' && !isInterviewActive ? (
-          <div className="start-screen">
-            <h2>Ready for your AI-powered interview?</h2>
-            <p>Practice interviews with real-time feedback on:</p>
-            <ul>
-              <li>✅ Eye contact monitoring</li>
-              <li>✅ Speech fluency analysis</li>
-              <li>✅ AI-generated questions</li>
-              <li>✅ Voice interaction</li>
-            </ul>
+          <div className="modern-home">
+            <div className="hero-section">
+              <h2>Master Your Interview Skills</h2>
+              <p>AI-powered practice with real-time feedback and personalized coaching</p>
+            </div>
             
-            <div className="interview-types">
-              <div className="interview-card">
-                <h3><span className="icon">💻</span>Technical Interview</h3>
-                <p>Programming, algorithms, system design, and technical problem-solving</p>
-                <button 
-                  onClick={() => startInterview('technical')}
-                  disabled={isLoading}
-                  className="primary-button"
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                >
-                  {isLoading ? (
-                    <><span className="icon spin">⟳</span> Starting...</>
-                  ) : (
-                    <><span className="icon">🚀</span> Start Technical</>
-                  )}
-                </button>
+            <div className="features-grid">
+              <div className="feature-card" onClick={() => setCurrentSection('learn')}>
+                <div className="feature-icon">📚</div>
+                <h3>Learn & Practice</h3>
+                <p>Structured learning paths for technical skills</p>
+                <div className="feature-badge">Popular</div>
               </div>
               
-              <div className="interview-card">
-                <h3><span className="icon">💬</span>English Interview</h3>
-                <p>Communication skills, behavioral questions, and professional conversation</p>
-                <button 
-                  onClick={() => startInterview('english')}
-                  disabled={isLoading}
-                  className="secondary-button"
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                >
-                  {isLoading ? (
-                    <><span className="icon spin">⟳</span> Starting...</>
-                  ) : (
-                    <><span className="icon">💬</span> Start English</>
-                  )}
-                </button>
+              <div className="feature-card" onClick={() => setCurrentSection('vocabulary')}>
+                <div className="feature-icon">📖</div>
+                <h3>Vocabulary Builder</h3>
+                <p>Expand your professional vocabulary</p>
+              </div>
+              
+              <div className="feature-card" onClick={() => setCurrentSection('english')}>
+                <div className="feature-icon">🎤</div>
+                <h3>English Practice</h3>
+                <p>Improve pronunciation and fluency</p>
+              </div>
+              
+              <div className="feature-card" onClick={() => setCurrentSection('character-chat')}>
+                <div className="feature-icon">🎭</div>
+                <h3>Character Chat</h3>
+                <p>Practice conversations with AI characters</p>
+                <div className="feature-badge new">New</div>
               </div>
             </div>
             
-            <div className="company-selector">
-              <label><span className="icon">🏢</span>Company Focus:</label>
+            <div className="interview-section">
+              <h3>Start Your Interview Practice</h3>
+              <div className="interview-cards">
+                <div className="interview-card primary">
+                  <div className="card-header">
+                    <span className="card-icon">💻</span>
+                    <h4>Technical Interview</h4>
+                  </div>
+                  <p>Programming, algorithms, and system design questions</p>
+                  <button 
+                    onClick={() => startInterview('technical')}
+                    disabled={isLoading}
+                    className="interview-btn primary"
+                  >
+                    {isLoading ? 'Starting...' : 'Start Technical'}
+                  </button>
+                </div>
+                
+                <div className="interview-card secondary">
+                  <div className="card-header">
+                    <span className="card-icon">💬</span>
+                    <h4>English Interview</h4>
+                  </div>
+                  <p>Communication skills and behavioral questions</p>
+                  <button 
+                    onClick={() => startInterview('english')}
+                    disabled={isLoading}
+                    className="interview-btn secondary"
+                  >
+                    {isLoading ? 'Starting...' : 'Start English'}
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div className="company-section">
+              <label className="company-label">
+                <span className="label-icon">🏢</span>
+                Target Company
+              </label>
               <select 
                 value={selectedCompany}
                 onChange={(e) => setSelectedCompany(e.target.value)}
+                className="company-select"
               >
                 <option value="general">🌐 General Questions</option>
                 <option value="google">Google</option>
