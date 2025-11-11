@@ -365,7 +365,7 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
         <div style={{ marginTop: '20px', color: '#FF9800' }}>
           🔄 Preparing your first question...
         </div>
-        <div style={{ marginTop: '15px', fontSize: '14px', color: '#FF9800', textAlign: 'center', padding: '10px', backgroundColor: '#2a2a2a', borderRadius: '8px' }}>
+        <div style={{ marginTop: '15px', fontSize: '14px', color: 'hsla(36, 81%, 49%, 0.92)', textAlign: 'center', padding: '10px', backgroundColor: '#2a2a2a', borderRadius: '8px' }}>
           ⚠️ <strong>Important:</strong> Click "Test Audio" first to enable voice in your browser!
         </div>
         <div style={{ marginTop: '15px', padding: '15px', backgroundColor: '#2a2a2a', borderRadius: '8px', fontSize: '12px', color: '#ccc' }}>
@@ -472,9 +472,25 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
           </div>
         )}
         
-        <div style={{ textAlign: 'center' }}>
+        <div style={{ 
+          display: 'flex', 
+          gap: '20px', 
+          justifyContent: 'center',
+          flexWrap: 'wrap'
+        }}>
           <button 
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              // Reset all states and start fresh
+              setInterviewComplete(false);
+              setOverallResults(null);
+              setAllScores([]);
+              setQuestionCount(1);
+              setCurrentQuestion('');
+              setAnalysis(null);
+              setShowWelcome(true);
+              setHasGeneratedFirst(false);
+              speechSynthesis.cancel();
+            }}
             style={{
               padding: '15px 30px',
               backgroundColor: '#4CAF50',
@@ -483,10 +499,72 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
               borderRadius: '8px',
               cursor: 'pointer',
               fontSize: '16px',
-              fontWeight: 'bold'
+              fontWeight: 'bold',
+              boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)'
             }}
           >
             🔄 Start New Interview
+          </button>
+          
+          <button 
+            onClick={() => {
+              const results = {
+                ...overallResults,
+                timestamp: new Date().toISOString(),
+                questions: allScores.length
+              };
+              
+              const dataStr = JSON.stringify(results, null, 2);
+              const dataBlob = new Blob([dataStr], {type: 'application/json'});
+              const url = URL.createObjectURL(dataBlob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = `interview-results-${new Date().toISOString().split('T')[0]}.json`;
+              link.click();
+              URL.revokeObjectURL(url);
+            }}
+            style={{
+              padding: '15px 30px',
+              backgroundColor: '#2196F3',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              boxShadow: '0 4px 12px rgba(33, 150, 243, 0.3)'
+            }}
+          >
+            📊 Download Results
+          </button>
+          
+          <button 
+            onClick={() => {
+              const shareText = `I just completed an AI interview! 🎉\n\nOverall Score: ${overallResults.overallScore}/10\nCorrect Answers: ${overallResults.correctAnswers}/${overallResults.totalQuestions}\nEye Contact: ${overallResults.eyeContactScore}%\n\n#AIInterview #InterviewPractice`;
+              
+              if (navigator.share) {
+                navigator.share({
+                  title: 'My AI Interview Results',
+                  text: shareText
+                });
+              } else {
+                navigator.clipboard.writeText(shareText);
+                alert('Results copied to clipboard!');
+              }
+            }}
+            style={{
+              padding: '15px 30px',
+              backgroundColor: '#FF9800',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              boxShadow: '0 4px 12px rgba(255, 152, 0, 0.3)'
+            }}
+          >
+            📤 Share Results
           </button>
         </div>
       </div>
