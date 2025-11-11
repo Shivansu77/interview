@@ -84,18 +84,37 @@ router.post('/generate-question', async (req, res) => {
     const response = await axios.post(GEMINI_URL, {
       contents: [{ parts: [{ text: prompt }] }]
     }, {
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 10000
     });
     
     const question = response.data.candidates[0].content.parts[0].text.trim();
     res.json({ question, type, company, context });
   } catch (error) {
-    console.error('Gemini API Error:', error.response?.data || error.message);
+    console.log('Gemini API unavailable, using fallback question');
     const { type = 'technical', company = 'general', context = 'interview' } = req.body;
-    const fallback = type === 'english' 
-      ? 'Tell me about a time when you had to work with a difficult team member.'
-      : 'What is your experience with JavaScript and how would you explain closures to a beginner?';
-    res.json({ question: fallback, type, company, context });
+    
+    const fallbackQuestions = {
+      technical: [
+        'What is your experience with JavaScript and how would you explain closures to a beginner?',
+        'How would you optimize the performance of a web application?',
+        'Explain the difference between SQL and NoSQL databases.',
+        'What are the key principles of object-oriented programming?',
+        'How do you handle error handling in your applications?'
+      ],
+      english: [
+        'Tell me about a time when you had to work with a difficult team member.',
+        'Describe a challenging project you worked on and how you overcame obstacles.',
+        'How do you handle stress and pressure in the workplace?',
+        'What are your career goals for the next five years?',
+        'Tell me about a time when you had to learn something new quickly.'
+      ]
+    };
+    
+    const questions = fallbackQuestions[type] || fallbackQuestions.technical;
+    const randomQuestion = questions[Math.floor(Math.random() * questions.length)];
+    
+    res.json({ question: randomQuestion, type, company, context });
   }
 });
 
@@ -129,7 +148,8 @@ Return ONLY this JSON format:
     const response = await axios.post(GEMINI_URL, {
       contents: [{ parts: [{ text: analysisPrompt }] }]
     }, {
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 15000
     });
     
     let analysisText = response.data.candidates[0].content.parts[0].text.trim();
@@ -170,7 +190,7 @@ Return ONLY this JSON format:
   }
 });
 
-// Character Chat
+// Character Chat with fallback responses
 router.post('/character-chat', async (req, res) => {
   try {
     const { userId, character, userMessage } = req.body;
@@ -187,17 +207,32 @@ router.post('/character-chat', async (req, res) => {
       'Deadpool': 'You are Deadpool, the sarcastic anti-hero. Break the fourth wall and make jokes naturally in conversation. Be witty and inappropriate but conversational. Help with English by explaining words with humor in parentheses.'
     };
 
-    const systemPrompt = characterPrompts[character] || characterPrompts['Tom Holland'];
-    const fullPrompt = `${systemPrompt}\n\nUser said: "${userMessage}"\n\nRespond as this character, stay 100% in character with their speech patterns and personality.`;
+    const fallbackResponses = {
+      'Jesse Pinkman': 'Yo, what\'s up man! I\'m doing alright, just dealing with some crazy stuff, you know? Chemistry can be pretty intense sometimes, dude. How about you?',
+      'Walter White': 'I\'m managing quite well, thank you. There are always challenges in my work, but I approach them methodically. Science requires precision and patience.',
+      'Cillian Murphy': 'Hello there! I\'m doing brilliantly, thanks for asking. Just finished working on a new project - the creative process is always fascinating.',
+      'Tom Holland': 'Hey mate! I\'m doing great, thanks! Just been working on some exciting new projects. Always something brilliant happening in this industry!',
+      'Deadpool': 'Oh hey there! I\'m fantastic, thanks for asking. Just broke the fourth wall again - did you see that? Classic me. What\'s your deal?'
+    };
 
-    const response = await axios.post(GEMINI_URL, {
-      contents: [{ parts: [{ text: fullPrompt }] }]
-    }, {
-      headers: { 'Content-Type': 'application/json' }
-    });
+    try {
+      const systemPrompt = characterPrompts[character] || characterPrompts['Jesse Pinkman'];
+      const fullPrompt = `${systemPrompt}\n\nUser said: "${userMessage}"\n\nRespond as this character, stay 100% in character with their speech patterns and personality.`;
 
-    const characterReply = response.data.candidates[0].content.parts[0].text.trim();
-    res.json({ reply: characterReply });
+      const response = await axios.post(GEMINI_URL, {
+        contents: [{ parts: [{ text: fullPrompt }] }]
+      }, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 10000
+      });
+
+      const characterReply = response.data.candidates[0].content.parts[0].text.trim();
+      res.json({ reply: characterReply });
+    } catch (apiError) {
+      console.log('Gemini API unavailable, using fallback response');
+      const fallbackReply = fallbackResponses[character] || fallbackResponses['Jesse Pinkman'];
+      res.json({ reply: fallbackReply });
+    }
   } catch (error) {
     console.error('Character chat error:', error);
     res.status(500).json({ error: 'Failed to generate response' });
