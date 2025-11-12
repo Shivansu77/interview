@@ -5,8 +5,6 @@ import EnglishPractice from './components/EnglishPractice';
 import VocabularyChallenge from './components/VocabularyChallenge';
 import CharacterChat from './components/CharacterChat';
 
-import './App.css';
-
 function App() {
   const [currentSection, setCurrentSection] = useState<'home' | 'learn' | 'interview' | 'english' | 'vocabulary' | 'character-chat' | 'ml'>('home');
   const [isInterviewActive, setIsInterviewActive] = useState(false);
@@ -22,7 +20,6 @@ function App() {
       console.log('Starting interview with type:', type, 'company:', selectedCompany);
       setInterviewType(type);
       
-      // Add a small delay for better UX
       await new Promise(resolve => setTimeout(resolve, 800));
       
       const response = await fetch('http://localhost:5003/api/interview/start-session', {
@@ -50,15 +47,11 @@ function App() {
 
   const endInterview = () => {
     console.log('Ending interview...');
-    
-    // Stop all speech synthesis
     speechSynthesis.cancel();
-    
     setIsInterviewActive(false);
     setSessionId('');
     setCurrentSection('home');
     
-    // Clean up any media streams
     navigator.mediaDevices.getUserMedia({ video: true, audio: true })
       .then(stream => {
         stream.getTracks().forEach(track => track.stop());
@@ -67,68 +60,26 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <header className="App-header">
-        {currentSection === 'home' && (
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            width: '100%',
-            maxWidth: '1200px',
-            margin: '0 auto 40px',
-            padding: '0 20px'
-          }}>
-            <h1>AI Interview Platform</h1>
-            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
-              <button onClick={() => setCurrentSection('learn')} className="nav-button">
-                <span className="icon">📚</span> Learn & Practice
-              </button>
-              <button onClick={() => setCurrentSection('english')} className="nav-button">
-                <span className="icon">🎤</span> English Practice
-              </button>
-              <button onClick={() => setCurrentSection('vocabulary')} className="nav-button">
-                <span className="icon">📖</span> Vocabulary
-              </button>
-              <button onClick={() => setCurrentSection('character-chat')} className="nav-button">
-                <span className="icon">🎭</span> Character Chat
-              </button>
-
-            </div>
-          </div>
-        )}
+    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+      <div style={currentSection === 'home' ? { backgroundColor: '#ffffff' } : { background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)', minHeight: '100vh' }}>
         
         {(currentSection === 'learn' || currentSection === 'english' || currentSection === 'vocabulary' || currentSection === 'character-chat') && (
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            width: '100%',
-            maxWidth: '1200px',
-            margin: '0 auto 30px'
-          }}>
-            <h1>AI Interview Platform</h1>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px', backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', borderBottom: '1px solid rgba(255, 255, 255, 0.2)' }}>
+            <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: 'white', margin: 0 }}>AI Interview Platform</h1>
             <button
               onClick={() => setCurrentSection('home')}
-              style={{
-                padding: '12px 24px',
-                backgroundColor: '#2196F3',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: '16px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', backgroundColor: 'rgba(255, 255, 255, 0.2)', color: 'white', border: '1px solid rgba(255, 255, 255, 0.3)', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s' }}
             >
-              <span className="icon">←</span> Back to Home
+              <span>←</span> Back to Home
             </button>
           </div>
         )}
         
-        {currentSection === 'interview' && <h1>AI Interview Platform</h1>}
+        {currentSection === 'interview' && (
+          <div style={{ padding: '24px', textAlign: 'center' }}>
+            <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: 'white', margin: 0 }}>AI Interview Platform</h1>
+          </div>
+        )}
         
         {currentSection === 'learn' ? (
           <LearnSection userId={userId} />
@@ -138,137 +89,150 @@ function App() {
           <VocabularyChallenge onBack={() => setCurrentSection('home')} />
         ) : currentSection === 'character-chat' ? (
           <CharacterChat />
-
         ) : isLoading ? (
-          <div className="loading-screen" style={{
-            textAlign: 'center',
-            padding: '50px',
-            color: '#4CAF50'
-          }}>
-            <div style={{ fontSize: '48px', marginBottom: '20px', color: '#7877c6' }}>🤖</div>
-            <h2>Preparing Your AI Interview...</h2>
-            <div className="loading-bar">
-              <div className="loading-progress" />
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '400px', backgroundColor: 'rgba(255, 255, 255, 0.95)', borderRadius: '16px', margin: '40px', padding: '64px', boxShadow: '0 20px 60px rgba(0, 0, 0, 0.1)' }}>
+            <div style={{ fontSize: '64px', marginBottom: '24px', color: '#7c3aed' }}>🤖</div>
+            <h2 style={{ fontSize: '24px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>Preparing Your AI Interview...</h2>
+            <div style={{ width: '320px', height: '4px', backgroundColor: '#e5e7eb', borderRadius: '2px', overflow: 'hidden', marginBottom: '16px' }}>
+              <div style={{ width: '100%', height: '100%', background: 'linear-gradient(90deg, #3b82f6, #7c3aed)', animation: 'pulse 2s infinite' }} />
             </div>
-            <p>Setting up camera, microphone, and AI systems...</p>
-
+            <p style={{ color: '#6b7280' }}>Setting up camera, microphone, and AI systems...</p>
           </div>
         ) : currentSection === 'home' && !isInterviewActive ? (
-          <div className="modern-home">
-            <div className="hero-section">
-              <h2>Master Your Interview Skills</h2>
-              <p>AI-powered practice with real-time feedback and personalized coaching</p>
-            </div>
-            
-            <div className="features-grid">
-              <div className="feature-card" onClick={() => setCurrentSection('learn')}>
-                <div className="feature-icon">📚</div>
-                <h3>Learn & Practice</h3>
-                <p>Structured learning paths for technical skills</p>
-                <div className="feature-badge">Popular</div>
+          <div style={{ backgroundColor: '#ffffff', minHeight: '100vh' }}>
+            {/* Navigation Header */}
+            <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 32px', backgroundColor: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(8px)', borderBottom: '1px solid #e5e7eb', position: 'sticky', top: 0, zIndex: 50 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '28px' }}>🤖</span>
+                <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827' }}>InterviewAI</span>
               </div>
-              
-              <div className="feature-card" onClick={() => setCurrentSection('vocabulary')}>
-                <div className="feature-icon">📖</div>
-                <h3>Vocabulary Builder</h3>
-                <p>Expand your professional vocabulary</p>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button style={{ padding: '8px 16px', color: '#6b7280', backgroundColor: 'transparent', border: 'none', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s' }} onClick={() => setCurrentSection('learn')}>Practice</button>
+                <button style={{ padding: '8px 16px', color: '#6b7280', backgroundColor: 'transparent', border: 'none', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s' }} onClick={() => setCurrentSection('english')}>English</button>
+                <button style={{ padding: '8px 16px', color: '#6b7280', backgroundColor: 'transparent', border: 'none', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s' }} onClick={() => setCurrentSection('vocabulary')}>Vocabulary</button>
+                <button style={{ padding: '8px 16px', color: '#6b7280', backgroundColor: 'transparent', border: 'none', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s' }} onClick={() => setCurrentSection('character-chat')}>Chat</button>
               </div>
-              
-              <div className="feature-card" onClick={() => setCurrentSection('english')}>
-                <div className="feature-icon">🎤</div>
-                <h3>English Practice</h3>
-                <p>Improve pronunciation and fluency</p>
-              </div>
-              
-              <div className="feature-card" onClick={() => setCurrentSection('character-chat')}>
-                <div className="feature-icon">🎭</div>
-                <h3>Character Chat</h3>
-                <p>Practice conversations with AI characters</p>
-                <div className="feature-badge new">New</div>
-              </div>
-            </div>
-            
-            <div className="interview-section">
-              <h3>Start Your Interview Practice</h3>
-              <div className="interview-cards">
-                <div className="interview-card primary">
-                  <div className="card-header">
-                    <span className="card-icon">💻</span>
-                    <h4>Technical Interview</h4>
-                  </div>
-                  <p>Programming, algorithms, and system design questions</p>
+            </nav>
+
+            {/* Hero Section */}
+            <div style={{ padding: '80px 32px', textAlign: 'center', background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)', color: 'white' }}>
+              <div style={{ maxWidth: '1024px', margin: '0 auto' }}>
+                <h1 style={{ fontSize: '56px', fontWeight: '800', lineHeight: '1.1', marginBottom: '24px', letterSpacing: '-0.02em' }}>
+                  Master Your <span style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Interview Skills</span>
+                </h1>
+                <p style={{ fontSize: '20px', lineHeight: '1.6', color: 'rgba(219, 234, 254, 0.9)', marginBottom: '48px', fontWeight: '400', maxWidth: '512px', margin: '0 auto 48px' }}>
+                  AI-powered interview practice with real-time feedback, personalized coaching, and comprehensive skill development
+                </p>
+                
+                {/* Quick Start Buttons */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', justifyContent: 'center', marginBottom: '32px', alignItems: 'center' }}>
                   <button 
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '16px 32px', backgroundColor: '#111827', color: 'white', borderRadius: '12px', border: 'none', cursor: 'pointer', minWidth: '256px', fontSize: '16px', fontWeight: '600', transition: 'all 0.2s' }}
                     onClick={() => startInterview('technical')}
                     disabled={isLoading}
-                    className="interview-btn primary"
                   >
-                    {isLoading ? 'Starting...' : 'Start Technical'}
+                    <span style={{ fontSize: '20px' }}>💻</span>
+                    {isLoading ? 'Starting...' : 'Start Technical Interview'}
                   </button>
-                </div>
-                
-                <div className="interview-card secondary">
-                  <div className="card-header">
-                    <span className="card-icon">💬</span>
-                    <h4>English Interview</h4>
-                  </div>
-                  <p>Communication skills and behavioral questions</p>
                   <button 
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '16px 32px', backgroundColor: 'rgba(255, 255, 255, 0.2)', color: 'white', border: '1px solid rgba(255, 255, 255, 0.3)', borderRadius: '12px', cursor: 'pointer', minWidth: '256px', fontSize: '16px', fontWeight: '600', transition: 'all 0.2s' }}
                     onClick={() => startInterview('english')}
                     disabled={isLoading}
-                    className="interview-btn secondary"
                   >
-                    {isLoading ? 'Starting...' : 'Start English'}
+                    <span style={{ fontSize: '20px' }}>💬</span>
+                    {isLoading ? 'Starting...' : 'Start English Interview'}
                   </button>
+                </div>
+
+                {/* Company Selector */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+                  <span style={{ color: 'rgba(219, 234, 254, 0.9)', fontWeight: '500' }}>Target Company:</span>
+                  <select 
+                    value={selectedCompany}
+                    onChange={(e) => setSelectedCompany(e.target.value)}
+                    style={{ padding: '12px 16px', backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'white', border: '1px solid rgba(255, 255, 255, 0.3)', borderRadius: '8px', backdropFilter: 'blur(8px)', minWidth: '160px', fontSize: '14px' }}
+                  >
+                    <option value="general" style={{ color: '#111827' }}>🌐 General</option>
+                    <option value="google" style={{ color: '#111827' }}>🔍 Google</option>
+                    <option value="microsoft" style={{ color: '#111827' }}>🪟 Microsoft</option>
+                    <option value="amazon" style={{ color: '#111827' }}>📦 Amazon</option>
+                    <option value="meta" style={{ color: '#111827' }}>👥 Meta</option>
+                    <option value="apple" style={{ color: '#111827' }}>🍎 Apple</option>
+                    <option value="netflix" style={{ color: '#111827' }}>🎬 Netflix</option>
+                  </select>
                 </div>
               </div>
             </div>
-            
-            <div className="company-section">
-              <label className="company-label">
-                <span className="label-icon">🏢</span>
-                Target Company
-              </label>
-              <select 
-                value={selectedCompany}
-                onChange={(e) => setSelectedCompany(e.target.value)}
-                className="company-select"
-              >
-                <option value="general">🌐 General Questions</option>
-                <option value="google">Google</option>
-                <option value="microsoft">Microsoft</option>
-                <option value="amazon">Amazon</option>
-                <option value="meta">Meta (Facebook)</option>
-                <option value="apple">Apple</option>
-                <option value="netflix">Netflix</option>
-              </select>
+
+            {/* Features Grid */}
+            <div style={{ padding: '80px 32px', backgroundColor: '#ffffff' }}>
+              <h2 style={{ fontSize: '36px', fontWeight: 'bold', textAlign: 'center', color: '#111827', marginBottom: '48px' }}>Everything you need to succeed</h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+                <div style={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '16px', padding: '32px 24px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' }} onClick={() => setCurrentSection('learn')}>
+                  <div style={{ fontSize: '48px', marginBottom: '20px' }}>📚</div>
+                  <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>Learn & Practice</h3>
+                  <p style={{ fontSize: '15px', color: '#6b7280', lineHeight: '1.5', marginBottom: '16px' }}>Structured learning paths with hands-on coding challenges</p>
+                  <span style={{ color: '#9ca3af', fontSize: '18px' }}>→</span>
+                </div>
+                
+                <div style={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '16px', padding: '32px 24px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' }} onClick={() => setCurrentSection('english')}>
+                  <div style={{ fontSize: '48px', marginBottom: '20px' }}>🎤</div>
+                  <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>Speech Training</h3>
+                  <p style={{ fontSize: '15px', color: '#6b7280', lineHeight: '1.5', marginBottom: '16px' }}>Improve pronunciation and communication skills</p>
+                  <span style={{ color: '#9ca3af', fontSize: '18px' }}>→</span>
+                </div>
+                
+                <div style={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '16px', padding: '32px 24px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' }} onClick={() => setCurrentSection('vocabulary')}>
+                  <div style={{ fontSize: '48px', marginBottom: '20px' }}>📖</div>
+                  <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>Vocabulary Builder</h3>
+                  <p style={{ fontSize: '15px', color: '#6b7280', lineHeight: '1.5', marginBottom: '16px' }}>Expand your professional and technical vocabulary</p>
+                  <span style={{ color: '#9ca3af', fontSize: '18px' }}>→</span>
+                </div>
+                
+                <div style={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '16px', padding: '32px 24px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)', position: 'relative' }} onClick={() => setCurrentSection('character-chat')}>
+                  <span style={{ position: 'absolute', top: '16px', left: '16px', backgroundColor: '#10b981', color: 'white', fontSize: '12px', padding: '4px 8px', borderRadius: '6px', fontWeight: '600' }}>New</span>
+                  <div style={{ fontSize: '48px', marginBottom: '20px' }}>🎭</div>
+                  <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>AI Characters</h3>
+                  <p style={{ fontSize: '15px', color: '#6b7280', lineHeight: '1.5', marginBottom: '16px' }}>Practice with realistic interview scenarios</p>
+                  <span style={{ color: '#9ca3af', fontSize: '18px' }}>→</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Stats Section */}
+            <div style={{ padding: '64px 32px', backgroundColor: '#f9fafb' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '32px', maxWidth: '800px', margin: '0 auto' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#2563eb', marginBottom: '8px' }}>10K+</div>
+                  <div style={{ color: '#6b7280', fontWeight: '500' }}>Practice Sessions</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#2563eb', marginBottom: '8px' }}>95%</div>
+                  <div style={{ color: '#6b7280', fontWeight: '500' }}>Success Rate</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#2563eb', marginBottom: '8px' }}>500+</div>
+                  <div style={{ color: '#6b7280', fontWeight: '500' }}>Questions</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#2563eb', marginBottom: '8px' }}>24/7</div>
+                  <div style={{ color: '#6b7280', fontWeight: '500' }}>AI Support</div>
+                </div>
+              </div>
             </div>
           </div>
         ) : currentSection === 'interview' && isInterviewActive ? (
-          <div className="interview-container">
+          <div style={{ background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)', minHeight: '100vh', padding: '20px' }}>
             <InterviewRoom sessionId={sessionId} userId={userId} interviewType={interviewType} company={selectedCompany} />
             <button 
               onClick={endInterview}
-              style={{
-                position: 'fixed',
-                top: '20px',
-                right: '20px',
-                padding: '12px 24px',
-                backgroundColor: '#f44336',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                zIndex: 1000,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
-              }}
+              style={{ position: 'fixed', top: '20px', right: '20px', padding: '12px 24px', backgroundColor: '#ef4444', color: 'white', borderRadius: '8px', fontWeight: '600', zIndex: 50, boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)', border: 'none', cursor: 'pointer', transition: 'all 0.2s' }}
             >
               ✕ End Interview
             </button>
           </div>
         ) : null}
-      </header>
+      </div>
     </div>
   );
 }

@@ -4,6 +4,17 @@ import MediaPipeFaceMonitor from './MediaPipeFaceMonitor';
 import VoiceRecorder from './VoiceRecorder';
 import AnalysisDisplay from './AnalysisDisplay';
 
+// Add CSS animation keyframes
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-10px); }
+    60% { transform: translateY(-5px); }
+  }
+`;
+document.head.appendChild(style);
+
 interface InterviewRoomProps {
   sessionId: string;
   userId: string;
@@ -335,82 +346,158 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
   if (showWelcome) {
     return (
       <div style={{
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        minHeight: '100vh',
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: '400px',
-        backgroundColor: '#1a1a1a',
-        borderRadius: '10px',
-        color: 'white',
-        textAlign: 'center',
-        padding: '40px'
+        padding: '15px'
       }}>
-        <div style={{ fontSize: '64px', marginBottom: '20px' }}>🎉</div>
-        <h2 style={{ color: '#4CAF50', marginBottom: '20px' }}>Welcome to Your AI Interview!</h2>
-        <div style={{ fontSize: '18px', lineHeight: '1.6', maxWidth: '600px' }}>
-          <p>📹 <strong>Camera:</strong> Position your face in the green guide</p>
-          <p>🎤 <strong>Microphone:</strong> Speak clearly when answering</p>
-          <p>🤖 <strong>AI Interviewer:</strong> Will ask you {maxQuestions} questions</p>
-          <p>📊 <strong>Real-time Feedback:</strong> Get instant analysis</p>
-        </div>
         <div style={{
-          marginTop: '30px',
-          padding: '15px 30px',
-          backgroundColor: '#2a2a2a',
-          borderRadius: '8px',
-          border: '2px solid #4CAF50'
+          background: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(20px)',
+          borderRadius: '20px',
+          padding: '25px',
+          maxWidth: '600px',
+          width: '100%',
+          textAlign: 'center',
+          color: 'white',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)'
         }}>
-          <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#4CAF50' }}>Interview Type: {interviewType.toUpperCase()}</div>
-          <div style={{ fontSize: '14px', color: '#ccc', marginTop: '5px' }}>Company Focus: {company}</div>
-        </div>
-        <div style={{ marginTop: '20px', color: '#FF9800' }}>
-          🔄 Preparing your first question...
-        </div>
-        <div style={{ marginTop: '15px', fontSize: '14px', color: 'hsla(36, 81%, 49%, 0.92)', textAlign: 'center', padding: '10px', backgroundColor: '#2a2a2a', borderRadius: '8px' }}>
-          ⚠️ <strong>Important:</strong> Click "Test Audio" first to enable voice in your browser!
-        </div>
-        <div style={{ marginTop: '15px', padding: '15px', backgroundColor: '#2a2a2a', borderRadius: '8px', fontSize: '12px', color: '#ccc' }}>
-          <div><strong>🔊 Audio Status:</strong></div>
-          <div>• Speech Synthesis: {typeof speechSynthesis !== 'undefined' ? '✅ Ready' : '❌ Not Available'}</div>
-          <div>• Voice Auto-Play: ✅ Enabled (Questions will be spoken automatically)</div>
-          <div>• Browser Support: {speechSynthesis?.getVoices()?.length > 0 ? '✅ Good' : '⚠️ Loading...'}</div>
-        </div>
-        <div style={{ marginTop: '15px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
-          <button
-            onClick={() => {
-              const testText = 'Hello! Audio test successful. Your AI interviewer is ready!';
-              speakQuestion(testText);
-            }}
-            style={{
-              padding: '12px 24px',
-              backgroundColor: '#2196F3',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              boxShadow: '0 4px 12px rgba(33, 150, 243, 0.3)'
-            }}
-          >
-            🔊 Test Audio & Enable Voice
-          </button>
-          <button
-            onClick={() => setVoiceEnabled(!voiceEnabled)}
-            style={{
-              padding: '12px 24px',
-              backgroundColor: voiceEnabled ? '#4CAF50' : '#f44336',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '16px',
-              fontWeight: 'bold'
-            }}
-          >
-            {voiceEnabled ? '🔊 Voice ON' : '🔇 Voice OFF'}
-          </button>
+          <div style={{ fontSize: '60px', marginBottom: '15px', animation: 'bounce 2s infinite' }}>🎉</div>
+          <h1 style={{
+            fontSize: '28px',
+            fontWeight: 'bold',
+            marginBottom: '20px',
+            background: 'linear-gradient(45deg, #4CAF50, #81C784)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+          }}>Welcome to Your AI Interview!</h1>
+          
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+            gap: '12px',
+            marginBottom: '20px'
+          }}>
+            {[
+              { icon: '📹', title: 'Camera', desc: 'Position your face in the green guide' },
+              { icon: '🎤', title: 'Microphone', desc: 'Speak clearly when answering' },
+              { icon: '🤖', title: 'AI Interviewer', desc: `Will ask you ${maxQuestions} questions` },
+              { icon: '📊', title: 'Real-time Feedback', desc: 'Get instant analysis' }
+            ].map((item, i) => (
+              <div key={i} style={{
+                background: 'rgba(255, 255, 255, 0.1)',
+                padding: '12px',
+                borderRadius: '12px',
+                border: '1px solid rgba(255, 255, 255, 0.2)'
+              }}>
+                <div style={{ fontSize: '24px', marginBottom: '6px' }}>{item.icon}</div>
+                <div style={{ fontWeight: 'bold', marginBottom: '4px', color: '#4CAF50', fontSize: '12px' }}>{item.title}</div>
+                <div style={{ fontSize: '11px', opacity: 0.9 }}>{item.desc}</div>
+              </div>
+            ))}
+          </div>
+          
+          <div style={{
+            background: 'linear-gradient(45deg, #4CAF50, #45a049)',
+            padding: '15px',
+            borderRadius: '12px',
+            marginBottom: '18px',
+            boxShadow: '0 6px 20px rgba(76, 175, 80, 0.3)'
+          }}>
+            <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '4px' }}>
+              Interview Type: {interviewType.toUpperCase()}
+            </div>
+            <div style={{ fontSize: '13px', opacity: 0.9 }}>Company Focus: {company}</div>
+          </div>
+          
+          <div style={{
+            background: 'rgba(255, 152, 0, 0.2)',
+            padding: '12px',
+            borderRadius: '10px',
+            marginBottom: '15px',
+            border: '1px solid rgba(255, 152, 0, 0.3)'
+          }}>
+            <div style={{ color: '#FF9800', fontWeight: 'bold', fontSize: '14px' }}>🔄 Preparing your first question...</div>
+          </div>
+          
+          <div style={{
+            background: 'rgba(255, 193, 7, 0.2)',
+            padding: '12px',
+            borderRadius: '10px',
+            marginBottom: '15px',
+            border: '1px solid rgba(255, 193, 7, 0.3)'
+          }}>
+            <div style={{ color: '#FFC107', fontWeight: 'bold', fontSize: '13px' }}>⚠️ Important: Click "Test Audio" first!</div>
+          </div>
+          
+          <div style={{
+            background: 'rgba(33, 150, 243, 0.2)',
+            padding: '15px',
+            borderRadius: '10px',
+            marginBottom: '18px',
+            border: '1px solid rgba(33, 150, 243, 0.3)'
+          }}>
+            <div style={{ fontWeight: 'bold', marginBottom: '10px', color: '#2196F3', fontSize: '14px' }}>🔊 Audio Status</div>
+            <div style={{ textAlign: 'left', fontSize: '12px', lineHeight: '1.6' }}>
+              <div>• Speech: {typeof speechSynthesis !== 'undefined' ? '✅ Ready' : '❌ Not Available'}</div>
+              <div>• Auto-Play: ✅ Enabled</div>
+              <div>• Browser: {speechSynthesis?.getVoices()?.length > 0 ? '✅ Good' : '⚠️ Loading...'}</div>
+            </div>
+          </div>
+          
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => {
+                const testText = 'Hello! Audio test successful. Your AI interviewer is ready!';
+                speakQuestion(testText);
+              }}
+              style={{
+                background: 'linear-gradient(45deg, #2196F3, #1976D2)',
+                color: 'white',
+                border: 'none',
+                padding: '12px 20px',
+                borderRadius: '10px',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                boxShadow: '0 6px 20px rgba(33, 150, 243, 0.3)',
+                transition: 'all 0.3s ease',
+                transform: 'translateY(0)'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+              onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+            >
+              🔊 Test Audio
+            </button>
+            <button
+              onClick={() => setVoiceEnabled(!voiceEnabled)}
+              style={{
+                background: voiceEnabled 
+                  ? 'linear-gradient(45deg, #4CAF50, #45a049)' 
+                  : 'linear-gradient(45deg, #f44336, #d32f2f)',
+                color: 'white',
+                border: 'none',
+                padding: '12px 20px',
+                borderRadius: '10px',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                boxShadow: voiceEnabled 
+                  ? '0 6px 20px rgba(76, 175, 80, 0.3)' 
+                  : '0 6px 20px rgba(244, 67, 54, 0.3)',
+                transition: 'all 0.3s ease',
+                transform: 'translateY(0)'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+              onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+            >
+              {voiceEnabled ? '🔊 Voice ON' : '🔇 Voice OFF'}
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -574,151 +661,182 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
   }
   
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: '20px', height: '100vh', padding: '20px' }}>
-      {/* Left Side - Camera */}
-      <div style={{ backgroundColor: '#2a2a2a', borderRadius: '12px', padding: '20px' }}>
-        <h3 style={{ color: '#4CAF50', marginBottom: '15px' }}>📹 Camera Monitor</h3>
-        <MediaPipeFaceMonitor onEyeContactUpdate={setEyeContactScore} />
-        <div style={{ marginTop: '15px', textAlign: 'center', fontSize: '14px' }}>
-          <div style={{ color: eyeContactScore > 70 ? '#4CAF50' : '#FF9800' }}>
-            Eye Contact: {eyeContactScore}%
-          </div>
-        </div>
-      </div>
-      
-      {/* Right Side - Question & Content */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        {/* Question Section */}
-        <div style={{ backgroundColor: '#2a2a2a', borderRadius: '12px', padding: '20px', flex: '1' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-            <h2 style={{ color: '#4CAF50' }}>Question {questionCount} of {maxQuestions}</h2>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-              <button
-                onClick={() => speakQuestion(currentQuestion)}
-                disabled={isSpeaking}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: isSpeaking ? '#666' : '#2196F3',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: isSpeaking ? 'not-allowed' : 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                {isSpeaking ? '🔊 Speaking...' : '🔁 Repeat'}
-              </button>
-              <div style={{
-                padding: '8px 16px',
-                backgroundColor: '#4CAF50',
-                color: 'white',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: 'bold'
-              }}>
-                🔊 AUTO
-              </div>
-              <div style={{ 
-                backgroundColor: '#4CAF50', 
-                color: 'white', 
-                padding: '8px 16px', 
-                borderRadius: '20px', 
-                fontSize: '14px',
-                fontWeight: 'bold'
-              }}>
-                {Math.round((questionCount / maxQuestions) * 100)}%
-              </div>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px', minHeight: '100vh', padding: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: '20px' }}>
+        {/* Left Side - Camera */}
+        <div style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          borderRadius: '16px',
+          padding: '20px',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          height: 'fit-content'
+        }}>
+          <h3 style={{ color: '#10b981', fontSize: '18px', fontWeight: '600', marginBottom: '16px', margin: 0 }}>📹 Camera Monitor</h3>
+          <MediaPipeFaceMonitor onEyeContactUpdate={setEyeContactScore} />
+          <div style={{ marginTop: '16px', textAlign: 'center', fontSize: '14px' }}>
+            <div style={{ color: eyeContactScore > 70 ? '#10b981' : '#f59e0b', fontWeight: '500' }}>
+              Eye Contact: {eyeContactScore}%
             </div>
           </div>
-          <p style={{ fontSize: '20px', lineHeight: '1.6', color: 'white' }}>{currentQuestion}</p>
-          {!analysis && (
-            <div style={{ 
-              marginTop: '15px', 
-              padding: '15px', 
-              backgroundColor: '#1a1a1a', 
-              borderRadius: '8px',
-              fontSize: '14px',
-              color: '#4CAF50',
-              border: '1px solid #4CAF50'
-            }}>
-              🎤 <strong>Tip:</strong> Click the microphone below and speak your answer clearly.
-            </div>
-          )}
         </div>
         
-        {/* Voice Recorder */}
-        <div style={{ backgroundColor: '#2a2a2a', borderRadius: '12px', padding: '20px' }}>
-          <VoiceRecorder 
-            onTranscript={handleAnswerSubmit}
-            isRecording={isRecording}
-            setIsRecording={setIsRecording}
-          />
-          
-          {!analysis && !isAnalyzing && (
-            <div style={{ marginTop: '15px', textAlign: 'center', display: 'flex', gap: '10px', justifyContent: 'center' }}>
-              <button
-                onClick={() => {
-                  const textAnswer = prompt('Enter your answer:');
-                  if (textAnswer && textAnswer.trim()) {
-                    handleAnswerSubmit(textAnswer.trim());
-                  }
-                }}
-                style={{
-                  padding: '12px 24px',
-                  backgroundColor: '#2196F3',
+        {/* Right Side - Question & Content */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Question Section */}
+          <div style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            borderRadius: '16px',
+            padding: '24px',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+              <h2 style={{ color: '#10b981', fontSize: '24px', fontWeight: 'bold', margin: 0 }}>Question {questionCount} of {maxQuestions}</h2>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => speakQuestion(currentQuestion)}
+                  disabled={isSpeaking}
+                  style={{
+                    padding: '10px 16px',
+                    backgroundColor: isSpeaking ? '#6b7280' : '#3b82f6',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: isSpeaking ? 'not-allowed' : 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {isSpeaking ? '🔊 Speaking...' : '🔁 Repeat'}
+                </button>
+                <div style={{
+                  padding: '8px 12px',
+                  backgroundColor: '#10b981',
                   color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: '600'
+                }}>
+                  🔊 AUTO
+                </div>
+                <div style={{ 
+                  backgroundColor: '#3b82f6', 
+                  color: 'white', 
+                  padding: '8px 12px', 
+                  borderRadius: '20px', 
                   fontSize: '14px',
                   fontWeight: '600'
-                }}
-              >
-                ✍️ Type Answer
-              </button>
-              
-              <button
-                onClick={() => {
-                  const answer = prompt('Quick Submit - Enter your answer:');
-                  if (answer && answer.trim()) {
-                    handleAnswerSubmit(answer.trim());
-                  }
-                }}
-                style={{
-                  padding: '12px 24px',
-                  backgroundColor: '#4CAF50',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)'
-                }}
-              >
-                🚀 Quick Submit
-              </button>
-            </div>
-          )}
-        </div>
-        
-        
-        {/* Analysis Section */}
-        {(isAnalyzing || analysis) && (
-          <div style={{ backgroundColor: '#2a2a2a', borderRadius: '12px', padding: '20px' }}>
-            {isAnalyzing && (
-              <div style={{
-                textAlign: 'center',
-                padding: '20px',
-                border: '2px solid #FF9800',
-                borderRadius: '8px',
-                backgroundColor: '#1a1a1a'
-              }}>
-                <div style={{ color: '#FF9800', fontSize: '18px' }}>
-                  🤖 Analyzing your answer...
+                }}>
+                  {Math.round((questionCount / maxQuestions) * 100)}%
                 </div>
               </div>
+            </div>
+            <p style={{ fontSize: '18px', lineHeight: '1.6', color: 'white', marginBottom: '16px' }}>{currentQuestion}</p>
+            {!analysis && (
+              <div style={{ 
+                marginTop: '16px', 
+                padding: '16px', 
+                backgroundColor: 'rgba(16, 185, 129, 0.1)', 
+                borderRadius: '8px',
+                fontSize: '14px',
+                color: '#10b981',
+                border: '1px solid rgba(16, 185, 129, 0.3)'
+              }}>
+                🎤 <strong>Tip:</strong> Click the microphone below and speak your answer clearly.
+              </div>
             )}
+          </div>
+        
+          {/* Voice Recorder */}
+          <div style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            borderRadius: '16px',
+            padding: '24px',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}>
+            <VoiceRecorder 
+              onTranscript={handleAnswerSubmit}
+              isRecording={isRecording}
+              setIsRecording={setIsRecording}
+            />
+            
+            {!analysis && !isAnalyzing && (
+              <div style={{ marginTop: '20px', textAlign: 'center', display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => {
+                    const textAnswer = prompt('Enter your answer:');
+                    if (textAnswer && textAnswer.trim()) {
+                      handleAnswerSubmit(textAnswer.trim());
+                    }
+                  }}
+                  style={{
+                    padding: '12px 20px',
+                    backgroundColor: '#3b82f6',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    transition: 'all 0.2s',
+                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+                  }}
+                >
+                  ✍️ Type Answer
+                </button>
+                
+                <button
+                  onClick={() => {
+                    const answer = prompt('Quick Submit - Enter your answer:');
+                    if (answer && answer.trim()) {
+                      handleAnswerSubmit(answer.trim());
+                    }
+                  }}
+                  style={{
+                    padding: '12px 20px',
+                    backgroundColor: '#10b981',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    transition: 'all 0.2s',
+                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+                  }}
+                >
+                  🚀 Quick Submit
+                </button>
+              </div>
+            )}
+          </div>
+        
+        
+          {/* Analysis Section */}
+          {(isAnalyzing || analysis) && (
+            <div style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              borderRadius: '16px',
+              padding: '24px',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)'
+            }}>
+              {isAnalyzing && (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '24px',
+                  border: '2px solid #f59e0b',
+                  borderRadius: '12px',
+                  backgroundColor: 'rgba(245, 158, 11, 0.1)'
+                }}>
+                  <div style={{ color: '#f59e0b', fontSize: '18px', fontWeight: '500' }}>
+                    🤖 Analyzing your answer...
+                  </div>
+                </div>
+              )}
             {analysis && (
               <div style={{ color: 'white' }}>
                 <h3 style={{ color: '#4CAF50', marginBottom: '20px' }}>📊 AI Feedback</h3>
@@ -857,124 +975,117 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
           </div>
         )}
         
-        {/* Next Question Controls */}
-        {analysis && questionCount < maxQuestions && (
-          <div style={{ backgroundColor: '#2a2a2a', borderRadius: '12px', padding: '20px' }}>
-          {/* Timer Section */}
-          {timeLeft > 0 && (
+          {/* Next Question Controls */}
+          {analysis && questionCount < maxQuestions && (
             <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '16px',
-              padding: '16px',
-              backgroundColor: '#2a2a2a',
-              borderRadius: '12px',
-              border: '1px solid #444',
-              marginBottom: '16px',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              borderRadius: '16px',
+              padding: '24px',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)'
             }}>
+              {/* Timer Section */}
+              {timeLeft > 0 && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '16px',
+                  padding: '16px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  marginBottom: '20px'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    color: timeLeft <= 10 ? '#ef4444' : '#10b981',
+                    fontSize: '16px',
+                    fontWeight: '600'
+                  }}>
+                    <span>⏱️</span>
+                    <span>Next in {timeLeft}s</span>
+                  </div>
+                  
+                  <button
+                    onClick={isPaused ? resumeTimer : pauseTimer}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: isPaused ? '#10b981' : '#f59e0b',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {isPaused ? '▶️ Resume' : '⏸️ Pause'}
+                  </button>
+                </div>
+              )}
+              
+              {/* Action Buttons */}
               <div style={{
                 display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                color: timeLeft <= 10 ? '#f44336' : '#4CAF50',
-                fontSize: '16px',
-                fontWeight: '600'
+                gap: '12px',
+                justifyContent: 'center',
+                flexWrap: 'wrap'
               }}>
-                <span>⏱️</span>
-                <span>Next in {timeLeft}s</span>
+                <button 
+                  onClick={() => {
+                    speechSynthesis.cancel();
+                    stopTimer();
+                    setAnalysis(null);
+                    if (questionCount < maxQuestions) {
+                      setQuestionCount(prev => prev + 1);
+                      generateQuestion();
+                    }
+                  }}
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: '#10b981',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+                  }}
+                >
+                  Next Question →
+                </button>
+                
+                <button 
+                  onClick={() => {
+                    speechSynthesis.cancel();
+                    stopTimer();
+                    setAnalysis(null);
+                    generateQuestion();
+                  }}
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  🔄 Retry Question
+                </button>
               </div>
-              
-              <button
-                onClick={isPaused ? resumeTimer : pauseTimer}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: isPaused ? '#4CAF50' : '#FF9800',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600'
-                }}
-              >
-                {isPaused ? '▶️ Resume' : '⏸️ Pause'}
-              </button>
             </div>
           )}
-          
-          {/* Action Buttons */}
-          <div style={{
-            display: 'flex',
-            gap: '12px',
-            justifyContent: 'center',
-            padding: '20px',
-            backgroundColor: '#2a2a2a',
-            borderRadius: '12px',
-            border: '1px solid #444',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
-          }}>
-            <button 
-              onClick={() => {
-                speechSynthesis.cancel();
-                stopTimer();
-                setAnalysis(null);
-                if (questionCount < maxQuestions) {
-                  setQuestionCount(prev => prev + 1);
-                  generateQuestion();
-                }
-              }}
-              style={{
-                padding: '12px 24px',
-                backgroundColor: '#4CAF50',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)'
-              }}
-              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#45a049'}
-              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#4CAF50'}
-            >
-              Next Question →
-            </button>
-            
-            <button 
-              onClick={() => {
-                speechSynthesis.cancel();
-                stopTimer();
-                setAnalysis(null);
-                generateQuestion();
-              }}
-              style={{
-                padding: '12px 24px',
-                backgroundColor: '#1a1a1a',
-                color: '#ccc',
-                border: '1px solid #555',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = '#333';
-                e.currentTarget.style.borderColor = '#666';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = '#1a1a1a';
-                e.currentTarget.style.borderColor = '#555';
-              }}
-            >
-              🔄 Retry Question
-            </button>
-          </div>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

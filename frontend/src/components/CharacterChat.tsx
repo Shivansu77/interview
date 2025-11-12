@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
-import './CharacterChat.css';
 
 
 
@@ -423,10 +422,12 @@ const CharacterChat: React.FC = () => {
       maxWidth: '1200px',
       margin: '0 auto',
       padding: '20px',
-      backgroundColor: '#1a1a1a',
-      borderRadius: '12px',
+      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+      borderRadius: '16px',
       color: 'white',
-      minHeight: '80vh'
+      minHeight: '80vh',
+      backdropFilter: 'blur(10px)',
+      border: '1px solid rgba(255, 255, 255, 0.1)'
     }}>
       <div style={{
         display: 'flex',

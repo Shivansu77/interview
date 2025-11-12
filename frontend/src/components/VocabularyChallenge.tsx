@@ -143,19 +143,24 @@ const VocabularyChallenge: React.FC<VocabularyProps> = ({ onBack }) => {
       maxWidth: '1200px',
       margin: '0 auto',
       padding: '20px',
-      backgroundColor: '#1a1a1a',
-      borderRadius: '12px',
-      color: 'white'
+      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+      borderRadius: '16px',
+      color: 'white',
+      backdropFilter: 'blur(10px)',
+      border: '1px solid rgba(255, 255, 255, 0.1)'
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-        <h1 style={{ color: '#4CAF50' }}>📚 Vocabulary Challenge</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', padding: '20px 0' }}>
+        <h1 style={{ color: '#10b981', fontSize: '28px', fontWeight: 'bold', margin: 0 }}>📚 Vocabulary Challenge</h1>
         <button onClick={onBack} style={{
-          padding: '10px 20px',
-          backgroundColor: '#2196F3',
+          padding: '12px 20px',
+          backgroundColor: '#3b82f6',
           color: 'white',
           border: 'none',
           borderRadius: '8px',
-          cursor: 'pointer'
+          cursor: 'pointer',
+          fontWeight: '500',
+          transition: 'all 0.2s',
+          boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
         }}>
           ← Back
         </button>
