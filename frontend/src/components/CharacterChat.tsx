@@ -64,8 +64,6 @@ const CharacterChat: React.FC = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voiceMode, setVoiceMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
 
@@ -418,11 +416,7 @@ const CharacterChat: React.FC = () => {
     }
   };
 
-  const renderMessageText = (text: string) => {
-    return text.replace(/\[([^\]]+)\]\(pplx:\/\/action\/translate\)/g, 
-      '<span class="highlighted-word" title="Click for translation">$1</span>'
-    );
-  };
+
 
   return (
     <div style={{

@@ -14,7 +14,6 @@ const EnglishPractice: React.FC<EnglishPracticeProps> = ({ onBack }) => {
   const [transcription, setTranscription] = useState('');
   const [recordingStep, setRecordingStep] = useState<'ready' | 'recording' | 'processing' | 'complete'>('ready');
   
-  const recognitionRef = useRef<any>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 

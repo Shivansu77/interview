@@ -1,46 +1,58 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const http = require('http');
-const socketIo = require('socket.io');
 require('dotenv').config();
+const http = require('http');
+const express = require('express');
+const routes = require('./routes');
 
-// Import routes
-const authRoutes = require('./routes/auth');
-const interviewRoutes = require('./routes/interview');
-const aiRoutes = require('./routes/ai');
-const learnRoutes = require('./routes/learn');
-const englishRoutes = require('./routes/english');
-
+// Create Express app
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server, {
-  cors: { origin: "http://localhost:3000", methods: ["GET", "POST"] }
+
+// Enable CORS
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
 });
 
-// Middleware
-app.use(cors());
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+// Parse JSON request body
+app.use(express.json({ limit: '10mb' }));
 
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/interview', interviewRoutes);
-app.use('/api/ai', aiRoutes);
-app.use('/api/learn', learnRoutes);
-app.use('/api/english', englishRoutes);
+// Parse urlencoded request body
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// API routes
+app.use('/api', routes);
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
 // Socket.io for real-time features
+const socketIo = require('socket.io');
+const io = socketIo(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
+
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
   
   socket.on('join-interview', (roomId) => {
     socket.join(roomId);
+    console.log(`User ${socket.id} joined room ${roomId}`);
   });
   
   socket.on('face-data', (data) => {
@@ -52,33 +64,57 @@ io.on('connection', (socket) => {
   });
 });
 
-// MongoDB connection
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.error('MongoDB connection error:', err));
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    error: 'Route not found'
+  });
+});
+
+// Basic error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    error: 'Something went wrong!'
+  });
+});
 
 const PORT = process.env.PORT || 5003;
 
-// Graceful shutdown handling
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down gracefully');
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (err) => {
+  console.error('UNHANDLED REJECTION! 💥 Shutting down...', err);
   server.close(() => {
-    console.log('Process terminated');
-    process.exit(0);
+    process.exit(1);
   });
 });
 
-process.on('SIGINT', () => {
-  console.log('SIGINT received, shutting down gracefully');
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION! 💥 Shutting down...', err);
   server.close(() => {
-    console.log('Process terminated');
-    process.exit(0);
+    process.exit(1);
   });
 });
+
+// Graceful shutdown handling
+const gracefulShutdown = (signal) => {
+  console.log(`${signal} received, shutting down gracefully`);
+  server.close(() => {
+    console.log('HTTP server closed');
+    process.exit(0);
+  });
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 // Start server
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 }).on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
     console.log(`Port ${PORT} is already in use. Please kill the existing process or use a different port.`);
@@ -88,3 +124,5 @@ server.listen(PORT, () => {
     console.error('Server error:', err);
   }
 });
+
+module.exports = { app, server, io };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 interface LearningRoadmapProps {
   field: 'webdev' | 'datascience' | 'ml' | 'behavioral';
@@ -17,12 +17,7 @@ const LearningRoadmap: React.FC<LearningRoadmapProps> = ({
   const [progress, setProgress] = useState<any>({});
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchRoadmap();
-    fetchProgress();
-  }, [field, level]);
-
-  const fetchRoadmap = async () => {
+  const fetchRoadmap = useCallback(async () => {
     try {
       const response = await fetch(`http://localhost:5003/api/learn/roadmap/${field}?level=${level}`);
       const data = await response.json();
@@ -32,9 +27,9 @@ const LearningRoadmap: React.FC<LearningRoadmapProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [field, level]);
 
-  const fetchProgress = async () => {
+  const fetchProgress = useCallback(async () => {
     try {
       const response = await fetch(`http://localhost:5003/api/learn/progress/${userId}`);
       const data = await response.json();
@@ -42,7 +37,12 @@ const LearningRoadmap: React.FC<LearningRoadmapProps> = ({
     } catch (error) {
       console.error('Error fetching progress:', error);
     }
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    fetchRoadmap();
+    fetchProgress();
+  }, [fetchRoadmap, fetchProgress]);
 
   const getTopicProgress = (topic: string) => {
     const topicQuestions = Object.keys(progress).filter(key => key.startsWith(topic));

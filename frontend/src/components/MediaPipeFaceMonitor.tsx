@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 
 interface MediaPipeFaceMonitorProps {
   onEyeContactUpdate: (score: number) => void;
@@ -20,17 +20,7 @@ const MediaPipeFaceMonitor: React.FC<MediaPipeFaceMonitorProps> = ({ onEyeContac
   const [isActive, setIsActive] = useState(false);
   const faceDetectionRef = useRef<any>(null);
 
-  useEffect(() => {
-    initializeMediaPipe();
-    
-    return () => {
-      if (faceDetectionRef.current) {
-        faceDetectionRef.current.close();
-      }
-    };
-  }, []);
-
-  const initializeMediaPipe = async () => {
+  const initializeMediaPipe = useCallback(async () => {
     try {
       // Wait for MediaPipe to load
       const checkMediaPipe = () => {
@@ -80,7 +70,17 @@ const MediaPipeFaceMonitor: React.FC<MediaPipeFaceMonitorProps> = ({ onEyeContac
       console.error('MediaPipe initialization failed:', error);
       setIsActive(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    initializeMediaPipe();
+    
+    return () => {
+      if (faceDetectionRef.current) {
+        faceDetectionRef.current.close();
+      }
+    };
+  }, [initializeMediaPipe]);
 
   const onResults = (results: any) => {
     const canvas = canvasRef.current;

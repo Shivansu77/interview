@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 interface SpeechPracticeProps {
   topic: string;
@@ -44,23 +44,7 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
   const recognitionRef = useRef<any>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  useEffect(() => {
-    fetchQuestions();
-    startWebcam();
-    return () => {
-      if (videoStream) {
-        videoStream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, [topic, field, level, selectedCompany]);
-
-  useEffect(() => {
-    if (questions.length > 0 && !showAnswer) {
-      fetchAnswer(questions[currentQuestionIndex].question);
-    }
-  }, [currentQuestionIndex, questions, showAnswer]);
-
-  const fetchQuestions = async () => {
+  const fetchQuestions = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await fetch(`http://localhost:5003/api/learn/topic/${encodeURIComponent(topic)}/questions?level=${level}&field=${field}&company=${selectedCompany}`);
@@ -71,9 +55,9 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [topic, field, level, selectedCompany]);
 
-  const fetchAnswer = async (question: string) => {
+  const fetchAnswer = useCallback(async (question: string) => {
     try {
       const response = await fetch('http://localhost:5003/api/learn/question/answer', {
         method: 'POST',
@@ -90,48 +74,24 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
     } catch (error) {
       console.error('Error fetching answer:', error);
     }
-  };
+  }, [level, field, topic, selectedCompany]);
 
-  const startRecording = () => {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
-      
-      recognitionRef.current.continuous = true;
-      recognitionRef.current.interimResults = true;
-      recognitionRef.current.lang = 'en-US';
-      recognitionRef.current.maxAlternatives = 3;
+  useEffect(() => {
+    fetchQuestions();
+    startWebcam();
+    return () => {
+      if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [fetchQuestions, videoStream]);
 
-      recognitionRef.current.onresult = (event: any) => {
-        let finalTranscript = '';
-        let interimTranscript = '';
-        
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            finalTranscript += transcript;
-          } else {
-            interimTranscript += transcript;
-          }
-        }
-        
-        // Process both final and interim results for real-time highlighting
-        const fullTranscript = finalTranscript + interimTranscript;
-        if (fullTranscript.trim()) {
-          processSpokenText(fullTranscript.toLowerCase());
-        }
-      };
-
-      recognitionRef.current.onend = () => {
-        if (isRecording) {
-          recognitionRef.current.start();
-        }
-      };
-
-      recognitionRef.current.start();
-      setIsRecording(true);
+  useEffect(() => {
+    if (questions.length > 0 && !showAnswer) {
+      fetchAnswer(questions[currentQuestionIndex].question);
     }
-  };
+  }, [currentQuestionIndex, questions, showAnswer, fetchAnswer]);
+
 
   const stopRecording = () => {
     if (recognitionRef.current) {

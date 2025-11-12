@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import io from 'socket.io-client';
 import MediaPipeFaceMonitor from './MediaPipeFaceMonitor';
 import VoiceRecorder from './VoiceRecorder';
@@ -15,7 +15,7 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
   const [currentQuestion, setCurrentQuestion] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [eyeContactScore, setEyeContactScore] = useState(0);
-  const [currentTranscript, setCurrentTranscript] = useState('');
+
 
   const [questionCount, setQuestionCount] = useState(1);
   const [analysis, setAnalysis] = useState<any>(null);
@@ -33,6 +33,35 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
   const maxQuestions = 5;
   const socketRef = useRef<any>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const generateQuestion = useCallback(async () => {
+    try {
+      // Stop any ongoing speech first
+      speechSynthesis.cancel();
+      
+      const response = await fetch('http://localhost:5003/api/ai/generate-question', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          type: interviewType, 
+          company: company,
+          difficulty: 'medium',
+          context: 'interview',
+          sessionId: sessionId
+        })
+      });
+      const data = await response.json();
+      setCurrentQuestion(data.question);
+      
+      // Always speak the question automatically
+      setTimeout(() => {
+        console.log('🤖 Auto-speaking question:', data.question);
+        speakQuestion(data.question);
+      }, 500);
+    } catch (error) {
+      console.error('Error generating question:', error);
+    }
+  }, [interviewType, company]);
 
   useEffect(() => {
     socketRef.current = io('http://localhost:5003');
@@ -77,35 +106,7 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
       stopTimer();
       socketRef.current?.disconnect();
     };
-  }, [sessionId]);
-
-  const generateQuestion = async () => {
-    try {
-      // Stop any ongoing speech first
-      speechSynthesis.cancel();
-      
-      const response = await fetch('http://localhost:5003/api/ai/generate-question', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          type: interviewType, 
-          company: company,
-          difficulty: 'medium',
-          context: 'interview'
-        })
-      });
-      const data = await response.json();
-      setCurrentQuestion(data.question);
-      
-      // Always speak the question automatically
-      setTimeout(() => {
-        console.log('🤖 Auto-speaking question:', data.question);
-        speakQuestion(data.question);
-      }, 500);
-    } catch (error) {
-      console.error('Error generating question:', error);
-    }
-  };
+  }, [sessionId, hasGeneratedFirst, generateQuestion]);
 
   const cleanTextForSpeech = (text: string): string => {
     return text
@@ -718,7 +719,141 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
                 </div>
               </div>
             )}
-            <AnalysisDisplay analysis={analysis} />
+            {analysis && (
+              <div style={{ color: 'white' }}>
+                <h3 style={{ color: '#4CAF50', marginBottom: '20px' }}>📊 AI Feedback</h3>
+                
+                {/* Spoken Text Display */}
+                {analysis.spokenText && (
+                  <div style={{
+                    backgroundColor: '#1a1a1a',
+                    padding: '15px',
+                    borderRadius: '8px',
+                    marginBottom: '20px',
+                    border: '1px solid #444'
+                  }}>
+                    <h4 style={{ color: '#2196F3', marginBottom: '10px' }}>🎤 Your Response</h4>
+                    <p style={{ fontSize: '16px', lineHeight: '1.5', color: '#fff' }}>
+                      {analysis.spokenText}
+                    </p>
+                    {analysis.wordCount && (
+                      <div style={{ marginTop: '10px', fontSize: '14px', color: '#ccc' }}>
+                        📝 {analysis.wordCount} words • 🔧 {analysis.technicalTerms || 0} technical terms
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Score Grid */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  gap: '15px',
+                  marginBottom: '20px'
+                }}>
+                  <div style={{
+                    backgroundColor: '#1a1a1a',
+                    padding: '15px',
+                    borderRadius: '8px',
+                    textAlign: 'center',
+                    border: `2px solid ${analysis.contentScore >= 7 ? '#4CAF50' : analysis.contentScore >= 5 ? '#FF9800' : '#f44336'}`
+                  }}>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: analysis.contentScore >= 7 ? '#4CAF50' : analysis.contentScore >= 5 ? '#FF9800' : '#f44336' }}>
+                      {analysis.contentScore}/10
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#ccc' }}>📝 Content</div>
+                  </div>
+                  
+                  <div style={{
+                    backgroundColor: '#1a1a1a',
+                    padding: '15px',
+                    borderRadius: '8px',
+                    textAlign: 'center',
+                    border: `2px solid ${analysis.clarityScore >= 7 ? '#4CAF50' : analysis.clarityScore >= 5 ? '#FF9800' : '#f44336'}`
+                  }}>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: analysis.clarityScore >= 7 ? '#4CAF50' : analysis.clarityScore >= 5 ? '#FF9800' : '#f44336' }}>
+                      {analysis.clarityScore}/10
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#ccc' }}>🗣️ Clarity</div>
+                  </div>
+                  
+                  <div style={{
+                    backgroundColor: '#1a1a1a',
+                    padding: '15px',
+                    borderRadius: '8px',
+                    textAlign: 'center',
+                    border: `2px solid ${analysis.completenessScore >= 7 ? '#4CAF50' : analysis.completenessScore >= 5 ? '#FF9800' : '#f44336'}`
+                  }}>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: analysis.completenessScore >= 7 ? '#4CAF50' : analysis.completenessScore >= 5 ? '#FF9800' : '#f44336' }}>
+                      {analysis.completenessScore}/10
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#ccc' }}>✅ Completeness</div>
+                  </div>
+                </div>
+                
+                {/* Feedback */}
+                <div style={{
+                  backgroundColor: '#1a1a1a',
+                  padding: '15px',
+                  borderRadius: '8px',
+                  marginBottom: '15px',
+                  border: '1px solid #444'
+                }}>
+                  <h4 style={{ color: '#FF9800', marginBottom: '10px' }}>💬 AI Feedback</h4>
+                  <p style={{ fontSize: '16px', lineHeight: '1.5' }}>{analysis.feedback}</p>
+                </div>
+                
+                {/* Improvements */}
+                <div style={{
+                  backgroundColor: '#1a1a1a',
+                  padding: '15px',
+                  borderRadius: '8px',
+                  marginBottom: '15px',
+                  border: '1px solid #444'
+                }}>
+                  <h4 style={{ color: '#2196F3', marginBottom: '10px' }}>🔧 Improvements</h4>
+                  <p style={{ fontSize: '16px', lineHeight: '1.5' }}>{analysis.corrections}</p>
+                </div>
+                
+                {/* Suggested Answer */}
+                <div style={{
+                  backgroundColor: '#1a1a1a',
+                  padding: '15px',
+                  borderRadius: '8px',
+                  border: '1px solid #444'
+                }}>
+                  <h4 style={{ color: '#4CAF50', marginBottom: '10px' }}>💡 Suggested Approach</h4>
+                  <p style={{ fontSize: '16px', lineHeight: '1.5' }}>{analysis.betterAnswer}</p>
+                </div>
+                
+                {/* Speech Analysis */}
+                {analysis.speechAnalysis && (
+                  <div style={{
+                    backgroundColor: '#1a1a1a',
+                    padding: '15px',
+                    borderRadius: '8px',
+                    marginTop: '15px',
+                    border: '1px solid #444'
+                  }}>
+                    <h4 style={{ color: '#9C27B0', marginBottom: '10px' }}>🎯 Speech Analysis</h4>
+                    <div style={{ marginBottom: '10px' }}>
+                      <span style={{ color: '#4CAF50', fontWeight: 'bold' }}>Accuracy: {analysis.speechAnalysis.accuracy}%</span>
+                      <span style={{ color: '#ccc', marginLeft: '20px' }}>({analysis.speechAnalysis.correctWords}/{analysis.speechAnalysis.totalWords} words correct)</span>
+                    </div>
+                    {analysis.speechAnalysis.errors.length > 0 && (
+                      <div>
+                        <div style={{ color: '#f44336', marginBottom: '10px' }}>Pronunciation Issues:</div>
+                        {analysis.speechAnalysis.errors.slice(0, 5).map((error: any, index: number) => (
+                          <div key={index} style={{ fontSize: '14px', color: '#ccc', marginBottom: '5px' }}>
+                            • Expected: "{error.expected}" → Heard: "{error.actual}" ({error.type})
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
         

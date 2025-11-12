@@ -13,25 +13,38 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
 }) => {
   const [transcript, setTranscript] = useState('');
   const [recordingTime, setRecordingTime] = useState(0);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isProcessing] = useState(false);
   const recognitionRef = useRef<any>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isRecordingRef = useRef(false);
 
   useEffect(() => {
     return () => {
       // Cleanup on unmount
+      console.log('VoiceRecorder unmounting, cleaning up...');
+      
+      isRecordingRef.current = false;
+      
       if (recordingTimerRef.current) {
         clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
       }
+      
       if (recognitionRef.current) {
         try {
-          recognitionRef.current.stop();
+          recognitionRef.current.abort();
           recognitionRef.current = null;
         } catch (error) {
           console.log('Cleanup error on unmount:', error);
+        }
+      }
+      
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+        try {
+          mediaRecorderRef.current.stop();
+        } catch (error) {
+          console.log('Media recorder cleanup error:', error);
         }
       }
     };
@@ -98,57 +111,106 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
     const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
     recognitionRef.current = new SpeechRecognition();
     
+    // Enhanced settings for continuous recording
     recognitionRef.current.continuous = true;
-    recognitionRef.current.interimResults = false;
+    recognitionRef.current.interimResults = true;
     recognitionRef.current.lang = 'en-US';
     recognitionRef.current.maxAlternatives = 1;
 
+    let restartTimeout: NodeJS.Timeout;
+    let finalTranscript = '';
+
     recognitionRef.current.onresult = (event: any) => {
-      let finalTranscript = '';
+      let interimTranscript = '';
       
-      for (let i = 0; i < event.results.length; i++) {
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript + ' ';
+          finalTranscript += transcript + ' ';
+        } else {
+          interimTranscript += transcript;
         }
       }
       
-      if (finalTranscript.trim()) {
-        setTranscript(prev => {
-          const newText = prev ? prev + ' ' + finalTranscript.trim() : finalTranscript.trim();
-          return newText;
-        });
+      // Update transcript with both final and interim results
+      const fullTranscript = finalTranscript + interimTranscript;
+      if (fullTranscript.trim()) {
+        setTranscript(fullTranscript.trim());
       }
     };
     
     recognitionRef.current.onend = () => {
-      // Only restart if still recording and recognition wasn't manually stopped
-      if (isRecordingRef.current && recognitionRef.current) {
-        setTimeout(() => {
+      console.log('Speech recognition ended, restarting if still recording...');
+      
+      // Clear any existing restart timeout
+      if (restartTimeout) {
+        clearTimeout(restartTimeout);
+      }
+      
+      // Only restart if still recording
+      if (isRecordingRef.current) {
+        restartTimeout = setTimeout(() => {
           try {
             if (recognitionRef.current && isRecordingRef.current) {
+              console.log('Restarting speech recognition...');
               recognitionRef.current.start();
             }
           } catch (error) {
             console.log('Recognition restart failed:', error);
+            // Try again after a longer delay
+            if (isRecordingRef.current) {
+              setTimeout(() => {
+                try {
+                  if (recognitionRef.current && isRecordingRef.current) {
+                    recognitionRef.current.start();
+                  }
+                } catch (e) {
+                  console.log('Second restart attempt failed:', e);
+                }
+              }, 1000);
+            }
           }
         }, 100);
       }
     };
 
     recognitionRef.current.onerror = (event: any) => {
+      console.log('Speech recognition error:', event.error);
+      
       if (event.error === 'not-allowed') {
         alert('Microphone access denied. Please allow microphone access and try again.');
         setIsRecording(false);
+        isRecordingRef.current = false;
         return;
       }
+      
       if (event.error === 'aborted') {
         return; // Silent - this is normal when stopping
       }
-      console.error('Speech recognition error:', event.error);
+      
+      // For other errors, try to restart if still recording
+      if (event.error === 'no-speech' && isRecordingRef.current) {
+        console.log('No speech detected, continuing to listen...');
+        return; // Don't restart on no-speech, let onend handle it
+      }
+      
+      if (event.error === 'network' && isRecordingRef.current) {
+        console.log('Network error, will retry...');
+        setTimeout(() => {
+          if (isRecordingRef.current && recognitionRef.current) {
+            try {
+              recognitionRef.current.start();
+            } catch (e) {
+              console.log('Network error restart failed:', e);
+            }
+          }
+        }, 2000);
+      }
     };
 
     try {
       recognitionRef.current.start();
+      console.log('Speech recognition started');
     } catch (error) {
       console.error('Failed to start speech recognition:', error);
     }
@@ -157,27 +219,39 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
 
 
   const stopRecording = () => {
+    console.log('Stopping recording...');
+    
+    // Set flags first to prevent restarts
     setIsRecording(false);
     isRecordingRef.current = false;
     
+    // Stop media recorder if active
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      mediaRecorderRef.current.stop();
+      try {
+        mediaRecorderRef.current.stop();
+      } catch (error) {
+        console.log('Error stopping media recorder:', error);
+      }
     }
     
     // Stop speech recognition properly
     if (recognitionRef.current) {
       try {
-        recognitionRef.current.stop();
+        // Abort instead of stop to prevent onend from firing
+        recognitionRef.current.abort();
         recognitionRef.current = null;
       } catch (error) {
         console.log('Error stopping recognition:', error);
       }
     }
     
+    // Clear timer
     if (recordingTimerRef.current) {
       clearInterval(recordingTimerRef.current);
       recordingTimerRef.current = null;
     }
+    
+    console.log('Recording stopped, transcript preserved:', transcript.substring(0, 50) + '...');
   };
 
   const submitAnswer = () => {

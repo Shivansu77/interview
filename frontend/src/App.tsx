@@ -4,7 +4,6 @@ import LearnSection from './components/LearnSection';
 import EnglishPractice from './components/EnglishPractice';
 import VocabularyChallenge from './components/VocabularyChallenge';
 import CharacterChat from './components/CharacterChat';
-import MLComponent from './components/MLComponent';
 
 import './App.css';
 
