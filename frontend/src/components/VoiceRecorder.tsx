@@ -18,11 +18,21 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isRecordingRef = useRef(false);
 
   useEffect(() => {
     return () => {
+      // Cleanup on unmount
       if (recordingTimerRef.current) {
         clearInterval(recordingTimerRef.current);
+      }
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+          recognitionRef.current = null;
+        } catch (error) {
+          console.log('Cleanup error on unmount:', error);
+        }
       }
     };
   }, []);
@@ -44,6 +54,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
       await navigator.mediaDevices.getUserMedia({ audio: true });
       
       setIsRecording(true);
+      isRecordingRef.current = true;
       setRecordingTime(0);
       setTranscript('');
 
@@ -60,7 +71,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
 
       // Auto-stop after 2 minutes
       setTimeout(() => {
-        if (isRecording) {
+        if (isRecordingRef.current) {
           stopRecording();
         }
       }, 120000);
@@ -74,6 +85,16 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
   };
 
   const startSpeechRecognition = () => {
+    // Clean up any existing recognition first
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+        recognitionRef.current = null;
+      } catch (error) {
+        console.log('Cleanup error:', error);
+      }
+    }
+
     const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
     recognitionRef.current = new SpeechRecognition();
     
@@ -100,10 +121,11 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
     };
     
     recognitionRef.current.onend = () => {
-      if (isRecording) {
+      // Only restart if still recording and recognition wasn't manually stopped
+      if (isRecordingRef.current && recognitionRef.current) {
         setTimeout(() => {
           try {
-            if (recognitionRef.current && isRecording) {
+            if (recognitionRef.current && isRecordingRef.current) {
               recognitionRef.current.start();
             }
           } catch (error) {
@@ -114,26 +136,35 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
     };
 
     recognitionRef.current.onerror = (event: any) => {
-      console.error('Speech recognition error:', event.error);
       if (event.error === 'not-allowed') {
         alert('Microphone access denied. Please allow microphone access and try again.');
         setIsRecording(false);
         return;
       }
+      if (event.error === 'aborted') {
+        return; // Silent - this is normal when stopping
+      }
+      console.error('Speech recognition error:', event.error);
     };
 
-    recognitionRef.current.start();
+    try {
+      recognitionRef.current.start();
+    } catch (error) {
+      console.error('Failed to start speech recognition:', error);
+    }
   };
 
 
 
   const stopRecording = () => {
     setIsRecording(false);
+    isRecordingRef.current = false;
     
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
     }
     
+    // Stop speech recognition properly
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();
@@ -152,9 +183,12 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
   const submitAnswer = () => {
     const cleanTranscript = transcript.replace(/\.\.\.+/g, '').trim();
     if (cleanTranscript) {
+      console.log('Submitting transcript:', cleanTranscript);
       onTranscript(cleanTranscript);
       setTranscript('');
       setRecordingTime(0);
+    } else {
+      console.log('No transcript to submit');
     }
   };
 
@@ -271,22 +305,23 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
               onClick={submitAnswer}
               disabled={isProcessing}
               style={{
-                padding: '12px 24px',
-                backgroundColor: '#4CAF50',
+                padding: '16px 32px',
+                backgroundColor: '#FF9800',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: '600',
+                borderRadius: '12px',
+                fontSize: '16px',
+                fontWeight: '700',
                 cursor: isProcessing ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s',
-                boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
-                opacity: isProcessing ? 0.7 : 1
+                transition: 'all 0.3s',
+                boxShadow: '0 6px 20px rgba(255, 152, 0, 0.4)',
+                opacity: isProcessing ? 0.7 : 1,
+                transform: isProcessing ? 'scale(0.95)' : 'scale(1)'
               }}
-              onMouseOver={(e) => !isProcessing && (e.currentTarget.style.backgroundColor = '#45a049')}
-              onMouseOut={(e) => !isProcessing && (e.currentTarget.style.backgroundColor = '#4CAF50')}
+              onMouseOver={(e) => !isProcessing && (e.currentTarget.style.backgroundColor = '#F57C00')}
+              onMouseOut={(e) => !isProcessing && (e.currentTarget.style.backgroundColor = '#FF9800')}
             >
-              🤖 Submit for AI Feedback
+              🎤 Submit Audio
             </button>
             
             <button
@@ -312,6 +347,8 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
           </div>
         </div>
       )}
+      
+
     </div>
   );
 };

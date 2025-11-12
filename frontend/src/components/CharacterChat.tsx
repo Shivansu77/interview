@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Volume2, VolumeX } from 'lucide-react';
 import './CharacterChat.css';
 
 
@@ -264,11 +265,17 @@ const CharacterChat: React.FC = () => {
       .trim();
   };
 
-  const speakMessage = (text: string, characterName: string) => {
+  const speakMessage = (text: string, characterName: string, forceSpeak = false) => {
     console.log('Speaking:', text, 'Character:', characterName, 'Voice Mode:', voiceMode);
     
-    if (!voiceMode || !text) {
-      console.log('Voice mode is off or no text');
+    if (!text) {
+      console.log('No text to speak');
+      return;
+    }
+    
+    // Check if we should speak based on voice mode or force flag
+    if (!voiceMode && !forceSpeak) {
+      console.log('Voice mode is off and not forced, skipping speak');
       return;
     }
     
@@ -367,10 +374,12 @@ const CharacterChat: React.FC = () => {
       
       // Auto-speak character response if voice mode is on
       if (voiceMode) {
-        console.log('Auto-speaking character response');
+        console.log('Auto-speaking character response, voice mode:', voiceMode);
         setTimeout(() => {
           speakMessage(data.reply, selectedCharacter);
-        }, 1000);
+        }, 500);
+      } else {
+        console.log('Voice mode is off, not auto-speaking');
       }
       
       await fetch('http://localhost:5003/api/ai/character-chat/save', {
@@ -469,22 +478,54 @@ const CharacterChat: React.FC = () => {
           </select>
           
           <button
-            onClick={() => setVoiceMode(!voiceMode)}
+            onClick={() => {
+              const newVoiceMode = !voiceMode;
+              setVoiceMode(newVoiceMode);
+              if (!newVoiceMode) {
+                stopSpeaking();
+              }
+              console.log('Voice mode toggled:', newVoiceMode);
+            }}
             style={{
-              padding: '10px 20px',
-              borderRadius: '8px',
-              border: 'none',
-              backgroundColor: voiceMode ? '#4CAF50' : '#666',
-              color: 'white',
+              padding: '12px 20px',
+              borderRadius: '25px',
+              border: `2px solid ${voiceMode ? '#4CAF50' : '#666'}`,
+              backgroundColor: voiceMode ? '#4CAF50' : 'transparent',
+              color: voiceMode ? 'white' : '#666',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
               fontSize: '14px',
-              fontWeight: 'bold'
+              fontWeight: 'bold',
+              transition: 'all 0.3s ease',
+              position: 'relative',
+              minWidth: '120px',
+              justifyContent: 'center'
             }}
           >
-            {voiceMode ? '🔊 Voice ON' : '🔇 Voice OFF'}
+            <div style={{
+              position: 'absolute',
+              left: voiceMode ? '4px' : 'calc(100% - 28px)',
+              top: '4px',
+              width: '24px',
+              height: '24px',
+              backgroundColor: voiceMode ? 'white' : '#666',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.3s ease'
+            }}>
+              {voiceMode ? (
+                <Volume2 size={14} color="#4CAF50" />
+              ) : (
+                <VolumeX size={14} color="white" />
+              )}
+            </div>
+            <span style={{ marginLeft: voiceMode ? '20px' : '0', marginRight: voiceMode ? '0' : '20px' }}>
+              {voiceMode ? 'ON' : 'OFF'}
+            </span>
           </button>
         </div>
       </div>
@@ -526,7 +567,7 @@ const CharacterChat: React.FC = () => {
                   </span>
                   <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{selectedCharacter}</span>
                   <button
-                    onClick={() => speakMessage(msg.text, selectedCharacter)}
+                    onClick={() => speakMessage(msg.text, selectedCharacter, true)}
                     disabled={isSpeaking}
                     style={{
                       padding: '4px 8px',

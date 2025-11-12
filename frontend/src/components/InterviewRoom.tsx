@@ -15,6 +15,7 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
   const [currentQuestion, setCurrentQuestion] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [eyeContactScore, setEyeContactScore] = useState(0);
+  const [currentTranscript, setCurrentTranscript] = useState('');
 
   const [questionCount, setQuestionCount] = useState(1);
   const [analysis, setAnalysis] = useState<any>(null);
@@ -651,7 +652,55 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
             isRecording={isRecording}
             setIsRecording={setIsRecording}
           />
+          
+          {!analysis && !isAnalyzing && (
+            <div style={{ marginTop: '15px', textAlign: 'center', display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <button
+                onClick={() => {
+                  const textAnswer = prompt('Enter your answer:');
+                  if (textAnswer && textAnswer.trim()) {
+                    handleAnswerSubmit(textAnswer.trim());
+                  }
+                }}
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: '#2196F3',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600'
+                }}
+              >
+                ✍️ Type Answer
+              </button>
+              
+              <button
+                onClick={() => {
+                  const answer = prompt('Quick Submit - Enter your answer:');
+                  if (answer && answer.trim()) {
+                    handleAnswerSubmit(answer.trim());
+                  }
+                }}
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: '#4CAF50',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)'
+                }}
+              >
+                🚀 Quick Submit
+              </button>
+            </div>
+          )}
         </div>
+        
         
         {/* Analysis Section */}
         {(isAnalyzing || analysis) && (
