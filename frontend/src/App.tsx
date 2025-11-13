@@ -4,6 +4,7 @@ import LearnSection from './components/LearnSection';
 import EnglishPractice from './components/EnglishPractice';
 import VocabularyChallenge from './components/VocabularyChallenge';
 import CharacterChat from './components/CharacterChat';
+import FloatingChatButton from './components/FloatingChatButton';
 
 function App() {
   const [currentSection, setCurrentSection] = useState<'home' | 'learn' | 'interview' | 'english' | 'vocabulary' | 'character-chat' | 'ml'>('home');
@@ -232,6 +233,11 @@ function App() {
             </button>
           </div>
         ) : null}
+        
+        {/* Floating Chat Button - Available on all pages except character-chat */}
+        {currentSection !== 'character-chat' && !isInterviewActive && (
+          <FloatingChatButton userId={userId} />
+        )}
       </div>
     </div>
   );

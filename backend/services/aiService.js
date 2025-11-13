@@ -15,13 +15,19 @@ class AIService {
     let prompt = '';
     
     if (type === 'technical') {
+      const techTopics = {
+        easy: 'web development basics, JavaScript fundamentals, HTML/CSS, or simple programming concepts',
+        medium: 'frameworks like React/Node.js, databases, APIs, or software engineering practices',
+        hard: 'system architecture, performance optimization, security, or advanced programming patterns'
+      };
+      
       prompt = company === 'general' 
-        ? `Generate a ${difficulty} level technical interview question about programming, algorithms, or system design. Return only the question text.`
-        : `Generate a ${difficulty} level technical interview question that ${company} company typically asks. Focus on their tech stack and interview style. Return only the question text.`;
+        ? `Generate a practical ${difficulty} level technical interview question about ${techTopics[difficulty] || techTopics.medium}. Focus on real-world development scenarios, NOT algorithm puzzles or data structure implementations like LRU cache. Ask about experience, best practices, or problem-solving approaches. Return only the question text.`
+        : `Generate a practical ${difficulty} level technical interview question for ${company} company about ${techTopics[difficulty] || techTopics.medium}. Focus on real-world scenarios and practical knowledge, NOT coding challenges or algorithm problems. Return only the question text.`;
     } else if (type === 'english') {
       prompt = company === 'general'
-        ? `Generate a ${difficulty} level English communication or behavioral interview question. Return only the question text.`
-        : `Generate a ${difficulty} level behavioral/communication question that ${company} company typically asks in interviews. Return only the question text.`;
+        ? `Generate a ${difficulty} level behavioral interview question about communication, teamwork, problem-solving, or professional experience. Return only the question text.`
+        : `Generate a ${difficulty} level behavioral question that ${company} company asks about leadership, collaboration, or professional growth. Return only the question text.`;
     }
 
     try {
@@ -311,6 +317,44 @@ Return ONLY this JSON format:
       totalWords: maxLength,
       correctWords: maxLength - errors.length
     };
+  }
+
+  // Generate character response for chat
+  async generateCharacterResponse(userId, character, userMessage) {
+    const characterPrompts = {
+      interviewer: 'You are a professional interviewer. Respond helpfully and ask follow-up questions.',
+      mentor: 'You are a career mentor. Provide guidance and encouragement.',
+      teacher: 'You are an English teacher. Help with language learning and pronunciation.',
+      friend: 'You are a supportive friend. Be casual and encouraging.'
+    };
+    
+    const prompt = `${characterPrompts[character] || characterPrompts.friend} User says: "${userMessage}". Respond in character with a helpful, encouraging message. Keep it under 100 words.`;
+    
+    try {
+      const response = await axios.post(API_CONFIG.GEMINI_URL, {
+        contents: [{ parts: [{ text: prompt }] }]
+      }, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 10000
+      });
+      
+      const reply = response.data.candidates[0].content.parts[0].text.trim();
+      
+      return {
+        success: true,
+        reply,
+        character,
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Character response error:', error);
+      return {
+        success: true,
+        reply: 'I understand what you\'re saying. That\'s a great point! Keep practicing and you\'ll continue to improve.',
+        character,
+        timestamp: new Date().toISOString()
+      };
+    }
   }
 
   // Clear session questions when interview ends

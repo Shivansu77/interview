@@ -47,6 +47,34 @@ class LearningService {
         'How does hoisting work in JavaScript?',
         'What are promises and how do they work?'
       ],
+      'DOM Manipulation': [
+        'How do you select elements in the DOM?',
+        'What is the difference between innerHTML and textContent?',
+        'How do you add event listeners to elements?',
+        'What is event delegation?',
+        'How do you create and append new elements?'
+      ],
+      'Responsive Design': [
+        'What are CSS media queries?',
+        'How do you make images responsive?',
+        'What is mobile-first design?',
+        'Explain flexbox and grid layouts.',
+        'How do you handle different screen sizes?'
+      ],
+      'React/Vue': [
+        'What is a component in React?',
+        'Explain the virtual DOM.',
+        'What are React hooks?',
+        'How do you manage state in React?',
+        'What is the component lifecycle?'
+      ],
+      'Node.js/Express': [
+        'What is Node.js and how does it work?',
+        'How do you create a REST API with Express?',
+        'What is middleware in Express?',
+        'How do you handle errors in Node.js?',
+        'What is the event loop?'
+      ],
       'Self Introduction': [
         'Tell me about yourself.',
         'What are your key strengths?',
@@ -77,14 +105,13 @@ class LearningService {
       return cached;
     }
 
-    // Get general questions or generate generic ones
-    const topicQuestions = this.generalQuestions[topic] || [
-      `What is your experience with ${topic}?`,
-      `How would you explain ${topic} to a beginner?`,
-      `What are the best practices for ${topic}?`,
-      `What challenges have you faced with ${topic}?`,
-      `How do you stay updated with ${topic}?`
-    ];
+    // Get specific questions for the topic
+    let topicQuestions = this.generalQuestions[topic];
+    
+    if (!topicQuestions) {
+      // Generate topic-specific questions based on field and topic
+      topicQuestions = this.generateTopicSpecificQuestions(topic, field, level);
+    }
     
     const result = {
       success: true,
@@ -174,6 +201,40 @@ class LearningService {
       console.error('Error generating answer:', error);
       return this.getFallbackAnswer(question, field, level);
     }
+  }
+
+  generateTopicSpecificQuestions(topic, field, level) {
+    const questionTemplates = {
+      webdev: {
+        beginner: [
+          `What is ${topic} and why is it important?`,
+          `How do you get started with ${topic}?`,
+          `What are the basic concepts of ${topic}?`,
+          `Can you give a simple example of ${topic}?`,
+          `What tools are commonly used for ${topic}?`
+        ],
+        intermediate: [
+          `How do you implement ${topic} in a real project?`,
+          `What are the best practices for ${topic}?`,
+          `How does ${topic} integrate with other technologies?`,
+          `What are common challenges with ${topic}?`,
+          `How do you optimize ${topic} for performance?`
+        ],
+        advanced: [
+          `How do you architect ${topic} for large-scale applications?`,
+          `What are the security considerations for ${topic}?`,
+          `How do you handle ${topic} in microservices architecture?`,
+          `What are the latest trends and innovations in ${topic}?`,
+          `How do you mentor others in ${topic}?`
+        ]
+      }
+    };
+    
+    return questionTemplates[field]?.[level] || [
+      `What is your experience with ${topic}?`,
+      `How would you explain ${topic}?`,
+      `What are the key aspects of ${topic}?`
+    ];
   }
 
   getFallbackAnswer(question, field, level) {

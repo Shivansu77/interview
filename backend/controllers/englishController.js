@@ -1,54 +1,69 @@
-const { asyncHandler } = require('../middleware/errorHandler');
 const englishService = require('../services/englishService');
 
+// Simple async handler replacement
+const asyncHandler = (fn) => (req, res, next) => {
+  Promise.resolve(fn(req, res, next)).catch(next);
+};
+
 // Pronunciation Assessment
-const assessPronunciation = asyncHandler(async (req, res) => {
-  const { audioData, text } = req.body;
-  
-  const result = await englishService.assessPronunciation(audioData, text);
-  
-  res.json(result);
-});
+const assessPronunciation = async (req, res) => {
+  try {
+    const { audioData, text } = req.body;
+    const result = await englishService.assessPronunciation(audioData, text);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
 
 // Grammar Check
-const checkGrammar = asyncHandler(async (req, res) => {
-  const { text } = req.body;
-  
-  const result = await englishService.checkGrammar(text);
-  
-  res.json(result);
-});
+const checkGrammar = async (req, res) => {
+  try {
+    const { text } = req.body;
+    const result = await englishService.checkGrammar(text);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
 
 // Random Vocabulary
-const getRandomVocabulary = asyncHandler(async (req, res) => {
-  const { type } = req.params;
-  
-  const result = await englishService.getRandomVocabulary(type);
-  
-  res.json(result);
-});
+const getRandomVocabulary = async (req, res) => {
+  try {
+    const { type } = req.params;
+    const result = await englishService.getRandomVocabulary(type);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
 
 // Daily Challenge
-const getDailyChallenge = asyncHandler(async (req, res) => {
-  const result = englishService.getDailyChallenge();
-  
-  res.json(result);
-});
+const getDailyChallenge = (req, res) => {
+  try {
+    const result = englishService.getDailyChallenge();
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
 
 // Word Search
-const searchWord = asyncHandler(async (req, res) => {
-  const { word } = req.params;
-  
-  const result = await englishService.searchWord(word);
-  
-  res.json(result);
-});
+const searchWord = async (req, res) => {
+  try {
+    const { word } = req.params;
+    const result = await englishService.searchWord(word);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
 
 // Comprehensive Assessment
-const comprehensiveAssessment = asyncHandler(async (req, res) => {
-  const { text, audioData } = req.body;
-  
+const comprehensiveAssessment = async (req, res) => {
   try {
+    const { text, audioData } = req.body;
+    
     // Parallel assessment calls
     const [grammarResult, pronunciationResult] = await Promise.allSettled([
       englishService.checkGrammar(text),
@@ -100,7 +115,7 @@ const comprehensiveAssessment = asyncHandler(async (req, res) => {
       }
     });
   }
-});
+};
 
 module.exports = {
   assessPronunciation,

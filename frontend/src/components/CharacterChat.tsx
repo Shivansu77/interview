@@ -51,6 +51,7 @@ interface Message {
   sender: 'user' | 'character';
   text: string;
   timestamp: Date;
+  isTyping?: boolean;
 }
 
 const CharacterChat: React.FC = () => {
@@ -360,24 +361,58 @@ const CharacterChat: React.FC = () => {
       });
 
       const data = await response.json();
+      const replyText = data.reply;
       
-      const characterMessage: Message = { 
-        sender: 'character' as const, 
-        text: data.reply, 
-        timestamp: new Date() 
-      };
-      
-      setMessages(prev => [...prev, characterMessage]);
-      
-      // Auto-speak character response if voice mode is on
-      if (voiceMode) {
-        console.log('Auto-speaking character response, voice mode:', voiceMode);
-        setTimeout(() => {
-          speakMessage(data.reply, selectedCharacter);
-        }, 500);
-      } else {
-        console.log('Voice mode is off, not auto-speaking');
-      }
+      // Simulate typing delay then start character typing animation
+      setTimeout(() => {
+        setLoading(false);
+        
+        // Add typing message
+        const typingMessage: Message = {
+          sender: 'character' as const,
+          text: '',
+          timestamp: new Date(),
+          isTyping: true
+        };
+        
+        setMessages(prev => [...prev, typingMessage]);
+        
+        // Type out message character by character
+        let currentText = '';
+        let charIndex = 0;
+        
+        const typeInterval = setInterval(() => {
+          if (charIndex < replyText.length) {
+            currentText += replyText[charIndex];
+            charIndex++;
+            
+            setMessages(prev => 
+              prev.map(msg => 
+                msg.isTyping && msg.sender === 'character'
+                  ? { ...msg, text: currentText }
+                  : msg
+              )
+            );
+          } else {
+            // Typing complete
+            clearInterval(typeInterval);
+            setMessages(prev => 
+              prev.map(msg => 
+                msg.isTyping && msg.sender === 'character'
+                  ? { ...msg, isTyping: false }
+                  : msg
+              )
+            );
+            
+            // Auto-speak if voice mode is on
+            if (voiceMode) {
+              setTimeout(() => {
+                speakMessage(replyText, selectedCharacter);
+              }, 300);
+            }
+          }
+        }, 30); // Typing speed
+      }, 1000);
       
       await fetch('http://localhost:5003/api/ai/character-chat/save', {
         method: 'POST',
@@ -392,7 +427,6 @@ const CharacterChat: React.FC = () => {
     } catch (error) {
       console.error('Failed to send message:', error);
       alert('Failed to send message. Make sure backend is running on port 5003.');
-    } finally {
       setLoading(false);
     }
   };
@@ -578,8 +612,18 @@ const CharacterChat: React.FC = () => {
                   </button>
                 </div>
               )}
-              <div style={{ lineHeight: '1.5' }}>
-                {msg.text}
+              <div style={{ lineHeight: '1.5', minHeight: '20px' }}>
+                <span>{msg.text}</span>
+                {msg.isTyping && (
+                  <span style={{
+                    display: 'inline-block',
+                    width: '2px',
+                    height: '16px',
+                    backgroundColor: '#4CAF50',
+                    marginLeft: '2px',
+                    animation: 'blink 1s infinite'
+                  }} />
+                )}
               </div>
               <div style={{
                 fontSize: '11px',
@@ -632,6 +676,17 @@ const CharacterChat: React.FC = () => {
         )}
         <div ref={messagesEndRef} />
       </div>
+      
+      <style>{`
+        @keyframes blink {
+          0%, 50% {
+            opacity: 1;
+          }
+          51%, 100% {
+            opacity: 0;
+          }
+        }
+      `}</style>
 
       <div style={{
         backgroundColor: '#2a2a2a',

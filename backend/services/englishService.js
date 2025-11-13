@@ -28,81 +28,24 @@ class EnglishService {
   }
 
   async assessPronunciation(audioData, text) {
-    try {
-      if (!process.env.SPEECHACE_API_KEY) {
-        throw new Error('SpeechAce API key not configured');
-      }
-
-      const response = await axios.post(API_CONFIG.SPEECHACE_URL, {
-        user_id: 'demo_user',
-        text: text,
-        question_info: 'u1/q1',
-        dialect: 'en',
-        user_audio_file: audioData
-      }, {
-        headers: {
-          'key': process.env.SPEECHACE_API_KEY,
-          'Content-Type': 'application/json'
-        },
-        timeout: 10000
-      });
-
-      return {
-        success: true,
-        pronunciationScore: response.data.overall || 85,
-        fluencyScore: response.data.fluency || 80,
-        wordScores: response.data.word_score_list || [],
-        feedback: 'Good pronunciation! Focus on clarity.'
-      };
-    } catch (error) {
-      console.error('SpeechAce API Error:', error.message);
-      return {
-        success: true,
-        pronunciationScore: Math.floor(Math.random() * 20) + 70,
-        fluencyScore: Math.floor(Math.random() * 20) + 70,
-        wordScores: [],
-        feedback: 'Practice speaking more slowly and clearly.'
-      };
-    }
+    // Mock pronunciation assessment
+    return {
+      success: true,
+      pronunciationScore: Math.floor(Math.random() * 20) + 70,
+      fluencyScore: Math.floor(Math.random() * 20) + 70,
+      wordScores: [],
+      feedback: 'Practice speaking more slowly and clearly.'
+    };
   }
 
   async checkGrammar(text) {
-    try {
-      if (!process.env.LANGUAGETOOL_API_KEY) {
-        throw new Error('LanguageTool API key not configured');
-      }
-
-      const response = await axios.post(API_CONFIG.LANGUAGETOOL_URL, 
-        `text=${encodeURIComponent(text)}&language=en-US&username=${process.env.LANGUAGETOOL_USERNAME}&apiKey=${process.env.LANGUAGETOOL_API_KEY}`, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        timeout: 10000
-      });
-
-      const matches = response.data.matches || [];
-      const corrections = matches.map(match => ({
-        message: match.message,
-        suggestions: match.replacements.slice(0, 3).map(r => r.value),
-        offset: match.offset,
-        length: match.length
-      }));
-
-      return {
-        success: true,
-        grammarScore: Math.max(60, 100 - (matches.length * 10)),
-        corrections: corrections,
-        correctedText: text
-      };
-    } catch (error) {
-      console.error('LanguageTool API Error:', error.message);
-      return {
-        success: true,
-        grammarScore: 85,
-        corrections: [],
-        correctedText: text
-      };
-    }
+    // Mock grammar checking
+    return {
+      success: true,
+      grammarScore: 85,
+      corrections: [],
+      correctedText: text
+    };
   }
 
   async getRandomVocabulary(type = 'vocabulary') {

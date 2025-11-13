@@ -40,13 +40,17 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
   const [showAnswer, setShowAnswer] = useState(false);
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
   const [lines, setLines] = useState<Line[]>([]);
+  const [suggestedAnswer, setSuggestedAnswer] = useState('');
+  const [isLoadingAnswer, setIsLoadingAnswer] = useState(false);
   
   const recognitionRef = useRef<any>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const fetchQuestions = useCallback(async () => {
+  const fetchQuestions = async () => {
     try {
       setIsLoading(true);
+      setShowAnswer(false);
+      setCurrentQuestionIndex(0);
       const response = await fetch(`http://localhost:5003/api/learn/topic/${encodeURIComponent(topic)}/questions?level=${level}&field=${field}&company=${selectedCompany}`);
       const data = await response.json();
       setQuestions(data.questions || []);
@@ -55,10 +59,11 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [topic, field, level, selectedCompany]);
+  };
 
-  const fetchAnswer = useCallback(async (question: string) => {
+  const fetchAnswer = async (question: string) => {
     try {
+      setIsLoadingAnswer(true);
       const response = await fetch('http://localhost:5003/api/learn/question/answer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -67,14 +72,17 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
       const data = await response.json();
 
       setLines(data.lines || []);
+      setSuggestedAnswer(data.answer || '');
       setShowAnswer(true);
       setSpokenLines(new Set());
       setCurrentLineIndex(0);
       setAccuracy(0);
     } catch (error) {
       console.error('Error fetching answer:', error);
+    } finally {
+      setIsLoadingAnswer(false);
     }
-  }, [level, field, topic, selectedCompany]);
+  };
 
   useEffect(() => {
     fetchQuestions();
@@ -84,13 +92,18 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
         videoStream.getTracks().forEach(track => track.stop());
       }
     };
-  }, [fetchQuestions, videoStream]);
+  }, [topic, field, level, selectedCompany]);
 
   useEffect(() => {
-    if (questions.length > 0 && !showAnswer) {
-      fetchAnswer(questions[currentQuestionIndex].question);
+    if (questions.length > 0 && currentQuestionIndex < questions.length) {
+      setShowAnswer(false);
+      setIsLoadingAnswer(true);
+      const timer = setTimeout(() => {
+        fetchAnswer(questions[currentQuestionIndex].question);
+      }, 500);
+      return () => clearTimeout(timer);
     }
-  }, [currentQuestionIndex, questions, showAnswer, fetchAnswer]);
+  }, [questions, currentQuestionIndex]);
 
 
   const stopRecording = () => {
@@ -157,16 +170,16 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
     
     // Move to next question or complete
     if (currentQuestionIndex < questions.length - 1) {
+      setShowAnswer(false);
       setTimeout(() => {
         setCurrentQuestionIndex(prev => prev + 1);
-        setShowAnswer(false);
-      }, 2000);
+      }, 1000);
     } else {
       // All questions completed
       setTimeout(() => {
         alert('🎉 Congratulations! You completed all questions for this topic!');
         onBack();
-      }, 2000);
+      }, 1000);
     }
   };
 
@@ -302,7 +315,7 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
             </span>
           </div>
           <p style={{ fontSize: '18px', lineHeight: '1.6', color: 'white' }}>
-            {currentQuestion.question}
+            {isLoadingAnswer ? 'Loading question...' : (currentQuestion?.question || 'Loading...')}
           </p>
         </div>
 
@@ -448,9 +461,40 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
         display: 'flex',
         flexDirection: 'column'
       }}>
-        <h3 style={{ color: '#FF9800', marginBottom: '20px' }}>
-          📜 Practice Script
-        </h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h3 style={{ color: '#FF9800', margin: 0 }}>
+            📜 Practice Script
+          </h3>
+          {suggestedAnswer && (
+            <button
+              onClick={() => {
+                const answerWindow = window.open('', '_blank', 'width=600,height=400');
+                answerWindow?.document.write(`
+                  <html>
+                    <head><title>Suggested Answer</title></head>
+                    <body style="font-family: Arial; padding: 20px; background: #1a1a1a; color: white;">
+                      <h2 style="color: #4CAF50;">💡 Suggested Answer</h2>
+                      <div style="background: #2a2a2a; padding: 20px; border-radius: 8px; line-height: 1.6;">
+                        ${suggestedAnswer.replace(/\n/g, '<br>')}
+                      </div>
+                    </body>
+                  </html>
+                `);
+              }}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#4CAF50',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              💡 View Answer
+            </button>
+          )}
+        </div>
         
         {showAnswer ? (
           <div style={{
