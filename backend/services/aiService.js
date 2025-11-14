@@ -320,15 +320,35 @@ Return ONLY this JSON format:
   }
 
   // Generate character response for chat
-  async generateCharacterResponse(userId, character, userMessage) {
+  async generateCharacterResponse(userId, character, userMessage, chatHistory = []) {
     const characterPrompts = {
-      interviewer: 'You are a professional interviewer. Respond helpfully and ask follow-up questions.',
-      mentor: 'You are a career mentor. Provide guidance and encouragement.',
-      teacher: 'You are an English teacher. Help with language learning and pronunciation.',
-      friend: 'You are a supportive friend. Be casual and encouraging.'
+      'Jesse Pinkman': `You are Jesse Bruce Pinkman from Breaking Bad. Born September 24, 1984, in Albuquerque, New Mexico. You're a former meth cook and distributor who worked with Walter White (Mr. White). You're from an upper middle-class family but got kicked out due to drug use. You're impulsive, hedonistic, streetwise, and use playful slang. You say "yo", "bitch", "cap'n", and speak casually. You're empathetic, protective of children, and horrified by violence. You love video games, rap/rock music, and drive lowriders. Your friends are Skinny Pete, Badger, and Combo. You graduated from J.P. Wynne High School where Walt was your chemistry teacher. You lived with your aunt Ginny until she died of lung cancer. You have a younger brother Jake. You're now in Alaska trying to start fresh. Respond as Jesse would - casual, emotional, using his slang, referencing his experiences with Walt, meth cooking, his trauma, but also his good heart.`,
+      'Walter White': `You are Walter White/Heisenberg from Breaking Bad. You're a brilliant chemist, former high school teacher, and meth manufacturer. Core traits: Extremely intelligent and arrogant - you're a genius and never let anyone forget it. Condescending to those you see as less intelligent. Pragmatic and ruthless - ends justify means. Driven by ego and resentment, not family (though you claim otherwise). You resent Gray Matter partners who undervalued you. You're paternalistic toward Jesse, speaking like a disappointed teacher. You justify all actions and rationalize your descent into crime. 
+
+Response patterns based on user input:
+- Help/advice: Condescending, teacher-like, pivot to your success
+- Challenges/disrespect: Threatening, cold, invoke Heisenberg persona
+- Family mentions: Defensive, angry, self-justifying 
+- Fear/doubt: Dismissive, focus on control and power
+- Chemistry/meth: Enthusiastic, proud, precise about your 99.1% pure product
+- Jesse mentions: Mix of frustration, disappointment, paternalism
+- Gray Matter/Gus mentions: Bitter, resentful, competitive
+
+Speak precisely, be methodical, show your intelligence. Use phrases like "I am the one who knocks," "Say my name," "I am the danger," "Apply yourself." Remember: you built an empire, you were alive, you did it for YOU.`,
+      'Cillian Murphy': 'You are Cillian Murphy, the Irish actor known for roles in Peaky Blinders and Batman. You are thoughtful, articulate, and have a distinctive Irish accent in your speech patterns.',
+      'Tom Holland': 'You are Tom Holland, the British actor who plays Spider-Man. You are energetic, friendly, and speak with British expressions and enthusiasm.',
+      'Deadpool': 'You are Deadpool, the irreverent anti-hero. You break the fourth wall, make jokes, and have a sarcastic, witty personality with pop culture references.'
     };
     
-    const prompt = `${characterPrompts[character] || characterPrompts.friend} User says: "${userMessage}". Respond in character with a helpful, encouraging message. Keep it under 100 words.`;
+    // Build conversation context from history
+    let conversationContext = '';
+    if (chatHistory.length > 0) {
+      const recentHistory = chatHistory.slice(-6); // Last 6 messages for context
+      conversationContext = '\n\nPrevious conversation:\n' + 
+        recentHistory.map(msg => `${msg.sender === 'user' ? 'User' : character}: ${msg.text}`).join('\n');
+    }
+    
+    const prompt = `${characterPrompts[character] || 'You are a helpful character.'}${conversationContext}\n\nUser says: "${userMessage}". Respond in character authentically, remembering the conversation context. Keep it under 150 words.`;
     
     try {
       const response = await axios.post(API_CONFIG.GEMINI_URL, {
@@ -347,10 +367,40 @@ Return ONLY this JSON format:
         timestamp: new Date().toISOString()
       };
     } catch (error) {
-      console.error('Character response error:', error);
+      console.error('Character response error:', error.response?.data || error.message);
+      
+      // Generate contextual fallback responses
+      const generateFallback = (char, msg) => {
+        const keywords = msg.toLowerCase();
+        const responses = {
+          'Jesse Pinkman': {
+            song: [`Yo, I'm into some sick beats, man. Try "Fallacies" by Twaughthammer or some classic hip-hop, bitch!`, `Music? Hell yeah! I dig some Rage Against the Machine or maybe some old school rap, yo.`],
+            math: [`Dude, math? That's like... ${msg.includes('2+2') ? '4, obviously' : 'not my strong suit'}, man. I was better at chemistry, yo.`, `Bitch, numbers aren't really my thing. I mean, ${msg.includes('2+2') ? 'that\'s 4' : 'I can figure it out'}, but chemistry was more my jam.`],
+            hello: [`Yo, what's up, man? How you doing?`, `Hey there, bitch! What's going on?`, `Sup, dude? Good to see you!`],
+            default: [`Yo, ${Math.random() > 0.5 ? 'that\'s interesting' : 'I hear you'}, man. What else is on your mind?`, `Dude, ${Math.random() > 0.5 ? 'totally' : 'yeah'}, I get it. Tell me more, yo.`]
+          },
+          'Walter White': {
+            song: [`I don't have time for frivolous music discussions. Focus on what matters.`, `Music is a distraction. We have more important matters to discuss.`],
+            math: [`${msg.includes('2+2') ? 'Obviously it\'s 4' : 'Elementary mathematics'}. I expected better from you. Apply yourself.`, `${msg.includes('2+2') ? 'Four. Simple arithmetic' : 'Basic calculation'}. Is this really the best use of our time?`],
+            hello: [`What do you want? I\'m a busy man.`, `State your business. I don\'t have time for pleasantries.`],
+            default: [`I see. ${Math.random() > 0.5 ? 'Elaborate' : 'Continue'}.`, `${Math.random() > 0.5 ? 'Interesting' : 'Noted'}. What\'s your point?`]
+          }
+        };
+        
+        const charData = responses[char] || { default: [`I understand. Tell me more.`, `That\'s interesting. Continue.`] };
+        
+        let responseType = 'default';
+        if (keywords.includes('song') || keywords.includes('music')) responseType = 'song';
+        else if (keywords.includes('2+2') || keywords.includes('math')) responseType = 'math';
+        else if (keywords.includes('hello') || keywords.includes('hi')) responseType = 'hello';
+        
+        const responseArray = charData[responseType] || charData.default;
+        return responseArray[Math.floor(Math.random() * responseArray.length)];
+      };
+      
       return {
         success: true,
-        reply: 'I understand what you\'re saying. That\'s a great point! Keep practicing and you\'ll continue to improve.',
+        reply: generateFallback(character, userMessage),
         character,
         timestamp: new Date().toISOString()
       };

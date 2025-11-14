@@ -1,7 +1,19 @@
 require('dotenv').config();
 const http = require('http');
 const express = require('express');
+const mongoose = require('mongoose');
 const routes = require('./routes');
+
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log('✅ MongoDB connected successfully'))
+.catch(err => {
+  console.error('❌ MongoDB connection error:', err);
+  process.exit(1);
+});
 
 // Create Express app
 const app = express();

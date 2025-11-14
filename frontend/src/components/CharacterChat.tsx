@@ -9,7 +9,7 @@ const CHARACTERS = [
     name: 'Jesse Pinkman', 
     voice: 'male', 
     accent: 'american', 
-    avatar: '🧪',
+    avatar: '/jessepinkman.jpeg',
     color: '#ff6b6b',
     description: 'Chemistry Expert'
   },
@@ -17,7 +17,7 @@ const CHARACTERS = [
     name: 'Walter White', 
     voice: 'male', 
     accent: 'american', 
-    avatar: '👨🏫',
+    avatar: '/WalterWhite.webp',
     color: '#4ecdc4',
     description: 'Science Teacher'
   },
@@ -377,6 +377,11 @@ const CharacterChat: React.FC = () => {
         
         setMessages(prev => [...prev, typingMessage]);
         
+        // Start speaking immediately if voice mode is on
+        if (voiceMode) {
+          speakMessage(replyText, selectedCharacter);
+        }
+        
         // Type out message character by character
         let currentText = '';
         let charIndex = 0;
@@ -403,13 +408,6 @@ const CharacterChat: React.FC = () => {
                   : msg
               )
             );
-            
-            // Auto-speak if voice mode is on
-            if (voiceMode) {
-              setTimeout(() => {
-                speakMessage(replyText, selectedCharacter);
-              }, 300);
-            }
           }
         }, 30); // Typing speed
       }, 1000);
@@ -455,30 +453,86 @@ const CharacterChat: React.FC = () => {
     <div style={{
       maxWidth: '1200px',
       margin: '0 auto',
-      padding: '20px',
-      backgroundColor: 'rgba(255, 255, 255, 0.05)',
-      borderRadius: '16px',
-      color: 'white',
-      minHeight: '80vh',
-      backdropFilter: 'blur(10px)',
-      border: '1px solid rgba(255, 255, 255, 0.1)'
+      padding: '50px',
+      backgroundColor: '#000',
+      color: '#fff',
+      minHeight: '80vh'
     }}>
+      <div style={{
+        textAlign: 'center',
+        marginBottom: '40px'
+      }}>
+        <h1 style={{
+          fontSize: '48px',
+          fontWeight: 'bold',
+          marginBottom: '20px',
+          color: '#fff'
+        }}>
+          AI Character Chat
+        </h1>
+        <p style={{
+          fontSize: '20px',
+          color: '#ccc',
+          marginBottom: '40px'
+        }}>
+          Chat with your favorite characters using AI
+        </p>
+      </div>
+      
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: '20px',
+        marginBottom: '30px',
         padding: '20px',
-        backgroundColor: '#2a2a2a',
+        backgroundColor: '#000',
         borderRadius: '12px',
-        border: '1px solid #444'
+        border: '1px solid #333'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <span style={{ fontSize: '32px' }}>
-            {CHARACTERS.find(c => c.name === selectedCharacter)?.avatar || '🧪'}
-          </span>
+          <div style={{
+            width: '50px',
+            height: '50px',
+            borderRadius: '50%',
+            overflow: 'hidden',
+            border: '2px solid #fff'
+          }}>
+            {selectedCharacter === 'Jesse Pinkman' ? (
+              <img 
+                src="/jessepinkman.jpeg" 
+                alt="Jesse Pinkman"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+              />
+            ) : selectedCharacter === 'Walter White' ? (
+              <img 
+                src="/WalterWhite.webp" 
+                alt="Walter White"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+              />
+            ) : (
+              <div style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '24px',
+                backgroundColor: '#333'
+              }}>
+                {CHARACTERS.find(c => c.name === selectedCharacter)?.avatar || '🧪'}
+              </div>
+            )}
+          </div>
           <div>
-            <h2 style={{ margin: '0', color: '#4CAF50' }}>Character Chat</h2>
+            <h2 style={{ margin: '0', color: '#fff' }}>Current Chat</h2>
             <p style={{ margin: '5px 0 0 0', color: '#ccc', fontSize: '14px' }}>
               Chatting with {selectedCharacter}
             </p>
@@ -492,16 +546,16 @@ const CharacterChat: React.FC = () => {
             style={{
               padding: '10px 15px',
               borderRadius: '8px',
-              border: '1px solid #444',
-              backgroundColor: '#333',
-              color: 'white',
+              border: '1px solid #333',
+              backgroundColor: '#000',
+              color: '#fff',
               fontSize: '14px',
               minWidth: '180px'
             }}
           >
             {CHARACTERS.map(char => (
               <option key={char.name} value={char.name}>
-                {char.avatar} {char.name}
+                {char.name === 'Jesse Pinkman' ? '🧪' : char.name === 'Walter White' ? '👨🏫' : char.avatar} {char.name}
               </option>
             ))}
           </select>
@@ -516,43 +570,36 @@ const CharacterChat: React.FC = () => {
               console.log('Voice mode toggled:', newVoiceMode);
             }}
             style={{
-              padding: '12px 20px',
-              borderRadius: '25px',
-              border: `2px solid ${voiceMode ? '#4CAF50' : '#666'}`,
-              backgroundColor: voiceMode ? '#4CAF50' : 'transparent',
-              color: voiceMode ? 'white' : '#666',
+              padding: '8px 16px',
+              borderRadius: '20px',
+              border: `1px solid ${voiceMode ? '#fff' : '#333'}`,
+              backgroundColor: voiceMode ? '#fff' : 'transparent',
+              color: voiceMode ? '#000' : '#fff',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              fontSize: '14px',
+              gap: '6px',
+              fontSize: '12px',
               fontWeight: 'bold',
               transition: 'all 0.3s ease',
               position: 'relative',
-              minWidth: '120px',
-              justifyContent: 'center'
+              minWidth: '90px',
+              justifyContent: 'center',
+              height: '36px'
             }}
           >
             <div style={{
               position: 'absolute',
-              left: voiceMode ? '4px' : 'calc(100% - 28px)',
-              top: '4px',
-              width: '24px',
-              height: '24px',
-              backgroundColor: voiceMode ? 'white' : '#666',
+              left: voiceMode ? '3px' : 'calc(100% - 21px)',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: '18px',
+              height: '18px',
+              backgroundColor: '#fff',
               borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
               transition: 'all 0.3s ease'
-            }}>
-              {voiceMode ? (
-                <Volume2 size={14} color="#4CAF50" />
-              ) : (
-                <VolumeX size={14} color="white" />
-              )}
-            </div>
-            <span style={{ marginLeft: voiceMode ? '20px' : '0', marginRight: voiceMode ? '0' : '20px' }}>
+            }} />
+            <span style={{ marginLeft: voiceMode ? '16px' : '0', marginRight: voiceMode ? '0' : '16px' }}>
               {voiceMode ? 'ON' : 'OFF'}
             </span>
           </button>
@@ -560,14 +607,14 @@ const CharacterChat: React.FC = () => {
       </div>
 
       <div style={{
-        backgroundColor: '#2a2a2a',
+        backgroundColor: '#000',
         borderRadius: '12px',
         padding: '20px',
         marginBottom: '20px',
         minHeight: '400px',
         maxHeight: '500px',
         overflowY: 'auto',
-        border: '1px solid #444'
+        border: '1px solid #333'
       }}>
         {messages.map((msg, index) => (
           <div key={index} style={{
@@ -579,8 +626,8 @@ const CharacterChat: React.FC = () => {
               maxWidth: '70%',
               padding: '15px',
               borderRadius: '12px',
-              backgroundColor: msg.sender === 'user' ? '#4CAF50' : '#333',
-              color: 'white'
+              backgroundColor: msg.sender === 'user' ? '#fff' : '#111',
+              color: msg.sender === 'user' ? '#000' : '#fff'
             }}>
               {msg.sender === 'character' && (
                 <div style={{
@@ -589,11 +636,49 @@ const CharacterChat: React.FC = () => {
                   gap: '10px',
                   marginBottom: '8px',
                   paddingBottom: '8px',
-                  borderBottom: '1px solid #555'
+                  borderBottom: '1px solid #333'
                 }}>
-                  <span style={{ fontSize: '20px' }}>
-                    {CHARACTERS.find(c => c.name === selectedCharacter)?.avatar || '🎭'}
-                  </span>
+                  <div style={{
+                    width: '30px',
+                    height: '30px',
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    border: '1px solid #fff'
+                  }}>
+                    {selectedCharacter === 'Jesse Pinkman' ? (
+                      <img 
+                        src="/jessepinkman.jpeg" 
+                        alt="Jesse Pinkman"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover'
+                        }}
+                      />
+                    ) : selectedCharacter === 'Walter White' ? (
+                      <img 
+                        src="/WalterWhite.webp" 
+                        alt="Walter White"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover'
+                        }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '16px',
+                        backgroundColor: '#333'
+                      }}>
+                        {CHARACTERS.find(c => c.name === selectedCharacter)?.avatar || '🎭'}
+                      </div>
+                    )}
+                  </div>
                   <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{selectedCharacter}</span>
                   <button
                     onClick={() => speakMessage(msg.text, selectedCharacter, true)}
@@ -602,8 +687,8 @@ const CharacterChat: React.FC = () => {
                       padding: '4px 8px',
                       borderRadius: '4px',
                       border: 'none',
-                      backgroundColor: '#4CAF50',
-                      color: 'white',
+                      backgroundColor: '#fff',
+                      color: '#000',
                       cursor: 'pointer',
                       fontSize: '12px'
                     }}
@@ -619,7 +704,7 @@ const CharacterChat: React.FC = () => {
                     display: 'inline-block',
                     width: '2px',
                     height: '16px',
-                    backgroundColor: '#4CAF50',
+                    backgroundColor: '#fff',
                     marginLeft: '2px',
                     animation: 'blink 1s infinite'
                   }} />
@@ -645,17 +730,55 @@ const CharacterChat: React.FC = () => {
             <div style={{
               padding: '15px',
               borderRadius: '12px',
-              backgroundColor: '#333',
-              color: 'white'
+              backgroundColor: '#111',
+              color: '#fff'
             }}>
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px'
               }}>
-                <span style={{ fontSize: '20px' }}>
-                  {CHARACTERS.find(c => c.name === selectedCharacter)?.avatar || '🎭'}
-                </span>
+                <div style={{
+                  width: '30px',
+                  height: '30px',
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  border: '1px solid #fff'
+                }}>
+                  {selectedCharacter === 'Jesse Pinkman' ? (
+                    <img 
+                      src="/jessepinkman.jpeg" 
+                      alt="Jesse Pinkman"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                    />
+                  ) : selectedCharacter === 'Walter White' ? (
+                    <img 
+                      src="/WalterWhite.webp" 
+                      alt="Walter White"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                    />
+                  ) : (
+                    <div style={{
+                      width: '100%',
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '16px',
+                      backgroundColor: '#333'
+                    }}>
+                      {CHARACTERS.find(c => c.name === selectedCharacter)?.avatar || '🎭'}
+                    </div>
+                  )}
+                </div>
                 <span>Typing...</span>
               </div>
             </div>
@@ -666,9 +789,9 @@ const CharacterChat: React.FC = () => {
           <div style={{
             textAlign: 'center',
             padding: '10px',
-            backgroundColor: '#444',
+            backgroundColor: '#111',
             borderRadius: '8px',
-            color: '#4CAF50',
+            color: '#fff',
             fontSize: '14px'
           }}>
             🔊 {selectedCharacter} is speaking...
@@ -689,10 +812,10 @@ const CharacterChat: React.FC = () => {
       `}</style>
 
       <div style={{
-        backgroundColor: '#2a2a2a',
+        backgroundColor: '#000',
         borderRadius: '12px',
         padding: '20px',
-        border: '1px solid #444'
+        border: '1px solid #333'
       }}>
         <textarea
           value={inputMessage}
@@ -705,9 +828,9 @@ const CharacterChat: React.FC = () => {
             width: 'calc(100% - 30px)',
             padding: '15px',
             borderRadius: '8px',
-            border: '1px solid #444',
-            backgroundColor: '#333',
-            color: 'white',
+            border: '1px solid #333',
+            backgroundColor: '#000',
+            color: '#fff',
             fontSize: '14px',
             resize: 'none',
             marginBottom: '15px',
@@ -725,9 +848,9 @@ const CharacterChat: React.FC = () => {
             style={{
               padding: '12px 20px',
               borderRadius: '8px',
-              border: 'none',
-              backgroundColor: isRecording ? '#f44336' : '#FF9800',
-              color: 'white',
+              border: isRecording ? 'none' : '1px solid #fff',
+              backgroundColor: isRecording ? '#fff' : 'transparent',
+              color: isRecording ? '#000' : '#fff',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -750,8 +873,8 @@ const CharacterChat: React.FC = () => {
               padding: '12px 20px',
               borderRadius: '8px',
               border: 'none',
-              backgroundColor: '#4CAF50',
-              color: 'white',
+              backgroundColor: '#fff',
+              color: '#000',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',

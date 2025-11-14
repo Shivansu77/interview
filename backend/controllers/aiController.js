@@ -61,9 +61,13 @@ const analyzeSpeech = async (req, res) => {
 // Character Chat
 const characterChat = async (req, res) => {
   try {
-  const { userId, character, userMessage } = req.body;
-  
-    const response = await aiService.generateCharacterResponse(userId, character, userMessage);
+    const { userId, character, userMessage } = req.body;
+    
+    // Get chat history for context
+    const key = `${userId}_${character}`;
+    const history = chatHistory[key] || [];
+    
+    const response = await aiService.generateCharacterResponse(userId, character, userMessage, history);
     
     res.json(response);
   } catch (error) {

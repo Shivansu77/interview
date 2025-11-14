@@ -25,7 +25,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ character, userId, onClose }) => {
     interviewer: { name: 'Alex', emoji: '👔', color: '#2196F3', bg: 'linear-gradient(135deg, #2196F3, #1976D2)' },
     mentor: { name: 'Sarah', emoji: '🎯', color: '#4CAF50', bg: 'linear-gradient(135deg, #4CAF50, #388E3C)' },
     teacher: { name: 'Emma', emoji: '📚', color: '#FF9800', bg: 'linear-gradient(135deg, #FF9800, #F57C00)' },
-    friend: { name: 'Jamie', emoji: '😊', color: '#9C27B0', bg: 'linear-gradient(135deg, #9C27B0, #7B1FA2)' }
+    friend: { name: 'Jesse', emoji: '/jessepinkman.jpeg', color: '#9C27B0', bg: 'linear-gradient(135deg, #9C27B0, #7B1FA2)' }
   };
 
   const currentChar = characterInfo[character];
@@ -145,10 +145,10 @@ const ChatBot: React.FC<ChatBotProps> = ({ character, userId, onClose }) => {
       right: '20px',
       width: '400px',
       height: '600px',
-      background: 'linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%)',
+      backgroundColor: '#000',
       borderRadius: '20px',
-      boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
-      border: '2px solid #333',
+      boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8)',
+      border: '1px solid #333',
       display: 'flex',
       flexDirection: 'column',
       zIndex: 1000,
@@ -156,7 +156,8 @@ const ChatBot: React.FC<ChatBotProps> = ({ character, userId, onClose }) => {
     }}>
       {/* Header */}
       <div style={{
-        background: currentChar.bg,
+        backgroundColor: '#fff',
+        color: '#000',
         padding: '20px',
         borderRadius: '18px 18px 0 0',
         display: 'flex',
@@ -168,20 +169,33 @@ const ChatBot: React.FC<ChatBotProps> = ({ character, userId, onClose }) => {
             width: '50px',
             height: '50px',
             borderRadius: '50%',
-            background: 'rgba(255, 255, 255, 0.2)',
+            backgroundColor: character === 'friend' ? 'transparent' : '#000',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: '24px',
-            border: '2px solid rgba(255, 255, 255, 0.3)'
+            overflow: 'hidden',
+            border: character === 'friend' ? '2px solid #000' : 'none'
           }}>
-            {currentChar.emoji}
+            {character === 'friend' ? (
+              <img 
+                src="/jessepinkman.jpeg" 
+                alt="Jesse Pinkman"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+              />
+            ) : (
+              currentChar.emoji
+            )}
           </div>
           <div>
-            <div style={{ color: 'white', fontWeight: 'bold', fontSize: '18px' }}>
+            <div style={{ color: '#000', fontWeight: 'bold', fontSize: '18px' }}>
               {currentChar.name}
             </div>
-            <div style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px', textTransform: 'capitalize' }}>
+            <div style={{ color: '#666', fontSize: '14px', textTransform: 'capitalize' }}>
               {character} • Online
             </div>
           </div>
@@ -189,12 +203,12 @@ const ChatBot: React.FC<ChatBotProps> = ({ character, userId, onClose }) => {
         <button
           onClick={onClose}
           style={{
-            background: 'rgba(255, 255, 255, 0.2)',
+            backgroundColor: '#000',
             border: 'none',
             borderRadius: '50%',
             width: '35px',
             height: '35px',
-            color: 'white',
+            color: '#fff',
             cursor: 'pointer',
             fontSize: '18px',
             display: 'flex',
@@ -232,15 +246,30 @@ const ChatBot: React.FC<ChatBotProps> = ({ character, userId, onClose }) => {
               borderRadius: '50%',
               background: message.sender === 'user' 
                 ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                : currentChar.bg,
+                : (character === 'friend' ? 'transparent' : currentChar.bg),
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '16px',
               flexShrink: 0,
-              border: '2px solid rgba(255, 255, 255, 0.1)'
+              border: '2px solid rgba(255, 255, 255, 0.1)',
+              overflow: 'hidden'
             }}>
-              {message.sender === 'user' ? '👤' : currentChar.emoji}
+              {message.sender === 'user' ? '👤' : (
+                character === 'friend' ? (
+                  <img 
+                    src="/jessepinkman.jpeg" 
+                    alt="Jesse Pinkman"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover'
+                    }}
+                  />
+                ) : (
+                  currentChar.emoji
+                )
+              )}
             </div>
 
             {/* Message Bubble */}
@@ -293,14 +322,27 @@ const ChatBot: React.FC<ChatBotProps> = ({ character, userId, onClose }) => {
               width: '35px',
               height: '35px',
               borderRadius: '50%',
-              background: currentChar.bg,
+              background: character === 'friend' ? 'transparent' : currentChar.bg,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '16px',
-              border: '2px solid rgba(255, 255, 255, 0.1)'
+              border: '2px solid rgba(255, 255, 255, 0.1)',
+              overflow: 'hidden'
             }}>
-              {currentChar.emoji}
+              {character === 'friend' ? (
+                <img 
+                  src="/jessepinkman.jpeg" 
+                  alt="Jesse Pinkman"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
+                  }}
+                />
+              ) : (
+                currentChar.emoji
+              )}
             </div>
             <div style={{
               padding: '12px 16px',

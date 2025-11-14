@@ -2,27 +2,56 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  name: { type: String, required: true },
-  profilePicture: String,
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true
+  },
+  password: {
+    type: String,
+    required: true,
+    minlength: 6
+  },
+  name: {
+    type: String,
+    required: true
+  },
+  avatar: {
+    type: String,
+    default: ''
+  },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
+  },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  lastLogin: {
+    type: Date,
+    default: Date.now
+  },
   interviewHistory: [{
     sessionId: String,
-    date: { type: Date, default: Date.now },
+    type: String,
+    company: String,
     score: Number,
-    eyeContactScore: Number,
-    fluencyScore: Number,
-    timingStats: {
-      avgResponseTime: Number,
-      totalQuestions: Number
-    }
+    completedAt: Date
   }],
-  englishLevel: { type: String, default: 'beginner' },
-  preferences: {
-    interviewType: { type: String, default: 'technical' },
-    difficulty: { type: String, default: 'medium' }
+  learningProgress: {
+    type: Map,
+    of: {
+      completed: Boolean,
+      accuracy: Number,
+      completedAt: Date
+    }
   }
-}, { timestamps: true });
+}, {
+  timestamps: true
+});
 
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
@@ -31,7 +60,7 @@ userSchema.pre('save', async function(next) {
 });
 
 userSchema.methods.comparePassword = async function(password) {
-  return bcrypt.compare(password, this.password);
+  return await bcrypt.compare(password, this.password);
 };
 
 module.exports = mongoose.model('User', userSchema);

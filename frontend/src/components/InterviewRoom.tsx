@@ -346,7 +346,7 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
   if (showWelcome) {
     return (
       <div style={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        backgroundColor: '#000',
         minHeight: '100vh',
         display: 'flex',
         alignItems: 'center',
@@ -354,26 +354,21 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
         padding: '15px'
       }}>
         <div style={{
-          background: 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(20px)',
+          backgroundColor: '#000',
+          border: '1px solid #333',
           borderRadius: '20px',
-          padding: '25px',
+          padding: '40px',
           maxWidth: '600px',
           width: '100%',
           textAlign: 'center',
-          color: 'white',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)'
+          color: '#fff'
         }}>
           <div style={{ fontSize: '60px', marginBottom: '15px', animation: 'bounce 2s infinite' }}>🎉</div>
           <h1 style={{
-            fontSize: '28px',
+            fontSize: '48px',
             fontWeight: 'bold',
             marginBottom: '20px',
-            background: 'linear-gradient(45deg, #4CAF50, #81C784)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+            color: '#fff'
           }}>Welcome to Your AI Interview!</h1>
           
           <div style={{
@@ -389,13 +384,13 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
               { icon: '📊', title: 'Real-time Feedback', desc: 'Get instant analysis' }
             ].map((item, i) => (
               <div key={i} style={{
-                background: 'rgba(255, 255, 255, 0.1)',
+                backgroundColor: '#111',
                 padding: '12px',
                 borderRadius: '12px',
-                border: '1px solid rgba(255, 255, 255, 0.2)'
+                border: '1px solid #333'
               }}>
                 <div style={{ fontSize: '24px', marginBottom: '6px' }}>{item.icon}</div>
-                <div style={{ fontWeight: 'bold', marginBottom: '4px', color: '#4CAF50', fontSize: '12px' }}>{item.title}</div>
+                <div style={{ fontWeight: 'bold', marginBottom: '4px', color: '#fff', fontSize: '12px' }}>{item.title}</div>
                 <div style={{ fontSize: '11px', opacity: 0.9 }}>{item.desc}</div>
               </div>
             ))}
@@ -456,44 +451,50 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
                 speakQuestion(testText);
               }}
               style={{
-                background: 'linear-gradient(45deg, #2196F3, #1976D2)',
-                color: 'white',
+                backgroundColor: '#fff',
+                color: '#000',
                 border: 'none',
                 padding: '12px 20px',
                 borderRadius: '10px',
                 fontSize: '14px',
                 fontWeight: 'bold',
                 cursor: 'pointer',
-                boxShadow: '0 6px 20px rgba(33, 150, 243, 0.3)',
-                transition: 'all 0.3s ease',
-                transform: 'translateY(0)'
+                transition: 'all 0.2s'
               }}
-              onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-              onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#e0e0e0'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fff'}
             >
               🔊 Test Audio
             </button>
             <button
               onClick={() => setVoiceEnabled(!voiceEnabled)}
               style={{
-                background: voiceEnabled 
-                  ? 'linear-gradient(45deg, #4CAF50, #45a049)' 
-                  : 'linear-gradient(45deg, #f44336, #d32f2f)',
-                color: 'white',
-                border: 'none',
+                backgroundColor: voiceEnabled ? '#fff' : 'transparent',
+                color: voiceEnabled ? '#000' : '#fff',
+                border: voiceEnabled ? 'none' : '1px solid #fff',
                 padding: '12px 20px',
                 borderRadius: '10px',
                 fontSize: '14px',
                 fontWeight: 'bold',
                 cursor: 'pointer',
-                boxShadow: voiceEnabled 
-                  ? '0 6px 20px rgba(76, 175, 80, 0.3)' 
-                  : '0 6px 20px rgba(244, 67, 54, 0.3)',
-                transition: 'all 0.3s ease',
-                transform: 'translateY(0)'
+                transition: 'all 0.2s'
               }}
-              onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-              onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+              onMouseOver={(e) => {
+                if (voiceEnabled) {
+                  e.currentTarget.style.backgroundColor = '#e0e0e0';
+                } else {
+                  e.currentTarget.style.backgroundColor = '#fff';
+                  e.currentTarget.style.color = '#000';
+                }
+              }}
+              onMouseOut={(e) => {
+                if (voiceEnabled) {
+                  e.currentTarget.style.backgroundColor = '#fff';
+                } else {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = '#fff';
+                }
+              }}
             >
               {voiceEnabled ? '🔊 Voice ON' : '🔇 Voice OFF'}
             </button>
@@ -661,21 +662,20 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
   }
   
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px', minHeight: '100vh', padding: '20px' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px', minHeight: '100vh', padding: '20px', backgroundColor: '#000', color: '#fff' }}>
       <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: '20px' }}>
         {/* Left Side - Camera */}
         <div style={{
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          backgroundColor: '#000',
           borderRadius: '16px',
           padding: '20px',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
+          border: '1px solid #333',
           height: 'fit-content'
         }}>
-          <h3 style={{ color: '#10b981', fontSize: '18px', fontWeight: '600', marginBottom: '16px', margin: 0 }}>📹 Camera Monitor</h3>
+          <h3 style={{ color: '#fff', fontSize: '18px', fontWeight: '600', marginBottom: '16px', margin: 0 }}>📹 Camera Monitor</h3>
           <MediaPipeFaceMonitor onEyeContactUpdate={setEyeContactScore} />
           <div style={{ marginTop: '16px', textAlign: 'center', fontSize: '14px' }}>
-            <div style={{ color: eyeContactScore > 70 ? '#10b981' : '#f59e0b', fontWeight: '500' }}>
+            <div style={{ color: eyeContactScore > 70 ? '#fff' : '#ccc', fontWeight: '500' }}>
               Eye Contact: {eyeContactScore}%
             </div>
           </div>

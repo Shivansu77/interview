@@ -14,7 +14,7 @@ const FloatingChatButton: React.FC<FloatingChatButtonProps> = ({ userId }) => {
     { id: 'teacher', name: 'Emma', emoji: '📚', color: '#FF9800', desc: 'English Teacher' },
     { id: 'mentor', name: 'Sarah', emoji: '🎯', color: '#4CAF50', desc: 'Career Mentor' },
     { id: 'interviewer', name: 'Alex', emoji: '👔', color: '#2196F3', desc: 'Interviewer' },
-    { id: 'friend', name: 'Jamie', emoji: '😊', color: '#9C27B0', desc: 'Supportive Friend' }
+    { id: 'friend', name: 'Jesse', emoji: '/jessepinkman.jpeg', color: '#9C27B0', desc: 'Jesse Pinkman' }
   ];
 
   const handleCharacterSelect = (character: any) => {
@@ -88,13 +88,27 @@ const FloatingChatButton: React.FC<FloatingChatButtonProps> = ({ userId }) => {
                     width: '40px',
                     height: '40px',
                     borderRadius: '50%',
-                    background: `linear-gradient(135deg, ${char.color}, ${char.color}CC)`,
+                    background: char.id === 'friend' ? 'transparent' : `linear-gradient(135deg, ${char.color}, ${char.color}CC)`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '18px'
+                    fontSize: '18px',
+                    overflow: 'hidden',
+                    border: char.id === 'friend' ? '2px solid #fff' : 'none'
                   }}>
-                    {char.emoji}
+                    {char.id === 'friend' ? (
+                      <img 
+                        src="/jessepinkman.jpeg" 
+                        alt="Jesse Pinkman"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover'
+                        }}
+                      />
+                    ) : (
+                      char.emoji
+                    )}
                   </div>
                   <div>
                     <div style={{ color: 'white', fontWeight: 'bold', fontSize: '14px' }}>
