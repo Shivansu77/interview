@@ -4,7 +4,9 @@ import MediaPipeFaceMonitor from './MediaPipeFaceMonitor';
 import VoiceRecorder from './VoiceRecorder';
 import AnalysisDisplay from './AnalysisDisplay';
 import AIAvatar from './AIAvatar';
+import InterviewSetup from './InterviewSetup';
 import { useAudioAnalyzer } from '../hooks/useAudioAnalyzer';
+import './InterviewSetup.css';
 
 // Add CSS animation keyframes
 const style = document.createElement('style');
@@ -17,14 +19,24 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
+interface CVProfile {
+  name: string;
+  experience: string;
+  skills: string[];
+  projects: string[];
+  education: string;
+  technologies: string[];
+}
+
 interface InterviewRoomProps {
   sessionId: string;
   userId: string;
   interviewType: string;
   company: string;
+  profile?: CVProfile;
 }
 
-const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interviewType, company }) => {
+const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interviewType, company, profile }) => {
   const [currentQuestion, setCurrentQuestion] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [eyeContactScore, setEyeContactScore] = useState(0);
@@ -39,6 +51,7 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
   const [allScores, setAllScores] = useState<any[]>([]);
   const [overallResults, setOverallResults] = useState<any>(null);
   const [showWelcome, setShowWelcome] = useState(true);
+  const [showSetup, setShowSetup] = useState(true);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const { audioLevel, startAnalyzing, stopAnalyzing, isAnalyzing: isListening } = useAudioAnalyzer();
@@ -48,7 +61,7 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
   const socketRef = useRef<any>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const generateQuestion = useCallback(async () => {
+  const generateQuestion = useCallback(async (profile?: any) => {
     try {
       // Stop any ongoing speech first
       speechSynthesis.cancel();
@@ -61,7 +74,8 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
           company: company,
           difficulty: 'medium',
           context: 'interview',
-          sessionId: sessionId
+          sessionId: sessionId,
+          profile: profile
         })
       });
       const data = await response.json();
@@ -105,11 +119,11 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
     initSpeech();
     
     // Show welcome message first
-    if (!hasGeneratedFirst) {
+    if (!hasGeneratedFirst && !showSetup) {
       setTimeout(() => {
         setShowWelcome(false);
         setHasGeneratedFirst(true);
-        generateQuestion();
+        generateQuestion(profile);
       }, 3000);
     }
     
@@ -120,7 +134,16 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
       stopTimer();
       socketRef.current?.disconnect();
     };
-  }, [sessionId, hasGeneratedFirst, generateQuestion]);
+  }, [sessionId, hasGeneratedFirst, generateQuestion, showSetup]);
+
+  const handleStartInterview = (cvProfile?: CVProfile) => {
+    setShowSetup(false);
+    // Update profile if provided
+    if (cvProfile) {
+      // Store profile for question generation
+      profile = cvProfile;
+    }
+  };
 
   const cleanTextForSpeech = (text: string): string => {
     return text
@@ -308,7 +331,7 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
             setAnalysis(null);
             setTimeout(() => {
               setQuestionCount(prev => prev + 1);
-              generateQuestion();
+              generateQuestion(profile);
             }, 100);
           }
           return 0;
@@ -336,7 +359,7 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
             setAnalysis(null);
             setTimeout(() => {
               setQuestionCount(prev => prev + 1);
-              generateQuestion();
+              generateQuestion(profile);
             }, 100);
           }
           return 0;
@@ -353,6 +376,10 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
     }
     setTimeLeft(0);
   };
+
+  if (showSetup) {
+    return <InterviewSetup onStartInterview={handleStartInterview} />;
+  }
 
   if (showWelcome) {
     return (
@@ -1067,7 +1094,7 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
                     setAnalysis(null);
                     if (questionCount < maxQuestions) {
                       setQuestionCount(prev => prev + 1);
-                      generateQuestion();
+                      generateQuestion(profile);
                     }
                   }}
                   style={{
@@ -1091,7 +1118,7 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
                     speechSynthesis.cancel();
                     stopTimer();
                     setAnalysis(null);
-                    generateQuestion();
+                    generateQuestion(profile);
                   }}
                   style={{
                     padding: '12px 24px',
