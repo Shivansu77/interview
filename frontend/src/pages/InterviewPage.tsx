@@ -126,20 +126,50 @@ const InterviewPage: React.FC = () => {
           </select>
         </div>
 
-        <div style={{ display: 'flex', gap: '20px', justifyContent: 'center' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', maxWidth: '800px', margin: '0 auto' }}>
+          <button 
+            onClick={() => startInterview('general')}
+            disabled={isLoading}
+            style={{ 
+              padding: '30px 20px', 
+              backgroundColor: 'transparent', 
+              color: '#fff', 
+              border: '1px solid #333', 
+              borderRadius: '12px', 
+              cursor: 'pointer', 
+              fontSize: '16px', 
+              fontWeight: '600',
+              transition: 'all 0.2s',
+              textAlign: 'center'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.borderColor = '#fff';
+              e.currentTarget.style.backgroundColor = '#111';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.borderColor = '#333';
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+          >
+            <div style={{ fontSize: '32px', marginBottom: '10px' }}>🌐</div>
+            <div>General</div>
+            <div style={{ fontSize: '12px', color: '#ccc', marginTop: '5px' }}>Behavioral & soft skills</div>
+          </button>
+          
           <button 
             onClick={() => startInterview('technical')}
             disabled={isLoading}
             style={{ 
-              padding: '20px 40px', 
+              padding: '30px 20px', 
               backgroundColor: '#fff', 
               color: '#000', 
               borderRadius: '12px', 
               border: 'none', 
               cursor: 'pointer', 
-              fontSize: '18px', 
+              fontSize: '16px', 
               fontWeight: '600',
-              transition: 'all 0.2s'
+              transition: 'all 0.2s',
+              textAlign: 'center'
             }}
             onMouseOver={(e) => {
               e.currentTarget.style.backgroundColor = '#e0e0e0';
@@ -148,32 +178,38 @@ const InterviewPage: React.FC = () => {
               e.currentTarget.style.backgroundColor = '#fff';
             }}
           >
-            💻 Technical Interview
+            <div style={{ fontSize: '32px', marginBottom: '10px' }}>💻</div>
+            <div>Technical Interview</div>
+            <div style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>Coding & system design</div>
           </button>
+          
           <button 
             onClick={() => startInterview('english')}
             disabled={isLoading}
             style={{ 
-              padding: '20px 40px', 
+              padding: '30px 20px', 
               backgroundColor: 'transparent', 
               color: '#fff', 
-              border: '1px solid #fff', 
+              border: '1px solid #333', 
               borderRadius: '12px', 
               cursor: 'pointer', 
-              fontSize: '18px', 
+              fontSize: '16px', 
               fontWeight: '600',
-              transition: 'all 0.2s'
+              transition: 'all 0.2s',
+              textAlign: 'center'
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = '#fff';
-              e.currentTarget.style.color = '#000';
+              e.currentTarget.style.borderColor = '#fff';
+              e.currentTarget.style.backgroundColor = '#111';
             }}
             onMouseOut={(e) => {
+              e.currentTarget.style.borderColor = '#333';
               e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = '#fff';
             }}
           >
-            💬 English Interview
+            <div style={{ fontSize: '32px', marginBottom: '10px' }}>💬</div>
+            <div>English Interview</div>
+            <div style={{ fontSize: '12px', color: '#ccc', marginTop: '5px' }}>Communication skills</div>
           </button>
         </div>
       </div>

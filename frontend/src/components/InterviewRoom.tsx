@@ -3,6 +3,8 @@ import io from 'socket.io-client';
 import MediaPipeFaceMonitor from './MediaPipeFaceMonitor';
 import VoiceRecorder from './VoiceRecorder';
 import AnalysisDisplay from './AnalysisDisplay';
+import AIAvatar from './AIAvatar';
+import { useAudioAnalyzer } from '../hooks/useAudioAnalyzer';
 
 // Add CSS animation keyframes
 const style = document.createElement('style');
@@ -39,6 +41,7 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
   const [showWelcome, setShowWelcome] = useState(true);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const { audioLevel, startAnalyzing, stopAnalyzing, isAnalyzing: isListening } = useAudioAnalyzer();
 
   const [isPaused, setIsPaused] = useState(false);
   const maxQuestions = 5;
@@ -187,6 +190,14 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
       const analysisData = await response.json();
       console.log('Analysis received:', analysisData);
       setAnalysis(analysisData);
+      
+      // AI speaks feedback after analysis
+      if (analysisData.feedback) {
+        setTimeout(() => {
+          const feedbackText = `Well, you have great experience in web development. ${analysisData.feedback}`;
+          speakQuestion(feedbackText);
+        }, 1000);
+      }
       
       // Store score for overall calculation
       const questionScore = {
@@ -664,20 +675,34 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px', minHeight: '100vh', padding: '20px', backgroundColor: '#000', color: '#fff' }}>
       <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: '20px' }}>
-        {/* Left Side - Camera */}
+        {/* Left Side - Camera & Avatar */}
         <div style={{
           backgroundColor: '#000',
           borderRadius: '16px',
           padding: '20px',
           border: '1px solid #333',
-          height: 'fit-content'
+          height: 'fit-content',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '20px'
         }}>
-          <h3 style={{ color: '#fff', fontSize: '18px', fontWeight: '600', marginBottom: '16px', margin: 0 }}>📹 Camera Monitor</h3>
-          <MediaPipeFaceMonitor onEyeContactUpdate={setEyeContactScore} />
-          <div style={{ marginTop: '16px', textAlign: 'center', fontSize: '14px' }}>
-            <div style={{ color: eyeContactScore > 70 ? '#fff' : '#ccc', fontWeight: '500' }}>
-              Eye Contact: {eyeContactScore}%
+          <div>
+            <h3 style={{ color: '#fff', fontSize: '18px', fontWeight: '600', marginBottom: '16px', margin: 0 }}>📹 Camera Monitor</h3>
+            <MediaPipeFaceMonitor onEyeContactUpdate={setEyeContactScore} />
+            <div style={{ marginTop: '16px', textAlign: 'center', fontSize: '14px' }}>
+              <div style={{ color: eyeContactScore > 70 ? '#fff' : '#ccc', fontWeight: '500' }}>
+                Eye Contact: {eyeContactScore}%
+              </div>
             </div>
+          </div>
+          
+          <div>
+            <h3 style={{ color: '#fff', fontSize: '18px', fontWeight: '600', marginBottom: '16px', margin: 0 }}>🤖 AI Interviewer</h3>
+            <AIAvatar 
+              isListening={isListening || isRecording}
+              isSpeaking={isSpeaking}
+              audioLevel={audioLevel}
+            />
           </div>
         </div>
         
