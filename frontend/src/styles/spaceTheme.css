@@ -1,0 +1,53 @@
+/* Space Theme Global Styles */
+body {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+  background-attachment: fixed;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Glassmorphism Components */
+.space-card {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(100, 116, 139, 0.2);
+  border-radius: 16px;
+}
+
+.space-input {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(100, 116, 139, 0.3);
+  border-radius: 12px;
+  color: #e2e8f0;
+  backdrop-filter: blur(10px);
+}
+
+.space-button {
+  background: rgba(59, 130, 246, 0.8);
+  border: 1px solid rgba(129, 140, 248, 0.4);
+  border-radius: 12px;
+  color: #fff;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.space-button:hover {
+  background: rgba(59, 130, 246, 1);
+  transform: translateY(-2px);
+}
+
+/* Text Styles */
+.space-title {
+  background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 300;
+  letter-spacing: 1px;
+}
+
+.space-text {
+  color: rgba(226, 232, 240, 0.9);
+}
+
+.space-text-muted {
+  color: rgba(148, 163, 184, 0.8);
+}

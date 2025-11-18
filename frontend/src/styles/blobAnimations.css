@@ -1,0 +1,254 @@
+/* Advanced Blob Animations */
+
+@keyframes morphBlob {
+  0%, 100% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+  20% {
+    border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+    transform: translate(15px, -15px) scale(1.08) rotate(72deg);
+  }
+  40% {
+    border-radius: 50% 50% 30% 60% / 30% 60% 70% 40%;
+    transform: translate(-15px, 15px) scale(0.92) rotate(144deg);
+  }
+  60% {
+    border-radius: 70% 30% 50% 50% / 60% 50% 40% 50%;
+    transform: translate(15px, 15px) scale(1.05) rotate(216deg);
+  }
+  80% {
+    border-radius: 40% 70% 60% 30% / 40% 70% 50% 60%;
+    transform: translate(-10px, -10px) scale(0.98) rotate(288deg);
+  }
+}
+
+@keyframes floatBlob {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px);
+  }
+  25% {
+    transform: translateY(-20px) translateX(10px);
+  }
+  50% {
+    transform: translateY(-30px) translateX(-10px);
+  }
+  75% {
+    transform: translateY(-15px) translateX(15px);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.3;
+    filter: blur(60px) brightness(1);
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    filter: blur(80px) brightness(1.2);
+    transform: scale(1.15);
+  }
+}
+
+@keyframes rotateBlob {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes scaleBlob {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+@keyframes colorShift {
+  0% {
+    filter: hue-rotate(0deg) blur(60px);
+  }
+  50% {
+    filter: hue-rotate(180deg) blur(80px);
+  }
+  100% {
+    filter: hue-rotate(360deg) blur(60px);
+  }
+}
+
+/* Gradient Blob Animation */
+@keyframes gradientBlob {
+  0%, 100% {
+    background: radial-gradient(circle at 30% 50%, rgba(102, 126, 234, 0.8), transparent);
+  }
+  25% {
+    background: radial-gradient(circle at 70% 30%, rgba(118, 75, 162, 0.8), transparent);
+  }
+  50% {
+    background: radial-gradient(circle at 50% 70%, rgba(240, 147, 251, 0.8), transparent);
+  }
+  75% {
+    background: radial-gradient(circle at 30% 30%, rgba(79, 172, 254, 0.8), transparent);
+  }
+}
+
+/* Multi-directional Float */
+@keyframes multiFloat {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(20px, -25px) rotate(90deg);
+  }
+  50% {
+    transform: translate(-20px, 20px) rotate(180deg);
+  }
+  75% {
+    transform: translate(25px, 15px) rotate(270deg);
+  }
+}
+
+/* Breathing Effect */
+@keyframes breathe {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.5;
+  }
+}
+
+/* Liquid Wave */
+@keyframes liquidWave {
+  0%, 100% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  }
+  10% {
+    border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+  }
+  20% {
+    border-radius: 50% 50% 30% 60% / 30% 60% 70% 40%;
+  }
+  30% {
+    border-radius: 70% 30% 50% 50% / 60% 50% 40% 50%;
+  }
+  40% {
+    border-radius: 40% 70% 60% 30% / 40% 70% 50% 60%;
+  }
+  50% {
+    border-radius: 55% 45% 35% 65% / 65% 35% 65% 35%;
+  }
+  60% {
+    border-radius: 35% 65% 55% 45% / 45% 55% 35% 65%;
+  }
+  70% {
+    border-radius: 65% 35% 45% 55% / 55% 45% 65% 35%;
+  }
+  80% {
+    border-radius: 45% 55% 65% 35% / 35% 65% 45% 55%;
+  }
+  90% {
+    border-radius: 55% 45% 45% 55% / 55% 45% 55% 45%;
+  }
+}
+
+/* Orbit Animation */
+@keyframes orbit {
+  0% {
+    transform: rotate(0deg) translateX(100px) rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg) translateX(100px) rotate(-360deg);
+  }
+}
+
+/* Shimmer Effect */
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+/* Glow Pulse */
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.3),
+                0 0 40px rgba(102, 126, 234, 0.2),
+                0 0 60px rgba(102, 126, 234, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(102, 126, 234, 0.5),
+                0 0 80px rgba(102, 126, 234, 0.4),
+                0 0 120px rgba(102, 126, 234, 0.3);
+  }
+}
+
+/* Elastic Bounce */
+@keyframes elasticBounce {
+  0%, 100% {
+    transform: scale(1, 1);
+  }
+  25% {
+    transform: scale(1.1, 0.9);
+  }
+  50% {
+    transform: scale(0.9, 1.1);
+  }
+  75% {
+    transform: scale(1.05, 0.95);
+  }
+}
+
+/* Utility Classes for Blobs */
+.blob-animated {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.3;
+  pointer-events: none;
+  will-change: transform, border-radius;
+}
+
+.blob-gradient {
+  background: linear-gradient(45deg, 
+    rgba(102, 126, 234, 0.8), 
+    rgba(118, 75, 162, 0.8),
+    rgba(240, 147, 251, 0.8)
+  );
+  background-size: 200% 200%;
+  animation: gradientBlob 15s ease infinite;
+}
+
+.blob-glow {
+  animation: glowPulse 3s ease-in-out infinite;
+}
+
+.blob-morph {
+  animation: morphBlob 20s ease-in-out infinite;
+}
+
+.blob-float {
+  animation: floatBlob 15s ease-in-out infinite;
+}
+
+.blob-rotate {
+  animation: rotateBlob 30s linear infinite;
+}
+
+.blob-breathe {
+  animation: breathe 4s ease-in-out infinite;
+}
+
+.blob-liquid {
+  animation: liquidWave 10s ease-in-out infinite;
+}

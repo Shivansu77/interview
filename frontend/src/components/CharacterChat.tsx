@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Volume2, VolumeX } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import AIAssistant from './AIAssistant';
 
 
 
@@ -78,10 +78,6 @@ const CharacterChat: React.FC = () => {
   const userId = 'user123';
 
   useEffect(() => {
-    loadChatHistory();
-  }, [selectedCharacter]);
-
-  useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
@@ -131,7 +127,7 @@ const CharacterChat: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const loadChatHistory = async () => {
+  const loadChatHistory = useCallback(async () => {
     try {
       const response = await fetch(`http://localhost:5003/api/ai/character-chat/history?userId=${userId}&character=${selectedCharacter}`);
       const data = await response.json();
@@ -140,7 +136,11 @@ const CharacterChat: React.FC = () => {
       console.error('Failed to load chat history:', error);
       setMessages([]);
     }
-  };
+  }, [selectedCharacter, userId]);
+
+  useEffect(() => {
+    loadChatHistory();
+  }, [loadChatHistory]);
 
   const startRecording = () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
@@ -451,31 +451,43 @@ const CharacterChat: React.FC = () => {
 
   return (
     <div style={{
-      maxWidth: '1200px',
+      maxWidth: '1000px',
       margin: '0 auto',
-      padding: '50px',
-      backgroundColor: '#000',
+      padding: '30px 20px',
+      backgroundColor: 'transparent',
       color: '#fff',
-      minHeight: '80vh'
+      minHeight: '80vh',
+      position: 'relative'
     }}>
+      {/* AI Assistant */}
+      <AIAssistant
+        position="bottom-right"
+        size={80}
+        isListening={isRecording}
+        isThinking={loading}
+      />
       <div style={{
         textAlign: 'center',
         marginBottom: '40px'
       }}>
         <h1 style={{
-          fontSize: '48px',
-          fontWeight: 'bold',
-          marginBottom: '20px',
-          color: '#fff'
+          fontSize: '36px',
+          fontWeight: '300',
+          marginBottom: '10px',
+          background: 'linear-gradient(135deg, #667eea, #764ba2, #f093fb)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          letterSpacing: '2px'
         }}>
-          AI Character Chat
+          🚀 SPACE CHAT
         </h1>
         <p style={{
-          fontSize: '20px',
-          color: '#ccc',
-          marginBottom: '40px'
+          fontSize: '16px',
+          color: 'rgba(255,255,255,0.7)',
+          marginBottom: '30px',
+          fontWeight: '300'
         }}>
-          Chat with your favorite characters using AI
+          Connect with AI entities across the cosmos
         </p>
       </div>
       
@@ -483,11 +495,12 @@ const CharacterChat: React.FC = () => {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: '30px',
-        padding: '20px',
-        backgroundColor: '#000',
-        borderRadius: '12px',
-        border: '1px solid #333'
+        marginBottom: '20px',
+        padding: '15px 20px',
+        backgroundColor: 'rgba(15, 23, 42, 0.8)',
+        borderRadius: '16px',
+        border: '1px solid rgba(100, 116, 139, 0.3)',
+        backdropFilter: 'blur(20px)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <div style={{
@@ -607,14 +620,15 @@ const CharacterChat: React.FC = () => {
       </div>
 
       <div style={{
-        backgroundColor: '#000',
-        borderRadius: '12px',
+        backgroundColor: 'rgba(15, 23, 42, 0.6)',
+        borderRadius: '16px',
         padding: '20px',
-        marginBottom: '20px',
-        minHeight: '400px',
-        maxHeight: '500px',
+        marginBottom: '15px',
+        minHeight: '350px',
+        maxHeight: '450px',
         overflowY: 'auto',
-        border: '1px solid #333'
+        border: '1px solid rgba(100, 116, 139, 0.2)',
+        backdropFilter: 'blur(20px)'
       }}>
         {messages.map((msg, index) => (
           <div key={index} style={{
@@ -812,10 +826,11 @@ const CharacterChat: React.FC = () => {
       `}</style>
 
       <div style={{
-        backgroundColor: '#000',
-        borderRadius: '12px',
+        backgroundColor: 'rgba(15, 23, 42, 0.8)',
+        borderRadius: '16px',
         padding: '20px',
-        border: '1px solid #333'
+        border: '1px solid rgba(100, 116, 139, 0.3)',
+        backdropFilter: 'blur(20px)'
       }}>
         <textarea
           value={inputMessage}

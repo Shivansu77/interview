@@ -2,11 +2,11 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import io from 'socket.io-client';
 import MediaPipeFaceMonitor from './MediaPipeFaceMonitor';
 import VoiceRecorder from './VoiceRecorder';
-import AnalysisDisplay from './AnalysisDisplay';
-import AIAvatar from './AIAvatar';
-import InterviewSetup from './InterviewSetup';
+import AnimatedBlob from './AnimatedBlob';
+import ProfessionalAIBlob from './ProfessionalAIBlob';
+import InterviewModeSelector, { InterviewConfig, CVProfile } from './InterviewModeSelector';
 import { useAudioAnalyzer } from '../hooks/useAudioAnalyzer';
-import './InterviewSetup.css';
+
 
 // Add CSS animation keyframes
 const style = document.createElement('style');
@@ -16,17 +16,28 @@ style.textContent = `
     40% { transform: translateY(-10px); }
     60% { transform: translateY(-5px); }
   }
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+  @keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes shimmer {
+    0% { opacity: 0.3; }
+    100% { opacity: 0.8; }
+  }
+  @keyframes wave {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(2deg); }
+  }
+
 `;
 document.head.appendChild(style);
 
-interface CVProfile {
-  name: string;
-  experience: string;
-  skills: string[];
-  projects: string[];
-  education: string;
-  technologies: string[];
-}
+
 
 interface InterviewRoomProps {
   sessionId: string;
@@ -51,114 +62,19 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
   const [allScores, setAllScores] = useState<any[]>([]);
   const [overallResults, setOverallResults] = useState<any>(null);
   const [showWelcome, setShowWelcome] = useState(true);
-  const [showSetup, setShowSetup] = useState(true);
+  const [showModeSelector, setShowModeSelector] = useState(true);
+  const [interviewConfig, setInterviewConfig] = useState<InterviewConfig | null>(null);
+  const [maxQuestions, setMaxQuestions] = useState(5);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const { audioLevel, startAnalyzing, stopAnalyzing, isAnalyzing: isListening } = useAudioAnalyzer();
+  const { isAnalyzing: isListening } = useAudioAnalyzer();
 
   const [isPaused, setIsPaused] = useState(false);
-  const maxQuestions = 5;
+
   const socketRef = useRef<any>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const generateQuestion = useCallback(async (profile?: any) => {
-    try {
-      // Stop any ongoing speech first
-      speechSynthesis.cancel();
-      
-      const response = await fetch('http://localhost:5003/api/ai/generate-question', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          type: interviewType, 
-          company: company,
-          difficulty: 'medium',
-          context: 'interview',
-          sessionId: sessionId,
-          profile: profile
-        })
-      });
-      const data = await response.json();
-      setCurrentQuestion(data.question);
-      
-      // Always speak the question automatically
-      setTimeout(() => {
-        console.log('🤖 Auto-speaking question:', data.question);
-        speakQuestion(data.question);
-      }, 500);
-    } catch (error) {
-      console.error('Error generating question:', error);
-    }
-  }, [interviewType, company]);
-
-  useEffect(() => {
-    socketRef.current = io('http://localhost:5003');
-    socketRef.current.emit('join-interview', sessionId);
-    
-    // Stop audio when page becomes hidden
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        speechSynthesis.cancel();
-        setIsSpeaking(false);
-      }
-    };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('beforeunload', () => speechSynthesis.cancel());
-    
-    // Initialize speech synthesis
-    const initSpeech = () => {
-      if (speechSynthesis) {
-        speechSynthesis.cancel();
-        // Load voices
-        speechSynthesis.getVoices();
-        console.log('🔊 Speech synthesis initialized');
-      }
-    };
-    
-    initSpeech();
-    
-    // Show welcome message first
-    if (!hasGeneratedFirst && !showSetup) {
-      setTimeout(() => {
-        setShowWelcome(false);
-        setHasGeneratedFirst(true);
-        generateQuestion(profile);
-      }, 3000);
-    }
-    
-    return () => {
-      document.removeEventListener('visibilitychange', () => {});
-      speechSynthesis.cancel();
-      setIsSpeaking(false);
-      stopTimer();
-      socketRef.current?.disconnect();
-    };
-  }, [sessionId, hasGeneratedFirst, generateQuestion, showSetup]);
-
-  const handleStartInterview = (cvProfile?: CVProfile) => {
-    setShowSetup(false);
-    // Update profile if provided
-    if (cvProfile) {
-      // Store profile for question generation
-      profile = cvProfile;
-    }
-  };
-
-  const cleanTextForSpeech = (text: string): string => {
-    return text
-      .replace(/\*\*(.*?)\*\*/g, '$1')  // Remove **bold**
-      .replace(/\*(.*?)\*/g, '$1')     // Remove *italic*
-      .replace(/\{(.*?)\}/g, '$1')     // Remove {curly braces}
-      .replace(/\[(.*?)\]/g, '$1')     // Remove [square brackets]
-      .replace(/`(.*?)`/g, '$1')       // Remove `code`
-      .replace(/#{1,6}\s/g, '')        // Remove # headers
-      .replace(/\n+/g, '. ')           // Replace newlines with periods
-      .replace(/\s+/g, ' ')            // Clean multiple spaces
-      .trim();
-  };
-
-  const speakQuestion = (text: string) => {
+  const speakQuestion = useCallback((text: string) => {
     if (!speechSynthesis) return;
     
     const cleanText = cleanTextForSpeech(text);
@@ -188,7 +104,111 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
     utterance.onerror = () => setIsSpeaking(false);
     
     speechSynthesis.speak(utterance);
+  }, []);
+
+  const generateQuestion = useCallback(async (config?: InterviewConfig) => {
+    try {
+      // Stop any ongoing speech first
+      speechSynthesis.cancel();
+      
+      const response = await fetch('http://localhost:5003/api/ai/generate-question', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          type: interviewType, 
+          company: company,
+          difficulty: 'medium',
+          context: 'interview',
+          sessionId: sessionId,
+          interviewConfig: config || interviewConfig
+        })
+      });
+      const data = await response.json();
+      setCurrentQuestion(data.question);
+      
+      // Always speak the question automatically
+      setTimeout(() => {
+        console.log('🤖 Auto-speaking question:', data.question);
+        speakQuestion(data.question);
+      }, 500);
+    } catch (error) {
+      console.error('Error generating question:', error);
+    }
+  }, [interviewType, company, sessionId, interviewConfig, speakQuestion]);
+
+  useEffect(() => {
+    socketRef.current = io('http://localhost:5003');
+    socketRef.current.emit('join-interview', sessionId);
+    
+    // Stop audio when page becomes hidden
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        speechSynthesis.cancel();
+        setIsSpeaking(false);
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', () => speechSynthesis.cancel());
+    
+    // Initialize speech synthesis
+    const initSpeech = () => {
+      if (speechSynthesis) {
+        speechSynthesis.cancel();
+        // Load voices
+        speechSynthesis.getVoices();
+        console.log('🔊 Speech synthesis initialized');
+      }
+    };
+    
+    initSpeech();
+    
+    // Show welcome message first
+    if (!hasGeneratedFirst && !showModeSelector && interviewConfig) {
+      setTimeout(() => {
+        setShowWelcome(false);
+        setHasGeneratedFirst(true);
+        generateQuestion(interviewConfig);
+      }, 3000);
+    }
+    
+    return () => {
+      document.removeEventListener('visibilitychange', () => {});
+      speechSynthesis.cancel();
+      setIsSpeaking(false);
+      stopTimer();
+      socketRef.current?.disconnect();
+    };
+  }, [sessionId, hasGeneratedFirst, generateQuestion, showModeSelector, interviewConfig]);
+
+  const handleStartInterview = (config: InterviewConfig) => {
+    setInterviewConfig(config);
+    setShowModeSelector(false);
+    
+    // Set max questions based on mode
+    if (config.mode === 'cv') {
+      setMaxQuestions(7);
+    } else if (config.mode === 'role') {
+      setMaxQuestions(6);
+    } else if (config.mode === 'practice') {
+      setMaxQuestions(5);
+    }
   };
+
+  const cleanTextForSpeech = (text: string): string => {
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '$1')  // Remove **bold**
+      .replace(/\*(.*?)\*/g, '$1')     // Remove *italic*
+      .replace(/\{(.*?)\}/g, '$1')     // Remove {curly braces}
+      .replace(/\[(.*?)\]/g, '$1')     // Remove [square brackets]
+      .replace(/`(.*?)`/g, '$1')       // Remove `code`
+      .replace(/#{1,6}\s/g, '')        // Remove # headers
+      .replace(/\n+/g, '. ')           // Replace newlines with periods
+      .replace(/\s+/g, ' ')            // Clean multiple spaces
+      .trim();
+  };
+
+
 
   const handleAnswerSubmit = async (transcript: string) => {
     if (!transcript.trim()) return;
@@ -331,7 +351,7 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
             setAnalysis(null);
             setTimeout(() => {
               setQuestionCount(prev => prev + 1);
-              generateQuestion(profile);
+              generateQuestion(interviewConfig || undefined);
             }, 100);
           }
           return 0;
@@ -359,7 +379,7 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
             setAnalysis(null);
             setTimeout(() => {
               setQuestionCount(prev => prev + 1);
-              generateQuestion(profile);
+              generateQuestion(interviewConfig || undefined);
             }, 100);
           }
           return 0;
@@ -377,8 +397,8 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
     setTimeLeft(0);
   };
 
-  if (showSetup) {
-    return <InterviewSetup onStartInterview={handleStartInterview} />;
+  if (showModeSelector) {
+    return <InterviewModeSelector onStartInterview={handleStartInterview} />;
   }
 
   if (showWelcome) {
@@ -389,17 +409,77 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '15px'
+        padding: '15px',
+        position: 'relative',
+        overflow: 'hidden'
       }}>
+        {/* Animated Blob Backgrounds - Optimized */}
+        <AnimatedBlob 
+          position="top-left" 
+          color="#667eea" 
+          size={520} 
+          delay={0} 
+          opacity={0.2} 
+          duration={30} 
+          animationType="wave" 
+          blur={85} 
+          enableGlow={true} 
+        />
+        <AnimatedBlob 
+          position="top-right" 
+          color="#764ba2" 
+          size={480} 
+          delay={4} 
+          opacity={0.18} 
+          duration={35} 
+          animationType="elastic" 
+          blur={80} 
+          enableGlow={true} 
+        />
+        <AnimatedBlob 
+          position="bottom-left" 
+          color="#f093fb" 
+          size={550} 
+          delay={2} 
+          opacity={0.15} 
+          duration={32} 
+          animationType="liquid" 
+          blur={75} 
+        />
+        <AnimatedBlob 
+          position="bottom-right" 
+          color="#43e97b" 
+          size={490} 
+          delay={6} 
+          opacity={0.16} 
+          duration={28} 
+          animationType="pulse" 
+          blur={70} 
+          enableGlow={true} 
+        />
+        <AnimatedBlob 
+          position="center" 
+          color="#4facfe" 
+          size={420} 
+          delay={8} 
+          opacity={0.12} 
+          duration={38} 
+          animationType="breathe" 
+          blur={75} 
+        />
+        
         <div style={{
-          backgroundColor: '#000',
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
           border: '1px solid #333',
           borderRadius: '20px',
           padding: '40px',
           maxWidth: '600px',
           width: '100%',
           textAlign: 'center',
-          color: '#fff'
+          color: '#fff',
+          backdropFilter: 'blur(10px)',
+          position: 'relative',
+          zIndex: 1
         }}>
           <div style={{ fontSize: '60px', marginBottom: '15px', animation: 'bounce 2s infinite' }}>🎉</div>
           <h1 style={{
@@ -544,14 +624,79 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
   
   if (interviewComplete && overallResults) {
     return (
-      <div className="interview-dashboard" style={{
-        maxWidth: '1000px',
-        margin: '0 auto',
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: '#000',
         padding: '20px',
-        backgroundColor: '#1a1a1a',
-        borderRadius: '10px',
-        color: 'white'
+        position: 'relative',
+        overflow: 'hidden'
       }}>
+        {/* Animated Blob Backgrounds for Results - Celebration Theme */}
+        <AnimatedBlob 
+          position="top-left" 
+          color="#4CAF50" 
+          size={520} 
+          delay={0} 
+          opacity={0.2} 
+          duration={28} 
+          animationType="wave" 
+          blur={85} 
+          enableGlow={true} 
+        />
+        <AnimatedBlob 
+          position="top-right" 
+          color="#FF9800" 
+          size={470} 
+          delay={3} 
+          opacity={0.18} 
+          duration={25} 
+          animationType="elastic" 
+          blur={80} 
+          enableGlow={true} 
+        />
+        <AnimatedBlob 
+          position="bottom-left" 
+          color="#2196F3" 
+          size={500} 
+          delay={5} 
+          opacity={0.16} 
+          duration={30} 
+          animationType="liquid" 
+          blur={75} 
+        />
+        <AnimatedBlob 
+          position="bottom-right" 
+          color="#9C27B0" 
+          size={540} 
+          delay={2} 
+          opacity={0.17} 
+          duration={32} 
+          animationType="pulse" 
+          blur={70} 
+          enableGlow={true} 
+        />
+        <AnimatedBlob 
+          position="center" 
+          color="#FFD700" 
+          size={420} 
+          delay={7} 
+          opacity={0.14} 
+          duration={35} 
+          animationType="breathe" 
+          blur={75} 
+        />
+        
+        <div className="interview-dashboard" style={{
+          maxWidth: '1000px',
+          margin: '0 auto',
+          padding: '20px',
+          backgroundColor: 'rgba(26, 26, 26, 0.8)',
+          backdropFilter: 'blur(10px)',
+          borderRadius: '10px',
+          color: 'white',
+          position: 'relative',
+          zIndex: 1
+        }}>
         <h1 style={{ textAlign: 'center', color: '#4CAF50', marginBottom: '30px' }}>🎉 Interview Complete!</h1>
         
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px' }}>
@@ -695,13 +840,78 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
             📤 Share Results
           </button>
         </div>
+        </div>
       </div>
     );
   }
   
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px', minHeight: '100vh', padding: '20px', backgroundColor: '#000', color: '#fff' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: '20px' }}>
+    <div style={{ 
+      display: 'grid', 
+      gridTemplateColumns: '1fr', 
+      gap: '20px', 
+      minHeight: '100vh', 
+      padding: '20px', 
+      backgroundColor: '#000', 
+      color: '#fff',
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {/* Animated Blob Backgrounds - Interview Room */}
+      <AnimatedBlob 
+        position="top-left" 
+        color="#667eea" 
+        size={450} 
+        delay={0} 
+        opacity={0.18} 
+        duration={30} 
+        animationType="elastic" 
+        blur={80} 
+        enableGlow={true} 
+      />
+      <AnimatedBlob 
+        position="top-right" 
+        color="#f093fb" 
+        size={400} 
+        delay={5} 
+        opacity={0.15} 
+        duration={28} 
+        animationType="wave" 
+        blur={75} 
+      />
+      <AnimatedBlob 
+        position="bottom-left" 
+        color="#4facfe" 
+        size={480} 
+        delay={2} 
+        opacity={0.17} 
+        duration={26} 
+        animationType="liquid" 
+        blur={85} 
+        enableGlow={true} 
+      />
+      <AnimatedBlob 
+        position="center" 
+        color="#764ba2" 
+        size={420} 
+        delay={7} 
+        opacity={0.14} 
+        duration={35} 
+        animationType="breathe" 
+        blur={70} 
+      />
+      <AnimatedBlob 
+        position="bottom-right" 
+        color="#43e97b" 
+        size={380} 
+        delay={4} 
+        opacity={0.12} 
+        duration={32} 
+        animationType="pulse" 
+        blur={70} 
+      />
+      
+      <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: '20px', position: 'relative', zIndex: 1 }}>
         {/* Left Side - Camera & Avatar */}
         <div style={{
           backgroundColor: '#000',
@@ -724,12 +934,50 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
           </div>
           
           <div>
-            <h3 style={{ color: '#fff', fontSize: '18px', fontWeight: '600', marginBottom: '16px', margin: 0 }}>🤖 AI Interviewer</h3>
-            <AIAvatar 
-              isListening={isListening || isRecording}
-              isSpeaking={isSpeaking}
-              audioLevel={audioLevel}
-            />
+            <h3 style={{ color: '#fff', fontSize: '18px', fontWeight: '600', marginBottom: '16px', margin: 0 }}>🤖 AI Assistant</h3>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              padding: '20px',
+              background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
+              borderRadius: '12px',
+              border: '1px solid #333',
+              position: 'relative'
+            }}>
+              <ProfessionalAIBlob
+                size={120}
+                primaryColor={isSpeaking ? '#e91e63' : isListening || isRecording ? '#bb86fc' : '#9c27b0'}
+                secondaryColor={isSpeaking ? '#ff5722' : isListening || isRecording ? '#6200ea' : '#673ab7'}
+                isActive={isSpeaking || isListening || isRecording}
+                intensity={isSpeaking ? 'high' : isListening || isRecording ? 'medium' : 'low'}
+              />
+              
+              <div style={{
+                marginTop: '15px',
+                display: 'flex',
+                gap: '8px',
+                alignItems: 'center',
+                zIndex: 2,
+                position: 'relative'
+              }}>
+                <div style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: isListening || isRecording ? '#00ff00' : '#666'
+                }} />
+                <span style={{ color: '#fff', fontSize: '12px', fontWeight: '500' }}>
+                  {isSpeaking ? 'Speaking...' : isListening || isRecording ? 'Listening...' : 'Ready'}
+                </span>
+                <div style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: isSpeaking ? '#ff6b6b' : '#666'
+                }} />
+              </div>
+            </div>
           </div>
         </div>
         
@@ -1094,7 +1342,7 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
                     setAnalysis(null);
                     if (questionCount < maxQuestions) {
                       setQuestionCount(prev => prev + 1);
-                      generateQuestion(profile);
+                      generateQuestion(interviewConfig || undefined);
                     }
                   }}
                   style={{
@@ -1118,7 +1366,7 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
                     speechSynthesis.cancel();
                     stopTimer();
                     setAnalysis(null);
-                    generateQuestion(profile);
+                    generateQuestion(interviewConfig || undefined);
                   }}
                   style={{
                     padding: '12px 24px',

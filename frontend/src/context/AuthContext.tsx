@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 interface User {
   id: string;
@@ -31,21 +31,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const initAuth = async () => {
-      const storedToken = localStorage.getItem('authToken');
-      if (storedToken) {
-        setToken(storedToken);
-        await fetchProfile(storedToken);
-      } else {
-        setLoading(false);
-      }
-    };
-    
-    initAuth();
+  const logout = useCallback(() => {
+    setUser(null);
+    setToken(null);
+    localStorage.removeItem('authToken');
   }, []);
 
-  const fetchProfile = async (authToken = token) => {
+  const fetchProfile = useCallback(async (authToken = token) => {
     if (!authToken) {
       setLoading(false);
       return;
@@ -69,7 +61,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, logout]);
+
+  useEffect(() => {
+    const initAuth = async () => {
+      const storedToken = localStorage.getItem('authToken');
+      if (storedToken) {
+        setToken(storedToken);
+        await fetchProfile(storedToken);
+      } else {
+        setLoading(false);
+      }
+    };
+    
+    initAuth();
+  }, [fetchProfile]);
 
   const login = async (email: string, password: string) => {
     const response = await fetch('http://localhost:5003/api/auth/login', {
@@ -107,11 +113,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('authToken', data.token);
   };
 
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('authToken');
-  };
+
 
   return (
     <AuthContext.Provider value={{ user, token, login, register, logout, loading }}>

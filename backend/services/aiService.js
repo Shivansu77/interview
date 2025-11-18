@@ -7,28 +7,13 @@ class AIService {
     this.sessionQuestions = new Map(); // Track questions per session
   }
 
-  async generateQuestion(type = 'technical', company = 'general', difficulty = 'medium', context = 'interview', sessionId = null) {
+  async generateQuestion(type = 'technical', company = 'general', difficulty = 'medium', context = 'interview', sessionId = null, interviewConfig = null) {
     if (context !== 'interview') {
       throw new Error('Question generation only available during interview sessions');
     }
     
-    let prompt = '';
-    
-    if (type === 'technical') {
-      const techTopics = {
-        easy: 'web development basics, JavaScript fundamentals, HTML/CSS, or simple programming concepts',
-        medium: 'frameworks like React/Node.js, databases, APIs, or software engineering practices',
-        hard: 'system architecture, performance optimization, security, or advanced programming patterns'
-      };
-      
-      prompt = company === 'general' 
-        ? `Generate a practical ${difficulty} level technical interview question about ${techTopics[difficulty] || techTopics.medium}. Focus on real-world development scenarios, NOT algorithm puzzles or data structure implementations like LRU cache. Ask about experience, best practices, or problem-solving approaches. Return only the question text.`
-        : `Generate a practical ${difficulty} level technical interview question for ${company} company about ${techTopics[difficulty] || techTopics.medium}. Focus on real-world scenarios and practical knowledge, NOT coding challenges or algorithm problems. Return only the question text.`;
-    } else if (type === 'english') {
-      prompt = company === 'general'
-        ? `Generate a ${difficulty} level behavioral interview question about communication, teamwork, problem-solving, or professional experience. Return only the question text.`
-        : `Generate a ${difficulty} level behavioral question that ${company} company asks about leadership, collaboration, or professional growth. Return only the question text.`;
-    }
+    let prompt = this.buildPromptFromConfig(type, company, difficulty, interviewConfig);
+
 
     try {
       // Add session context to prevent duplicate questions
@@ -405,6 +390,113 @@ Speak precisely, be methodical, show your intelligence. Use phrases like "I am t
         timestamp: new Date().toISOString()
       };
     }
+  }
+
+  buildPromptFromConfig(type, company, difficulty, interviewConfig) {
+    if (!interviewConfig) {
+      return this.getDefaultPrompt(type, company, difficulty);
+    }
+
+    const { mode, profile, role, level, topics } = interviewConfig;
+
+    if (mode === 'cv' && profile) {
+      return this.buildCVBasedPrompt(profile, difficulty);
+    } else if (mode === 'role' && role && level) {
+      return this.buildRoleBasedPrompt(role, level, difficulty);
+    } else if (mode === 'practice' && topics) {
+      return this.buildPracticePrompt(topics, difficulty);
+    }
+
+    return this.getDefaultPrompt(type, company, difficulty);
+  }
+
+  getDefaultPrompt(type, company, difficulty) {
+    if (type === 'technical') {
+      const techTopics = {
+        easy: 'web development basics, JavaScript fundamentals, HTML/CSS, or simple programming concepts',
+        medium: 'frameworks like React/Node.js, databases, APIs, or software engineering practices',
+        hard: 'system architecture, performance optimization, security, or advanced programming patterns'
+      };
+      
+      return company === 'general' 
+        ? `Generate a practical ${difficulty} level technical interview question about ${techTopics[difficulty] || techTopics.medium}. Focus on real-world development scenarios, NOT algorithm puzzles or data structure implementations like LRU cache. Ask about experience, best practices, or problem-solving approaches. Return only the question text.`
+        : `Generate a practical ${difficulty} level technical interview question for ${company} company about ${techTopics[difficulty] || techTopics.medium}. Focus on real-world scenarios and practical knowledge, NOT coding challenges or algorithm problems. Return only the question text.`;
+    } else if (type === 'english') {
+      return company === 'general'
+        ? `Generate a ${difficulty} level behavioral interview question about communication, teamwork, problem-solving, or professional experience. Return only the question text.`
+        : `Generate a ${difficulty} level behavioral question that ${company} company asks about leadership, collaboration, or professional growth. Return only the question text.`;
+    }
+    return 'Tell me about your experience in software development.';
+  }
+
+  buildCVBasedPrompt(profile, difficulty) {
+    const { experience, skills, projects, technologies } = profile;
+    
+    const skillsText = skills.slice(0, 3).join(', ');
+    const techText = technologies.slice(0, 3).join(', ');
+    const projectText = projects.length > 0 ? projects[0] : 'your projects';
+
+    const questionTypes = [
+      `Generate a skill-based question about ${skillsText} based on ${experience}. Ask about practical experience and real-world application. Return only the question text.`,
+      `Generate a project-based question about ${projectText} or similar work. Focus on challenges, decisions, and outcomes. Return only the question text.`,
+      `Generate a system design question related to ${techText} technologies. Ask about architecture, scalability, or best practices. Return only the question text.`,
+      `Generate a behavioral question about leadership, teamwork, or problem-solving in the context of ${experience}. Return only the question text.`
+    ];
+
+    return questionTypes[Math.floor(Math.random() * questionTypes.length)];
+  }
+
+  buildRoleBasedPrompt(role, level, difficulty) {
+    const roleQuestions = {
+      'frontend': {
+        'fresher': 'Generate a beginner frontend question about HTML, CSS, JavaScript basics, or responsive design. Return only the question text.',
+        'junior': 'Generate a junior frontend question about React, Vue, or modern JavaScript frameworks and tools. Return only the question text.',
+        'mid': 'Generate a mid-level frontend question about performance optimization, state management, or advanced React patterns. Return only the question text.'
+      },
+      'backend': {
+        'fresher': 'Generate a beginner backend question about APIs, databases, or server-side programming basics. Return only the question text.',
+        'junior': 'Generate a junior backend question about Node.js, Express, database design, or API development. Return only the question text.',
+        'mid': 'Generate a mid-level backend question about microservices, system architecture, or performance optimization. Return only the question text.'
+      },
+      'fullstack': {
+        'fresher': 'Generate a beginner full-stack question about web development fundamentals or MERN stack basics. Return only the question text.',
+        'junior': 'Generate a junior full-stack question about MERN stack development, API integration, or deployment. Return only the question text.',
+        'mid': 'Generate a mid-level full-stack question about system architecture, scalability, or end-to-end development. Return only the question text.'
+      },
+      'devops': {
+        'fresher': 'Generate a beginner DevOps question about CI/CD, version control, or basic deployment concepts. Return only the question text.',
+        'junior': 'Generate a junior DevOps question about Docker, cloud services, or automation tools. Return only the question text.',
+        'mid': 'Generate a mid-level DevOps question about Kubernetes, infrastructure as code, or monitoring systems. Return only the question text.'
+      },
+      'data': {
+        'fresher': 'Generate a beginner data analysis question about SQL, data visualization, or basic statistics. Return only the question text.',
+        'junior': 'Generate a junior data analyst question about Python, data processing, or business intelligence tools. Return only the question text.',
+        'mid': 'Generate a mid-level data analyst question about machine learning, advanced analytics, or data pipeline design. Return only the question text.'
+      },
+      'hr': {
+        'fresher': 'Generate a behavioral question for entry-level candidates about motivation, learning, or career goals. Return only the question text.',
+        'junior': 'Generate a behavioral question about teamwork, communication, or handling challenges in the workplace. Return only the question text.',
+        'mid': 'Generate a behavioral question about leadership, conflict resolution, or strategic thinking. Return only the question text.'
+      }
+    };
+
+    return roleQuestions[role]?.[level] || this.getDefaultPrompt('technical', 'general', difficulty);
+  }
+
+  buildPracticePrompt(topics, difficulty) {
+    const topicPrompts = {
+      'api': 'Generate a question about REST APIs, API design, HTTP methods, or API security. Return only the question text.',
+      'auth': 'Generate a question about authentication, authorization, JWT tokens, or security practices. Return only the question text.',
+      'system': 'Generate a system design question about scalability, architecture patterns, or distributed systems. Return only the question text.',
+      'projects': 'Generate a question about project experience, challenges faced, or technical decisions made. Return only the question text.',
+      'oop': 'Generate a question about object-oriented programming concepts, design patterns, or code organization. Return only the question text.',
+      'hr': 'Generate a behavioral question about teamwork, leadership, or professional development. Return only the question text.',
+      'communication': 'Generate a question about explaining technical concepts, documentation, or stakeholder communication. Return only the question text.',
+      'confidence': 'Generate a question designed to build confidence, focusing on achievements or problem-solving skills. Return only the question text.'
+    };
+
+    const selectedTopic = topics[Math.floor(Math.random() * topics.length)];
+    return topicPrompts[selectedTopic] || this.getDefaultPrompt('technical', 'general', difficulty);
   }
 
   // Clear session questions when interview ends

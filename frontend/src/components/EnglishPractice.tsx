@@ -159,17 +159,10 @@ const EnglishPractice: React.FC<EnglishPracticeProps> = ({ onBack }) => {
       border: '1px solid rgba(255, 255, 255, 0.1)'
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', padding: '20px 0' }}>
-        <h1 style={{ color: '#10b981', fontSize: '28px', fontWeight: 'bold', margin: 0 }}>🗣️ English Speaking Practice</h1>
-        <button onClick={onBack} style={{
-          padding: '12px 20px',
-          backgroundColor: '#3b82f6',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          cursor: 'pointer',
-          fontWeight: '500',
-          transition: 'all 0.2s',
-          boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+        <h1 className="space-title" style={{ fontSize: '32px', fontWeight: '300', margin: 0 }}>🌌 English Communication Lab</h1>
+        <button onClick={onBack} className="space-button" style={{
+          padding: '10px 16px',
+          fontWeight: '500'
         }}>
           ← Back
         </button>
@@ -178,7 +171,7 @@ const EnglishPractice: React.FC<EnglishPracticeProps> = ({ onBack }) => {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
         {/* Practice Section */}
         <div>
-          <h3 style={{ color: '#FF9800', marginBottom: '20px' }}>📝 Practice Text</h3>
+          <h3 className="space-text" style={{ marginBottom: '20px', fontSize: '20px' }}>🚀 Practice Mission</h3>
           
           {/* Sample Texts */}
           <div style={{ marginBottom: '20px' }}>
@@ -373,7 +366,7 @@ const EnglishPractice: React.FC<EnglishPracticeProps> = ({ onBack }) => {
 
         {/* Results Section */}
         <div>
-          <h3 style={{ color: '#4CAF50', marginBottom: '20px' }}>📊 Assessment Results</h3>
+          <h3 className="space-text" style={{ marginBottom: '20px', fontSize: '20px' }}>📊 Mission Analysis</h3>
           
           {isAnalyzing && (
             <div style={{

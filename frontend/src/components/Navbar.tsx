@@ -12,95 +12,109 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <nav style={{
+    <nav className="space-card" style={{
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      padding: '20px 50px',
-      borderBottom: '1px solid #333',
-      backgroundColor: '#000'
+      padding: '15px 40px',
+      borderBottom: '1px solid rgba(100, 116, 139, 0.3)',
+      margin: '10px 20px',
+      borderRadius: '16px'
     }}>
       <div 
         onClick={() => navigate('/dashboard')}
+        className="space-title"
         style={{ 
           fontSize: '24px', 
-          fontWeight: 'bold', 
-          color: '#fff',
-          cursor: 'pointer'
+          fontWeight: '300',
+          cursor: 'pointer',
+          letterSpacing: '1px'
         }}
       >
-        InterviewAI
+        🚀 InterviewAI
       </div>
       
       <div style={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
         <button
           onClick={() => navigate('/dashboard')}
+          className="space-text"
           style={{
             background: 'transparent',
             border: 'none',
-            color: '#fff',
-            fontSize: '16px',
+            fontSize: '14px',
             cursor: 'pointer',
-            padding: '10px'
+            padding: '8px 12px',
+            borderRadius: '8px',
+            transition: 'all 0.3s'
           }}
+          onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.2)'}
+          onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
         >
-          Dashboard
+          Mission Control
         </button>
         <button
           onClick={() => navigate('/interview')}
+          className="space-text"
           style={{
             background: 'transparent',
             border: 'none',
-            color: '#fff',
-            fontSize: '16px',
+            fontSize: '14px',
             cursor: 'pointer',
-            padding: '10px'
+            padding: '8px 12px',
+            borderRadius: '8px',
+            transition: 'all 0.3s'
           }}
+          onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.2)'}
+          onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
         >
           Interview
         </button>
         <button
           onClick={() => navigate('/english')}
+          className="space-text"
           style={{
             background: 'transparent',
             border: 'none',
-            color: '#fff',
-            fontSize: '16px',
+            fontSize: '14px',
             cursor: 'pointer',
-            padding: '10px'
+            padding: '8px 12px',
+            borderRadius: '8px',
+            transition: 'all 0.3s'
           }}
+          onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.2)'}
+          onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
         >
           English
         </button>
         <button
           onClick={() => navigate('/chat')}
+          className="space-text"
           style={{
             background: 'transparent',
             border: 'none',
-            color: '#fff',
-            fontSize: '16px',
+            fontSize: '14px',
             cursor: 'pointer',
-            padding: '10px'
+            padding: '8px 12px',
+            borderRadius: '8px',
+            transition: 'all 0.3s'
           }}
+          onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.2)'}
+          onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
         >
-          Chat
+          Space Chat
         </button>
         
         {user ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <span style={{ color: '#ccc', fontSize: '14px' }}>
+            <span className="space-text-muted" style={{ fontSize: '13px' }}>
               {user?.name}
             </span>
             <button
               onClick={handleLogout}
+              className="space-button"
               style={{
-                background: '#fff',
-                border: 'none',
-                color: '#000',
-                padding: '8px 16px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
+                padding: '6px 12px',
+                fontSize: '13px',
                 fontWeight: '500'
               }}
             >
@@ -111,14 +125,12 @@ const Navbar: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <button
               onClick={() => window.dispatchEvent(new CustomEvent('openAuth', { detail: 'login' }))}
+              className="space-button"
               style={{
                 background: 'transparent',
-                border: '1px solid #fff',
-                color: '#fff',
-                padding: '8px 16px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
+                border: '1px solid rgba(129, 140, 248, 0.6)',
+                padding: '6px 12px',
+                fontSize: '13px',
                 fontWeight: '500'
               }}
             >
@@ -126,14 +138,10 @@ const Navbar: React.FC = () => {
             </button>
             <button
               onClick={() => window.dispatchEvent(new CustomEvent('openAuth', { detail: 'register' }))}
+              className="space-button"
               style={{
-                background: '#fff',
-                border: 'none',
-                color: '#000',
-                padding: '8px 16px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
+                padding: '6px 12px',
+                fontSize: '13px',
                 fontWeight: '500'
               }}
             >

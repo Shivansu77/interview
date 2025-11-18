@@ -3,9 +3,9 @@ const aiService = require('../services/aiService');
 // Generate Interview Questions
 const generateQuestion = async (req, res) => {
   try {
-  const { type = 'technical', company = 'general', difficulty = 'medium', context = 'interview', sessionId } = req.body;
-  
-    const result = await aiService.generateQuestion(type, company, difficulty, context, sessionId);
+    const { type = 'technical', company = 'general', difficulty = 'medium', context = 'interview', sessionId, interviewConfig } = req.body;
+    
+    const result = await aiService.generateQuestion(type, company, difficulty, context, sessionId, interviewConfig);
     
     res.json(result);
   } catch (error) {
