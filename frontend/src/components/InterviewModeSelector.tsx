@@ -46,32 +46,35 @@ const InterviewModeSelector: React.FC<InterviewModeSelectorProps> = ({ onStartIn
       <div className="avatar-welcome">
         <div className="avatar-container">
           <div className="avatar-circle">
-            <span className="avatar-emoji">🤖</span>
+            <div className="ai-core"></div>
+            <div className="wave-ring wave-1"></div>
+            <div className="wave-ring wave-2"></div>
+            <div className="wave-ring wave-3"></div>
           </div>
         </div>
         <div className="welcome-message">
-          <h2>"Welcome! Let's create a personalized interview experience for you."</h2>
+          <h2 className="space-title">"Welcome! Let's create a personalized mission experience for you."</h2>
         </div>
       </div>
 
       <div className="mode-options">
-        <div className="mode-card recommended" onClick={() => setSelectedMode('cv')}>
-          <div className="mode-icon">📄</div>
-          <h3>Smart Interview (Upload CV)</h3>
-          <p>Reads CV → Personalized questions</p>
+        <div className="mode-card space-card recommended" onClick={() => setSelectedMode('cv')}>
+          <div className="mode-icon">🛸</div>
+          <h3 className="space-text">Smart Mission (Upload CV)</h3>
+          <p className="space-text-muted">Reads CV → Personalized transmissions</p>
           <span className="recommended-badge">Recommended</span>
         </div>
 
-        <div className="mode-card" onClick={() => setSelectedMode('role')}>
+        <div className="mode-card space-card" onClick={() => setSelectedMode('role')}>
           <div className="mode-icon">⚡</div>
-          <h3>Quick Role-Based Interview</h3>
-          <p>User selects role → Asks 6–10 questions</p>
+          <h3 className="space-text">Quick Role-Based Mission</h3>
+          <p className="space-text-muted">User selects role → Asks 6–10 transmissions</p>
         </div>
 
-        <div className="mode-card" onClick={() => setSelectedMode('practice')}>
+        <div className="mode-card space-card" onClick={() => setSelectedMode('practice')}>
           <div className="mode-icon">🎯</div>
-          <h3>Practice Mode (Choose Your Own Questions)</h3>
-          <p>Select specific topics to practice</p>
+          <h3 className="space-text">Practice Mode (Choose Your Own Missions)</h3>
+          <p className="space-text-muted">Select specific topics to practice</p>
         </div>
       </div>
 
@@ -92,25 +95,56 @@ const InterviewModeSelector: React.FC<InterviewModeSelectorProps> = ({ onStartIn
         }
 
         .avatar-circle {
+          width: 100px;
+          height: 100px;
+          position: relative;
+          margin: 0 auto;
+        }
+
+        .ai-core {
           width: 80px;
           height: 80px;
           border-radius: 50%;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: 0 auto;
-          animation: pulse 2s infinite;
+          background: radial-gradient(circle at 30% 30%, #667eea, #764ba2);
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          animation: coreGlow 3s ease-in-out infinite;
+          box-shadow: 0 0 30px rgba(102, 126, 234, 0.4);
         }
 
-        .avatar-emoji {
-          font-size: 2rem;
+        .wave-ring {
+          position: absolute;
+          border: 2px solid rgba(102, 126, 234, 0.3);
+          border-radius: 50%;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          animation: ripple 2s ease-out infinite;
+        }
+
+        .wave-1 {
+          width: 100px;
+          height: 100px;
+          animation-delay: 0s;
+        }
+
+        .wave-2 {
+          width: 120px;
+          height: 120px;
+          animation-delay: 0.5s;
+        }
+
+        .wave-3 {
+          width: 140px;
+          height: 140px;
+          animation-delay: 1s;
         }
 
         .welcome-message h2 {
-          color: #333;
           font-size: 1.5rem;
-          font-weight: 500;
+          font-weight: 300;
           margin: 0;
         }
 
@@ -122,9 +156,6 @@ const InterviewModeSelector: React.FC<InterviewModeSelectorProps> = ({ onStartIn
         }
 
         .mode-card {
-          background: white;
-          border: 2px solid #e2e8f0;
-          border-radius: 12px;
           padding: 2rem;
           cursor: pointer;
           transition: all 0.3s ease;
@@ -132,14 +163,12 @@ const InterviewModeSelector: React.FC<InterviewModeSelectorProps> = ({ onStartIn
         }
 
         .mode-card:hover {
-          border-color: #667eea;
-          transform: translateY(-2px);
-          box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+          transform: translateY(-5px);
+          border-color: rgba(129, 140, 248, 0.6);
         }
 
         .mode-card.recommended {
-          border-color: #10b981;
-          background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
+          border-color: rgba(34, 197, 94, 0.6);
         }
 
         .mode-icon {
@@ -148,13 +177,11 @@ const InterviewModeSelector: React.FC<InterviewModeSelectorProps> = ({ onStartIn
         }
 
         .mode-card h3 {
-          color: #1a202c;
           font-size: 1.25rem;
           margin-bottom: 0.5rem;
         }
 
         .mode-card p {
-          color: #718096;
           font-size: 0.95rem;
           line-height: 1.5;
         }
@@ -163,17 +190,35 @@ const InterviewModeSelector: React.FC<InterviewModeSelectorProps> = ({ onStartIn
           position: absolute;
           top: -8px;
           right: -8px;
-          background: #10b981;
+          background: rgba(34, 197, 94, 0.9);
           color: white;
           padding: 0.25rem 0.75rem;
           border-radius: 12px;
           font-size: 0.75rem;
-          font-weight: 600;
+          font-weight: 500;
+          backdrop-filter: blur(10px);
         }
 
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.05); }
+        @keyframes coreGlow {
+          0%, 100% {
+            filter: brightness(1) saturate(1);
+            box-shadow: 0 0 30px rgba(102, 126, 234, 0.4);
+          }
+          50% {
+            filter: brightness(1.2) saturate(1.2);
+            box-shadow: 0 0 40px rgba(102, 126, 234, 0.6);
+          }
+        }
+
+        @keyframes ripple {
+          0% {
+            transform: translate(-50%, -50%) scale(0.8);
+            opacity: 0.8;
+          }
+          100% {
+            transform: translate(-50%, -50%) scale(1.5);
+            opacity: 0;
+          }
         }
       `}</style>
     </div>

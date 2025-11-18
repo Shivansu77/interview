@@ -481,13 +481,12 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
           position: 'relative',
           zIndex: 1
         }}>
-          <div style={{ fontSize: '60px', marginBottom: '15px', animation: 'bounce 2s infinite' }}>🎉</div>
-          <h1 style={{
+          <div style={{ fontSize: '60px', marginBottom: '15px', animation: 'bounce 2s infinite' }}>🚀</div>
+          <h1 className="space-title" style={{
             fontSize: '48px',
             fontWeight: 'bold',
-            marginBottom: '20px',
-            color: '#fff'
-          }}>Welcome to Your AI Interview!</h1>
+            marginBottom: '20px'
+          }}>Welcome to Your AI Mission!</h1>
           
           <div style={{
             display: 'grid',
@@ -496,10 +495,10 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
             marginBottom: '20px'
           }}>
             {[
-              { icon: '📹', title: 'Camera', desc: 'Position your face in the green guide' },
-              { icon: '🎤', title: 'Microphone', desc: 'Speak clearly when answering' },
-              { icon: '🤖', title: 'AI Interviewer', desc: `Will ask you ${maxQuestions} questions` },
-              { icon: '📊', title: 'Real-time Feedback', desc: 'Get instant analysis' }
+              { icon: '🛸', title: 'Visual Scanner', desc: 'Position your face in the cosmic guide' },
+              { icon: '📡', title: 'Audio Transmitter', desc: 'Speak clearly when responding' },
+              { icon: '🤖', title: 'AI Commander', desc: `Will transmit ${maxQuestions} challenges` },
+              { icon: '🌌', title: 'Real-time Analysis', desc: 'Get instant cosmic feedback' }
             ].map((item, i) => (
               <div key={i} style={{
                 backgroundColor: '#111',
@@ -514,51 +513,51 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
             ))}
           </div>
           
-          <div style={{
-            background: 'linear-gradient(45deg, #4CAF50, #45a049)',
+          <div className="space-card" style={{
+            background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
             padding: '15px',
             borderRadius: '12px',
             marginBottom: '18px',
-            boxShadow: '0 6px 20px rgba(76, 175, 80, 0.3)'
+            boxShadow: '0 6px 20px rgba(139, 92, 246, 0.4)'
           }}>
             <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '4px' }}>
-              Interview Type: {interviewType.toUpperCase()}
+              Mission Type: {interviewType.toUpperCase()}
             </div>
-            <div style={{ fontSize: '13px', opacity: 0.9 }}>Company Focus: {company}</div>
+            <div style={{ fontSize: '13px', opacity: 0.9 }}>Sector Focus: {company}</div>
           </div>
           
-          <div style={{
-            background: 'rgba(255, 152, 0, 0.2)',
+          <div className="space-card" style={{
+            background: 'rgba(245, 158, 11, 0.2)',
             padding: '12px',
             borderRadius: '10px',
             marginBottom: '15px',
-            border: '1px solid rgba(255, 152, 0, 0.3)'
+            border: '1px solid rgba(245, 158, 11, 0.3)'
           }}>
-            <div style={{ color: '#FF9800', fontWeight: 'bold', fontSize: '14px' }}>🔄 Preparing your first question...</div>
+            <div style={{ color: '#f59e0b', fontWeight: 'bold', fontSize: '14px' }}>🛸 Initializing first transmission...</div>
           </div>
           
-          <div style={{
-            background: 'rgba(255, 193, 7, 0.2)',
+          <div className="space-card" style={{
+            background: 'rgba(251, 191, 36, 0.2)',
             padding: '12px',
             borderRadius: '10px',
             marginBottom: '15px',
-            border: '1px solid rgba(255, 193, 7, 0.3)'
+            border: '1px solid rgba(251, 191, 36, 0.3)'
           }}>
-            <div style={{ color: '#FFC107', fontWeight: 'bold', fontSize: '13px' }}>⚠️ Important: Click "Test Audio" first!</div>
+            <div style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: '13px' }}>⚠️ Critical: Activate "Test Transmission" first!</div>
           </div>
           
-          <div style={{
-            background: 'rgba(33, 150, 243, 0.2)',
+          <div className="space-card" style={{
+            background: 'rgba(59, 130, 246, 0.2)',
             padding: '15px',
             borderRadius: '10px',
             marginBottom: '18px',
-            border: '1px solid rgba(33, 150, 243, 0.3)'
+            border: '1px solid rgba(59, 130, 246, 0.3)'
           }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '10px', color: '#2196F3', fontSize: '14px' }}>🔊 Audio Status</div>
+            <div style={{ fontWeight: 'bold', marginBottom: '10px', color: '#3b82f6', fontSize: '14px' }}>📡 Transmission Status</div>
             <div style={{ textAlign: 'left', fontSize: '12px', lineHeight: '1.6' }}>
-              <div>• Speech: {typeof speechSynthesis !== 'undefined' ? '✅ Ready' : '❌ Not Available'}</div>
-              <div>• Auto-Play: ✅ Enabled</div>
-              <div>• Browser: {speechSynthesis?.getVoices()?.length > 0 ? '✅ Good' : '⚠️ Loading...'}</div>
+              <div>• Voice Synthesis: {typeof speechSynthesis !== 'undefined' ? '✅ Online' : '❌ Offline'}</div>
+              <div>• Auto-Transmission: ✅ Active</div>
+              <div>• System: {speechSynthesis?.getVoices()?.length > 0 ? '✅ Operational' : '⚠️ Initializing...'}</div>
             </div>
           </div>
           
@@ -568,53 +567,25 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
                 const testText = 'Hello! Audio test successful. Your AI interviewer is ready!';
                 speakQuestion(testText);
               }}
+              className="space-button"
               style={{
-                backgroundColor: '#fff',
-                color: '#000',
-                border: 'none',
                 padding: '12px 20px',
-                borderRadius: '10px',
                 fontSize: '14px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
+                fontWeight: '600'
               }}
-              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#e0e0e0'}
-              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fff'}
             >
-              🔊 Test Audio
+              📡 Test Transmission
             </button>
             <button
               onClick={() => setVoiceEnabled(!voiceEnabled)}
+              className={voiceEnabled ? 'space-button' : 'space-button-outline'}
               style={{
-                backgroundColor: voiceEnabled ? '#fff' : 'transparent',
-                color: voiceEnabled ? '#000' : '#fff',
-                border: voiceEnabled ? 'none' : '1px solid #fff',
                 padding: '12px 20px',
-                borderRadius: '10px',
                 fontSize: '14px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-              onMouseOver={(e) => {
-                if (voiceEnabled) {
-                  e.currentTarget.style.backgroundColor = '#e0e0e0';
-                } else {
-                  e.currentTarget.style.backgroundColor = '#fff';
-                  e.currentTarget.style.color = '#000';
-                }
-              }}
-              onMouseOut={(e) => {
-                if (voiceEnabled) {
-                  e.currentTarget.style.backgroundColor = '#fff';
-                } else {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = '#fff';
-                }
+                fontWeight: '600'
               }}
             >
-              {voiceEnabled ? '🔊 Voice ON' : '🔇 Voice OFF'}
+              {voiceEnabled ? '📡 Transmission ON' : '📵 Transmission OFF'}
             </button>
           </div>
         </div>
@@ -764,19 +735,16 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
               setHasGeneratedFirst(false);
               speechSynthesis.cancel();
             }}
+            className="space-button"
             style={{
               padding: '15px 30px',
-              backgroundColor: '#4CAF50',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
               fontSize: '16px',
-              fontWeight: 'bold',
-              boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)'
+              fontWeight: '600',
+              background: 'linear-gradient(135deg, #10b981, #059669)',
+              boxShadow: '0 8px 25px rgba(16, 185, 129, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
             }}
           >
-            🔄 Start New Interview
+            🔄 Start New Mission
           </button>
           
           <button 
@@ -792,32 +760,29 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
               const url = URL.createObjectURL(dataBlob);
               const link = document.createElement('a');
               link.href = url;
-              link.download = `interview-results-${new Date().toISOString().split('T')[0]}.json`;
+              link.download = `mission-results-${new Date().toISOString().split('T')[0]}.json`;
               link.click();
               URL.revokeObjectURL(url);
             }}
+            className="space-button"
             style={{
               padding: '15px 30px',
-              backgroundColor: '#2196F3',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
               fontSize: '16px',
-              fontWeight: 'bold',
-              boxShadow: '0 4px 12px rgba(33, 150, 243, 0.3)'
+              fontWeight: '600',
+              background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+              boxShadow: '0 8px 25px rgba(59, 130, 246, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
             }}
           >
-            📊 Download Results
+            📊 Download Data
           </button>
           
           <button 
             onClick={() => {
-              const shareText = `I just completed an AI interview! 🎉\n\nOverall Score: ${overallResults.overallScore}/10\nCorrect Answers: ${overallResults.correctAnswers}/${overallResults.totalQuestions}\nEye Contact: ${overallResults.eyeContactScore}%\n\n#AIInterview #InterviewPractice`;
+              const shareText = `I just completed an AI mission! 🚀\n\nOverall Score: ${overallResults.overallScore}/10\nCorrect Answers: ${overallResults.correctAnswers}/${overallResults.totalQuestions}\nEye Contact: ${overallResults.eyeContactScore}%\n\n#AIMission #InterviewPractice`;
               
               if (navigator.share) {
                 navigator.share({
-                  title: 'My AI Interview Results',
+                  title: 'My AI Mission Results',
                   text: shareText
                 });
               } else {
@@ -825,16 +790,13 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
                 alert('Results copied to clipboard!');
               }
             }}
+            className="space-button"
             style={{
               padding: '15px 30px',
-              backgroundColor: '#FF9800',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
               fontSize: '16px',
-              fontWeight: 'bold',
-              boxShadow: '0 4px 12px rgba(255, 152, 0, 0.3)'
+              fontWeight: '600',
+              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+              boxShadow: '0 8px 25px rgba(245, 158, 11, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
             }}
           >
             📤 Share Results
@@ -852,7 +814,6 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
       gap: '20px', 
       minHeight: '100vh', 
       padding: '20px', 
-      backgroundColor: '#000', 
       color: '#fff',
       position: 'relative',
       overflow: 'hidden'
@@ -913,18 +874,15 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
       
       <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: '20px', position: 'relative', zIndex: 1 }}>
         {/* Left Side - Camera & Avatar */}
-        <div style={{
-          backgroundColor: '#000',
-          borderRadius: '16px',
+        <div className="space-card" style={{
           padding: '20px',
-          border: '1px solid #333',
           height: 'fit-content',
           display: 'flex',
           flexDirection: 'column',
           gap: '20px'
         }}>
           <div>
-            <h3 style={{ color: '#fff', fontSize: '18px', fontWeight: '600', marginBottom: '16px', margin: 0 }}>📹 Camera Monitor</h3>
+            <h3 className="space-text" style={{ fontSize: '16px', fontWeight: '500', marginBottom: '16px', margin: 0 }}>🛸 Visual Monitor</h3>
             <MediaPipeFaceMonitor onEyeContactUpdate={setEyeContactScore} />
             <div style={{ marginTop: '16px', textAlign: 'center', fontSize: '14px' }}>
               <div style={{ color: eyeContactScore > 70 ? '#fff' : '#ccc', fontWeight: '500' }}>
@@ -934,7 +892,7 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
           </div>
           
           <div>
-            <h3 style={{ color: '#fff', fontSize: '18px', fontWeight: '600', marginBottom: '16px', margin: 0 }}>🤖 AI Assistant</h3>
+            <h3 className="space-text" style={{ fontSize: '16px', fontWeight: '500', marginBottom: '16px', margin: 0 }}>🌌 AI Commander</h3>
             <div style={{
               display: 'flex',
               flexDirection: 'column',
@@ -992,42 +950,32 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
             border: '1px solid rgba(255, 255, 255, 0.2)'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
-              <h2 style={{ color: '#10b981', fontSize: '24px', fontWeight: 'bold', margin: 0 }}>Question {questionCount} of {maxQuestions}</h2>
+              <h2 className="space-title" style={{ fontSize: '24px', fontWeight: '300', margin: 0 }}>🚀 Transmission {questionCount} of {maxQuestions}</h2>
               <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <button
                   onClick={() => speakQuestion(currentQuestion)}
                   disabled={isSpeaking}
+                  className="space-button"
                   style={{
-                    padding: '10px 16px',
-                    backgroundColor: isSpeaking ? '#6b7280' : '#3b82f6',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
+                    padding: '8px 14px',
                     cursor: isSpeaking ? 'not-allowed' : 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    transition: 'all 0.2s'
+                    fontSize: '13px',
+                    fontWeight: '500'
                   }}
                 >
                   {isSpeaking ? '🔊 Speaking...' : '🔁 Repeat'}
                 </button>
-                <div style={{
-                  padding: '8px 12px',
-                  backgroundColor: '#10b981',
-                  color: 'white',
-                  borderRadius: '6px',
-                  fontSize: '12px',
-                  fontWeight: '600'
+                <div className="space-button" style={{
+                  padding: '6px 10px',
+                  fontSize: '11px',
+                  fontWeight: '500'
                 }}>
                   🔊 AUTO
                 </div>
-                <div style={{ 
-                  backgroundColor: '#3b82f6', 
-                  color: 'white', 
-                  padding: '8px 12px', 
-                  borderRadius: '20px', 
-                  fontSize: '14px',
-                  fontWeight: '600'
+                <div className="space-button" style={{ 
+                  padding: '6px 10px', 
+                  fontSize: '12px',
+                  fontWeight: '500'
                 }}>
                   {Math.round((questionCount / maxQuestions) * 100)}%
                 </div>
@@ -1067,48 +1015,36 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
               <div style={{ marginTop: '20px', textAlign: 'center', display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
                 <button
                   onClick={() => {
-                    const textAnswer = prompt('Enter your answer:');
+                    const textAnswer = prompt('Enter your response:');
                     if (textAnswer && textAnswer.trim()) {
                       handleAnswerSubmit(textAnswer.trim());
                     }
                   }}
+                  className="space-button"
                   style={{
-                    padding: '12px 20px',
-                    backgroundColor: '#3b82f6',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    transition: 'all 0.2s',
-                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+                    padding: '10px 16px',
+                    fontSize: '13px',
+                    fontWeight: '500'
                   }}
                 >
-                  ✍️ Type Answer
+                  ✍️ Type Response
                 </button>
                 
                 <button
                   onClick={() => {
-                    const answer = prompt('Quick Submit - Enter your answer:');
+                    const answer = prompt('Quick Transmit - Enter your response:');
                     if (answer && answer.trim()) {
                       handleAnswerSubmit(answer.trim());
                     }
                   }}
+                  className="space-button"
                   style={{
-                    padding: '12px 20px',
-                    backgroundColor: '#10b981',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    transition: 'all 0.2s',
-                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+                    padding: '10px 16px',
+                    fontSize: '13px',
+                    fontWeight: '500'
                   }}
                 >
-                  🚀 Quick Submit
+                  🚀 Quick Transmit
                 </button>
               </div>
             )}
@@ -1311,16 +1247,12 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
                   
                   <button
                     onClick={isPaused ? resumeTimer : pauseTimer}
+                    className="space-button"
                     style={{
                       padding: '8px 16px',
-                      backgroundColor: isPaused ? '#10b981' : '#f59e0b',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
                       fontSize: '14px',
                       fontWeight: '500',
-                      transition: 'all 0.2s'
+                      background: isPaused ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #f59e0b, #d97706)'
                     }}
                   >
                     {isPaused ? '▶️ Resume' : '⏸️ Pause'}
@@ -1345,20 +1277,16 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
                       generateQuestion(interviewConfig || undefined);
                     }
                   }}
+                  className="space-button"
                   style={{
                     padding: '12px 24px',
-                    backgroundColor: '#10b981',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
                     fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+                    fontWeight: '600',
+                    background: 'linear-gradient(135deg, #10b981, #059669)',
+                    boxShadow: '0 6px 20px rgba(16, 185, 129, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
                   }}
                 >
-                  Next Question →
+                  Next Transmission →
                 </button>
                 
                 <button 
@@ -1368,19 +1296,14 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
                     setAnalysis(null);
                     generateQuestion(interviewConfig || undefined);
                   }}
+                  className="space-button-outline"
                   style={{
                     padding: '12px 24px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    color: 'rgba(255, 255, 255, 0.8)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '8px',
                     fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
+                    fontWeight: '500'
                   }}
                 >
-                  🔄 Retry Question
+                  🔄 Retry Transmission
                 </button>
               </div>
             </div>
