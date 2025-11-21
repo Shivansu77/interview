@@ -531,7 +531,8 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
             padding: '12px',
             borderRadius: '10px',
             marginBottom: '15px',
-            border: '1px solid rgba(245, 158, 11, 0.3)'
+            border: '1px solid rgba(245, 158, 11, 0.3)',
+            textAlign: 'center'
           }}>
             <div style={{ color: '#f59e0b', fontWeight: 'bold', fontSize: '14px' }}>🛸 Initializing first transmission...</div>
           </div>
