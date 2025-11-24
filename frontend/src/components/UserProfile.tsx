@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import '../styles/UserProfile.css';
 
@@ -17,15 +18,15 @@ const UserProfile: React.FC = () => {
 
   return (
     <div className="user-profile">
-      <div 
+      <div
         className="user-profile-info"
         onClick={() => setShowDropdown(!showDropdown)}
       >
         <div className="user-profile-avatar">
           {user.profilePictureUrl ? (
-            <img 
-              src={user.profilePictureUrl} 
-              alt="User" 
+            <img
+              src={user.profilePictureUrl}
+              alt="User"
               className="user-profile-picture"
             />
           ) : (
@@ -35,13 +36,13 @@ const UserProfile: React.FC = () => {
           )}
         </div>
         <div className="user-profile-greeting">
-          <span className="space-text">{user.name || 'User'}</span>
+          <span>{user.name || 'User'}</span>
         </div>
         <div className="user-profile-arrow">
           {showDropdown ? '▲' : '▼'}
         </div>
       </div>
-      
+
       {showDropdown && (
         <div className="user-profile-dropdown">
           <div className="dropdown-item">
@@ -51,9 +52,9 @@ const UserProfile: React.FC = () => {
             Settings
           </div>
           <div className="dropdown-divider" />
-          <button 
-            onClick={handleLogout} 
-            className="space-button user-profile-logout-button"
+          <button
+            onClick={handleLogout}
+            className="user-profile-logout-button"
           >
             Logout
           </button>

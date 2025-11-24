@@ -10,7 +10,8 @@ import VocabularyPage from './pages/VocabularyPage';
 import ChatPage from './pages/ChatPage';
 import './styles/blobAnimations.css';
 import './styles/aiBlob.css';
-import './styles/spaceTheme.css';
+// import './styles/spaceTheme.css';
+import './styles/minimalTheme.css';
 
 // Add loading animations
 const style = document.createElement('style');
@@ -28,7 +29,7 @@ document.head.appendChild(style);
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return (
       <div style={{
@@ -36,53 +37,46 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
+        background: 'var(--bg-primary)',
         position: 'relative',
         overflow: 'hidden'
       }}>
-        {/* Animated background particles */}
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%), radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 50%)',
-          animation: 'pulse 4s ease-in-out infinite'
-        }} />
-        
-        <div className="space-card" style={{
+
+        <div className="minimal-card" style={{
           padding: '60px 40px',
           textAlign: 'center',
           position: 'relative',
           zIndex: 1,
           maxWidth: '400px',
-          width: '90%'
+          width: '90%',
+          border: 'none',
+          boxShadow: 'none'
         }}>
-          <div style={{ 
+          <div style={{
             marginBottom: '30px',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center'
           }}>
-            <ProfessionalAIBlob 
-              size={140} 
-              isActive={true} 
-              intensity="high" 
-              primaryColor="#8b5cf6" 
-              secondaryColor="#06b6d4" 
+            <ProfessionalAIBlob
+              size={140}
+              isActive={true}
+              intensity="high"
+              primaryColor="#000000"
+              secondaryColor="#666666"
             />
           </div>
-          
-          <h2 className="space-title" style={{
+
+          <h2 style={{
             fontSize: '24px',
             fontWeight: '600',
             marginBottom: '16px',
-            letterSpacing: '0.5px'
+            letterSpacing: '-0.5px',
+            color: 'var(--text-primary)'
           }}>
-            🚀 Initializing Space Interface
+            Initializing Interface
           </h2>
-          
+
           <div style={{
             display: 'flex',
             justifyContent: 'center',
@@ -97,25 +91,25 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
                   width: '8px',
                   height: '8px',
                   borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #8b5cf6, #06b6d4)',
+                  background: 'var(--text-primary)',
                   animation: `bounce 1.4s ease-in-out ${i * 0.16}s infinite both`
                 }}
               />
             ))}
           </div>
-          
-          <p className="space-text" style={{
+
+          <p style={{
             fontSize: '14px',
-            opacity: 0.8,
+            color: 'var(--text-secondary)',
             lineHeight: '1.5'
           }}>
-            Connecting to cosmic servers...
+            Connecting to servers...
           </p>
         </div>
       </div>
     );
   }
-  
+
   return user ? <>{children}</> : <Navigate to="/" />;
 };
 

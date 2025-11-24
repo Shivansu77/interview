@@ -13,128 +13,61 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <nav className="space-card" style={{
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: '15px 40px',
-      borderBottom: '1px solid rgba(100, 116, 139, 0.3)',
-      margin: '10px 20px',
-      borderRadius: '16px'
-    }}>
-      <div 
-        onClick={() => navigate('/dashboard')}
-        className="space-title"
-        style={{ 
-          fontSize: '24px', 
-          fontWeight: '300',
-          cursor: 'pointer',
-          letterSpacing: '1px'
-        }}
-      >
-        🚀 InterviewAI
-      </div>
-      
-      <div style={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
-        <button
+    <nav className="minimal-nav">
+      <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '64px' }}>
+        <div
           onClick={() => navigate('/dashboard')}
-          className="space-text"
           style={{
-            background: 'transparent',
-            border: 'none',
-            fontSize: '14px',
+            fontSize: '20px',
+            fontWeight: '600',
             cursor: 'pointer',
-            padding: '8px 12px',
-            borderRadius: '8px',
-            transition: 'all 0.3s'
+            letterSpacing: '-0.5px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            color: 'var(--text-primary)'
           }}
-          onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.2)'}
-          onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
         >
-          Mission Control
-        </button>
-        <button
-          onClick={() => navigate('/interview')}
-          className="space-text"
-          style={{
-            background: 'transparent',
-            border: 'none',
-            fontSize: '14px',
-            cursor: 'pointer',
-            padding: '8px 12px',
-            borderRadius: '8px',
-            transition: 'all 0.3s'
-          }}
-          onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.2)'}
-          onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-        >
-          Interview
-        </button>
-        <button
-          onClick={() => navigate('/english')}
-          className="space-text"
-          style={{
-            background: 'transparent',
-            border: 'none',
-            fontSize: '14px',
-            cursor: 'pointer',
-            padding: '8px 12px',
-            borderRadius: '8px',
-            transition: 'all 0.3s'
-          }}
-          onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.2)'}
-          onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-        >
-          English
-        </button>
-        <button
-          onClick={() => navigate('/chat')}
-          className="space-text"
-          style={{
-            background: 'transparent',
-            border: 'none',
-            fontSize: '14px',
-            cursor: 'pointer',
-            padding: '8px 12px',
-            borderRadius: '8px',
-            transition: 'all 0.3s'
-          }}
-          onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.2)'}
-          onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-        >
-          Space Chat
-        </button>
-        
-        {user ? (
-          <UserProfile />
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <button
-              onClick={() => window.dispatchEvent(new CustomEvent('openAuth', { detail: 'login' }))}
-              className="space-button"
-              style={{
-                background: 'transparent',
-                border: '1px solid rgba(129, 140, 248, 0.6)',
-                padding: '6px 12px',
-                fontSize: '13px',
-                fontWeight: '500'
-              }}
-            >
-              Login
-            </button>
-            <button
-              onClick={() => window.dispatchEvent(new CustomEvent('openAuth', { detail: 'register' }))}
-              className="space-button"
-              style={{
-                padding: '6px 12px',
-                fontSize: '13px',
-                fontWeight: '500'
-              }}
-            >
-              Sign Up
-            </button>
-          </div>
-        )}
+          <span style={{ fontSize: '24px' }}>⚡️</span> Interview.io
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button onClick={() => navigate('/dashboard')} className="minimal-nav-link">
+            Dashboard
+          </button>
+          <button onClick={() => navigate('/interview')} className="minimal-nav-link">
+            Interview
+          </button>
+          <button onClick={() => navigate('/english')} className="minimal-nav-link">
+            English
+          </button>
+          <button onClick={() => navigate('/chat')} className="minimal-nav-link">
+            Chat
+          </button>
+
+          <div style={{ width: '1px', height: '24px', background: 'var(--border-light)', margin: '0 12px' }} />
+
+          {user ? (
+            <UserProfile />
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent('openAuth', { detail: 'login' }))}
+                className="minimal-button-secondary"
+                style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}
+              >
+                Log in
+              </button>
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent('openAuth', { detail: 'register' }))}
+                className="minimal-button-primary"
+                style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}
+              >
+                Sign up
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </nav>
   );

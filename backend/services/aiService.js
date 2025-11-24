@@ -11,7 +11,7 @@ class AIService {
     if (context !== 'interview') {
       throw new Error('Question generation only available during interview sessions');
     }
-    
+
     let prompt = this.buildPromptFromConfig(type, company, difficulty, interviewConfig);
 
 
@@ -19,7 +19,7 @@ class AIService {
       // Add session context to prevent duplicate questions
       const sessionKey = sessionId || 'default';
       const previousQuestions = this.sessionQuestions.get(sessionKey) || [];
-      
+
       let enhancedPrompt = prompt;
       if (previousQuestions.length > 0) {
         enhancedPrompt += `\n\nIMPORTANT: Do NOT ask any of these previously asked questions: ${previousQuestions.join(', ')}. Generate a completely different question.`;
@@ -31,16 +31,16 @@ class AIService {
         headers: { 'Content-Type': 'application/json' },
         timeout: 15000
       });
-      
+
       const question = response.data.candidates[0].content.parts[0].text.trim();
-      
+
       // Store the question to prevent duplicates
       if (sessionId) {
         const sessionQuestions = this.sessionQuestions.get(sessionKey) || [];
         sessionQuestions.push(question);
         this.sessionQuestions.set(sessionKey, sessionQuestions);
       }
-      
+
       console.log('Generated question from API:', question.substring(0, 50) + '...');
       return { question, type, company, context, source: 'api' };
     } catch (error) {
@@ -76,14 +76,14 @@ class AIService {
         'How do you stay motivated when working on long-term projects?'
       ]
     };
-    
+
     const sessionKey = sessionId || 'default';
     const previousQuestions = this.sessionQuestions.get(sessionKey) || [];
     const questions = fallbackQuestions[type] || fallbackQuestions.technical;
-    
+
     // Filter out previously asked questions
     const availableQuestions = questions.filter(q => !previousQuestions.includes(q));
-    
+
     // If all questions have been used, reset the session
     if (availableQuestions.length === 0) {
       this.sessionQuestions.set(sessionKey, []);
@@ -91,17 +91,17 @@ class AIService {
       console.log('Using fallback question (reset):', resetQuestion.substring(0, 50) + '...');
       return { question: resetQuestion, type, company, context, source: 'fallback' };
     }
-    
+
     // Select a question that hasn't been asked
     const selectedQuestion = availableQuestions[Math.floor(Math.random() * availableQuestions.length)];
-    
+
     // Track the question
     if (sessionId) {
       const sessionQuestions = this.sessionQuestions.get(sessionKey) || [];
       sessionQuestions.push(selectedQuestion);
       this.sessionQuestions.set(sessionKey, sessionQuestions);
     }
-    
+
     console.log('Using fallback question:', selectedQuestion.substring(0, 50) + '...');
     return { question: selectedQuestion, type, company, context, source: 'fallback' };
   }
@@ -120,15 +120,60 @@ class AIService {
         betterAnswer: 'Try to elaborate on your thoughts with concrete examples and explanations.'
       };
     }
-    
-    const analysisPrompt = `You are an expert AI evaluator. Analyze this interview answer and provide scores (1-10) for Content, Clarity, Completeness, and Fluency.
+
+    const analysisPrompt = `You are a senior technical interviewer at a top Silicon Valley startup. Analyze this interview answer with the same rigor and standards used at companies like Google, Meta, and top-tier startups.
 
 Question: ${question}
 Answer: ${answer}
 
-Return ONLY this JSON format:
-{"contentScore": number, "clarityScore": number, "completenessScore": number, "fluencyScore": number, "isCorrect": boolean, "isAdequate": boolean, "feedback": "Content: X/10 - [brief explanation], Clarity: X/10 - [brief explanation], Completeness: X/10 - [brief explanation]", "corrections": "helpful suggestions for improvement", "betterAnswer": "example of improved response"}`;
-    
+EVALUATION CRITERIA:
+1. **Content (1-10)**: Technical accuracy, depth of knowledge, relevance to the question
+   - 9-10: Demonstrates expert-level understanding with nuanced insights
+   - 7-8: Strong technical knowledge with good examples
+   - 5-6: Basic understanding but lacks depth or examples
+   - 3-4: Superficial understanding, missing key concepts
+   - 1-2: Incorrect or irrelevant information
+
+2. **Clarity (1-10)**: Structure, organization, communication effectiveness
+   - 9-10: Exceptionally well-structured, easy to follow, professional communication
+   - 7-8: Well-organized with clear points
+   - 5-6: Understandable but could be better organized
+   - 3-4: Confusing structure, hard to follow
+   - 1-2: Incoherent or disorganized
+
+3. **Completeness (1-10)**: Coverage of the topic, addressing all aspects of the question
+   - 9-10: Comprehensive answer covering all aspects with examples
+   - 7-8: Addresses main points with good coverage
+   - 5-6: Covers basics but misses important aspects
+   - 3-4: Incomplete, missing critical information
+   - 1-2: Barely addresses the question
+
+4. **Fluency (1-10)**: Language proficiency, grammar, professional vocabulary
+   - 9-10: Articulate, professional, excellent vocabulary
+   - 7-8: Clear communication with good language use
+   - 5-6: Adequate but with some language issues
+   - 3-4: Noticeable language problems affecting clarity
+   - 1-2: Poor language skills
+
+SCORING GUIDELINES:
+- Be honest and realistic - most answers fall in the 4-7 range
+- Only exceptional answers deserve 9-10
+- Consider the answer's length and depth relative to the question
+- Look for specific examples, technical terms, and structured thinking
+
+Return ONLY valid JSON (no markdown, no extra text):
+{
+  "contentScore": <number 1-10>,
+  "clarityScore": <number 1-10>,
+  "completenessScore": <number 1-10>,
+  "fluencyScore": <number 1-10>,
+  "isCorrect": <boolean - true if answer is factually correct and addresses the question>,
+  "isAdequate": <boolean - true if answer meets minimum professional standards>,
+  "feedback": "Content: X/10 - [specific, actionable feedback on technical accuracy]. Clarity: X/10 - [specific feedback on structure]. Completeness: X/10 - [specific feedback on coverage]",
+  "corrections": "[Specific, actionable improvements: 1) ... 2) ... 3) ...]",
+  "betterAnswer": "[A concrete example of how to improve this specific answer, not generic advice]"
+}`;
+
     try {
       const response = await axios.post(API_CONFIG.GEMINI_URL, {
         contents: [{ parts: [{ text: analysisPrompt }] }]
@@ -136,12 +181,12 @@ Return ONLY this JSON format:
         headers: { 'Content-Type': 'application/json' },
         timeout: 15000
       });
-      
+
       let analysisText = response.data.candidates[0].content.parts[0].text.trim();
       analysisText = analysisText.replace(/```json/g, '').replace(/```/g, '').trim();
-      
+
       const analysis = JSON.parse(analysisText);
-      
+
       return {
         contentScore: Math.max(SCORE_RANGES.MIN_SCORE, Math.min(SCORE_RANGES.MAX_SCORE, analysis.contentScore || 6)),
         clarityScore: Math.max(SCORE_RANGES.MIN_SCORE, Math.min(SCORE_RANGES.MAX_SCORE, analysis.clarityScore || 6)),
@@ -155,25 +200,25 @@ Return ONLY this JSON format:
       };
     } catch (error) {
       console.error('Analysis Error:', error.response?.data || error.message);
-      
+
       // If API is overloaded on first attempt, retry once
       if (error.response?.status === 503) {
         console.log('API overloaded, waiting 3 seconds and retrying once...');
         try {
           await new Promise(resolve => setTimeout(resolve, 3000));
-          
+
           const retryResponse = await axios.post(API_CONFIG.GEMINI_URL, {
             contents: [{ parts: [{ text: analysisPrompt }] }]
           }, {
             headers: { 'Content-Type': 'application/json' },
             timeout: 15000
           });
-          
+
           let retryAnalysisText = retryResponse.data.candidates[0].content.parts[0].text.trim();
           retryAnalysisText = retryAnalysisText.replace(/```json/g, '').replace(/```/g, '').trim();
-          
+
           const retryAnalysis = JSON.parse(retryAnalysisText);
-          
+
           return {
             contentScore: Math.max(SCORE_RANGES.MIN_SCORE, Math.min(SCORE_RANGES.MAX_SCORE, retryAnalysis.contentScore || 6)),
             clarityScore: Math.max(SCORE_RANGES.MIN_SCORE, Math.min(SCORE_RANGES.MAX_SCORE, retryAnalysis.clarityScore || 6)),
@@ -189,7 +234,7 @@ Return ONLY this JSON format:
           console.error('Retry failed:', retryError.message);
         }
       }
-      
+
       // Enhanced fallback analysis
       return this.getEnhancedLocalAnalysis(question, answer);
     }
@@ -199,76 +244,141 @@ Return ONLY this JSON format:
     const words = answer.trim().split(/\s+/);
     const wordCount = words.length;
     const sentences = answer.split(/[.!?]+/).filter(s => s.trim().length > 0);
-    
-    // Technical terms detection
-    const techTerms = ['algorithm', 'database', 'api', 'framework', 'function', 'variable', 'object', 'class', 'method', 'array', 'string', 'boolean', 'integer', 'loop', 'condition', 'exception', 'interface', 'inheritance', 'polymorphism', 'encapsulation'];
-    const techTermCount = words.filter(word => 
-      techTerms.some(term => word.toLowerCase().includes(term.toLowerCase()))
-    ).length;
-    
-    // Calculate scores based on actual content
-    let contentScore = 4; // Base score
-    if (wordCount >= 50) contentScore += 2;
+    const sentenceCount = sentences.length;
+
+    // Enhanced technical terms detection with categories
+    const techTerms = {
+      programming: ['algorithm', 'function', 'variable', 'object', 'class', 'method', 'array', 'string', 'boolean', 'integer', 'loop', 'condition', 'exception', 'interface', 'inheritance', 'polymorphism', 'encapsulation', 'async', 'promise', 'callback'],
+      data: ['database', 'sql', 'nosql', 'query', 'index', 'schema', 'table', 'collection', 'document', 'transaction', 'normalization'],
+      web: ['api', 'rest', 'http', 'endpoint', 'request', 'response', 'json', 'xml', 'authentication', 'authorization', 'cors', 'websocket'],
+      architecture: ['framework', 'library', 'module', 'component', 'service', 'microservice', 'monolith', 'scalability', 'performance', 'optimization', 'caching', 'load balancing'],
+      devops: ['deployment', 'ci/cd', 'docker', 'kubernetes', 'container', 'pipeline', 'testing', 'monitoring', 'logging']
+    };
+
+    let techTermCount = 0;
+    let techCategories = new Set();
+
+    words.forEach(word => {
+      const lowerWord = word.toLowerCase();
+      Object.entries(techTerms).forEach(([category, terms]) => {
+        if (terms.some(term => lowerWord.includes(term))) {
+          techTermCount++;
+          techCategories.add(category);
+        }
+      });
+    });
+
+    // Detect structure indicators
+    const hasNumberedPoints = /\b(first|second|third|1\.|2\.|3\.)/i.test(answer);
+    const hasExamples = /\b(example|for instance|such as|like)\b/i.test(answer);
+    const hasConclusion = /\b(therefore|thus|in conclusion|overall|to summarize)\b/i.test(answer);
+    const hasProperSentences = sentences.filter(s => /^[A-Z]/.test(s.trim())).length >= sentenceCount * 0.7;
+
+    // Calculate Content Score (1-10)
+    let contentScore = 2; // Base score
+    if (wordCount >= 30) contentScore += 1;
+    if (wordCount >= 60) contentScore += 1;
     if (wordCount >= 100) contentScore += 1;
-    if (techTermCount >= 2) contentScore += 2;
-    if (answer.includes('example') || answer.includes('for instance')) contentScore += 1;
-    
-    let clarityScore = 4; // Base score
-    if (sentences.length >= 3) clarityScore += 2;
-    if (answer.includes('first') || answer.includes('second') || answer.includes('finally')) clarityScore += 2;
-    if (wordCount >= 30) clarityScore += 1;
-    if (answer.match(/[A-Z][a-z].*\./)) clarityScore += 1; // Proper sentences
-    
-    let completenessScore = 4; // Base score
-    if (wordCount >= 75) completenessScore += 2;
-    if (sentences.length >= 4) completenessScore += 1;
-    if (techTermCount >= 3) completenessScore += 2;
-    if (answer.toLowerCase().includes(question.toLowerCase().split(' ')[0])) completenessScore += 1;
-    
+    if (techTermCount >= 2) contentScore += 1;
+    if (techTermCount >= 4) contentScore += 1;
+    if (techCategories.size >= 2) contentScore += 1; // Using terms from multiple categories
+    if (hasExamples) contentScore += 1;
+    if (answer.toLowerCase().includes(question.toLowerCase().split(' ').slice(0, 3).join(' '))) contentScore += 1; // Addresses the question
+
+    // Calculate Clarity Score (1-10)
+    let clarityScore = 2; // Base score
+    if (sentenceCount >= 2) clarityScore += 1;
+    if (sentenceCount >= 4) clarityScore += 1;
+    if (hasProperSentences) clarityScore += 1;
+    if (hasNumberedPoints) clarityScore += 2;
+    if (wordCount >= 40 && wordCount <= 200) clarityScore += 1; // Good length
+    if (sentenceCount > 0 && wordCount / sentenceCount >= 8 && wordCount / sentenceCount <= 25) clarityScore += 1; // Good sentence length
+    if (hasConclusion) clarityScore += 1;
+
+    // Calculate Completeness Score (1-10)
+    let completenessScore = 2; // Base score
+    if (wordCount >= 50) completenessScore += 1;
+    if (wordCount >= 100) completenessScore += 1;
+    if (sentenceCount >= 4) completenessScore += 1;
+    if (techTermCount >= 3) completenessScore += 1;
+    if (techCategories.size >= 2) completenessScore += 1;
+    if (hasExamples) completenessScore += 2;
+    if (hasConclusion) completenessScore += 1;
+
+    // Calculate Fluency Score (1-10)
+    let fluencyScore = 2; // Base score
+    if (hasProperSentences) fluencyScore += 2;
+    if (wordCount >= 30) fluencyScore += 1;
+    if (sentenceCount >= 3) fluencyScore += 1;
+    const avgWordLength = words.reduce((sum, w) => sum + w.length, 0) / words.length;
+    if (avgWordLength >= 4 && avgWordLength <= 7) fluencyScore += 2; // Good vocabulary
+    if (techTermCount >= 2) fluencyScore += 1; // Professional vocabulary
+    if (!/\b(um|uh|like|you know)\b/i.test(answer)) fluencyScore += 1; // No filler words
+
     // Cap scores at 10
     contentScore = Math.min(10, contentScore);
     clarityScore = Math.min(10, clarityScore);
     completenessScore = Math.min(10, completenessScore);
-    
-    const isAdequate = wordCount >= 30 && sentences.length >= 2;
-    const isCorrect = wordCount >= 50 && techTermCount >= 1;
-    
-    // Generate specific feedback
-    let feedback = `Content: ${contentScore}/10 - `;
-    if (contentScore >= 8) feedback += 'Excellent technical depth';
-    else if (contentScore >= 6) feedback += 'Good technical knowledge shown';
-    else feedback += 'Needs more technical detail';
-    
-    feedback += `, Clarity: ${clarityScore}/10 - `;
-    if (clarityScore >= 8) feedback += 'Very clear structure';
-    else if (clarityScore >= 6) feedback += 'Generally well structured';
-    else feedback += 'Needs better organization';
-    
-    feedback += `, Completeness: ${completenessScore}/10 - `;
-    if (completenessScore >= 8) feedback += 'Comprehensive coverage';
-    else if (completenessScore >= 6) feedback += 'Covers main points';
-    else feedback += 'Missing key information';
-    
-    // Generate corrections
+    fluencyScore = Math.min(10, fluencyScore);
+
+    const isAdequate = wordCount >= 40 && sentenceCount >= 2 && (contentScore >= 5 || techTermCount >= 1);
+    const isCorrect = wordCount >= 50 && techTermCount >= 2 && sentenceCount >= 3;
+
+    // Generate specific, actionable feedback
+    let contentFeedback = '';
+    if (contentScore >= 8) contentFeedback = 'Excellent technical depth with strong examples';
+    else if (contentScore >= 6) contentFeedback = 'Good technical knowledge, could add more specific details';
+    else if (contentScore >= 4) contentFeedback = 'Basic understanding shown, needs more technical depth and examples';
+    else contentFeedback = 'Lacks technical detail and specific examples. Add concrete technical concepts';
+
+    let clarityFeedback = '';
+    if (clarityScore >= 8) clarityFeedback = 'Exceptionally well-structured and easy to follow';
+    else if (clarityScore >= 6) clarityFeedback = 'Generally clear, could improve structure with numbered points';
+    else if (clarityScore >= 4) clarityFeedback = 'Understandable but needs better organization and flow';
+    else clarityFeedback = 'Poorly structured. Use clear points: 1) concept 2) example 3) conclusion';
+
+    let completenessFeedback = '';
+    if (completenessScore >= 8) completenessFeedback = 'Comprehensive coverage of the topic';
+    else if (completenessScore >= 6) completenessFeedback = 'Covers main points, could elaborate more';
+    else if (completenessScore >= 4) completenessFeedback = 'Addresses basics but missing important aspects';
+    else completenessFeedback = 'Incomplete answer. Add examples, explain benefits, mention challenges';
+
+    const feedback = `Content: ${contentScore}/10 - ${contentFeedback}. Clarity: ${clarityScore}/10 - ${clarityFeedback}. Completeness: ${completenessScore}/10 - ${completenessFeedback}`;
+
+    // Generate specific corrections based on what's missing
     let corrections = [];
-    if (wordCount < 50) corrections.push('Provide more detailed explanations');
-    if (techTermCount < 2) corrections.push('Include more technical terminology');
-    if (sentences.length < 3) corrections.push('Break down your answer into clear points');
-    if (!answer.includes('example')) corrections.push('Add specific examples to illustrate your points');
-    
-    const correctionsText = corrections.length > 0 ? corrections.join('. ') + '.' : 'Good structure, consider adding more specific examples.';
-    
+    if (wordCount < 50) corrections.push('Expand your answer to at least 50 words with more detailed explanations');
+    if (techTermCount < 3) corrections.push('Use more technical terminology relevant to the question');
+    if (!hasNumberedPoints && sentenceCount >= 3) corrections.push('Structure your answer with clear points (First, Second, Finally)');
+    if (!hasExamples) corrections.push('Add a specific, concrete example from your experience or knowledge');
+    if (sentenceCount < 3) corrections.push('Break down your answer into multiple clear sentences');
+    if (!hasConclusion && wordCount >= 50) corrections.push('End with a brief conclusion or summary statement');
+
+    const correctionsText = corrections.length > 0
+      ? corrections.map((c, i) => `${i + 1}) ${c}`).join('. ') + '.'
+      : 'Good foundation. To reach excellence: add more specific examples, use technical terminology, and structure with clear points.';
+
+    // Generate a better answer template specific to the question type
+    let betterAnswerTemplate = '';
+    if (question.toLowerCase().includes('tell me about') || question.toLowerCase().includes('describe')) {
+      betterAnswerTemplate = `For this question, structure your answer as: 1) Brief definition/overview 2) Specific example from your experience 3) Key benefits or outcomes 4) Lessons learned or challenges faced. Use technical terms and aim for 80-120 words.`;
+    } else if (question.toLowerCase().includes('how') || question.toLowerCase().includes('what')) {
+      betterAnswerTemplate = `For this question, use this structure: 1) Direct answer to the question 2) Explain the technical approach/methodology 3) Provide a concrete example 4) Mention any trade-offs or considerations. Include relevant technical terminology.`;
+    } else {
+      betterAnswerTemplate = `Structure your answer as: 1) State your main point clearly 2) Provide supporting details with technical terms 3) Give a specific example 4) Conclude with the impact or importance. Aim for clarity and completeness.`;
+    }
+
     return {
       contentScore,
       clarityScore,
       completenessScore,
-      fluencyScore: Math.min(10, Math.max(4, Math.floor(wordCount / 10) + 4)),
+      fluencyScore,
       isCorrect,
       isAdequate,
       feedback,
       corrections: correctionsText,
-      betterAnswer: 'Structure your answer as: 1) Define the concept 2) Provide a specific example 3) Explain the benefits/importance 4) Mention any challenges or considerations',
-      spokenText: answer, // Include the actual spoken text
+      betterAnswer: betterAnswerTemplate,
+      spokenText: answer,
       wordCount,
       technicalTerms: techTermCount
     };
@@ -278,14 +388,14 @@ Return ONLY this JSON format:
   analyzeSpeechErrors(originalText, spokenText) {
     const originalWords = originalText.toLowerCase().split(/\s+/);
     const spokenWords = spokenText.toLowerCase().split(/\s+/);
-    
+
     const errors = [];
     const maxLength = Math.max(originalWords.length, spokenWords.length);
-    
+
     for (let i = 0; i < maxLength; i++) {
       const original = originalWords[i] || '';
       const spoken = spokenWords[i] || '';
-      
+
       if (original !== spoken) {
         errors.push({
           position: i,
@@ -295,7 +405,7 @@ Return ONLY this JSON format:
         });
       }
     }
-    
+
     return {
       errors,
       accuracy: ((maxLength - errors.length) / maxLength * 100).toFixed(1),
@@ -324,17 +434,17 @@ Speak precisely, be methodical, show your intelligence. Use phrases like "I am t
       'Tom Holland': 'You are Tom Holland, the British actor who plays Spider-Man. You are energetic, friendly, and speak with British expressions and enthusiasm.',
       'Deadpool': 'You are Deadpool, the irreverent anti-hero. You break the fourth wall, make jokes, and have a sarcastic, witty personality with pop culture references.'
     };
-    
+
     // Build conversation context from history
     let conversationContext = '';
     if (chatHistory.length > 0) {
       const recentHistory = chatHistory.slice(-6); // Last 6 messages for context
-      conversationContext = '\n\nPrevious conversation:\n' + 
+      conversationContext = '\n\nPrevious conversation:\n' +
         recentHistory.map(msg => `${msg.sender === 'user' ? 'User' : character}: ${msg.text}`).join('\n');
     }
-    
+
     const prompt = `${characterPrompts[character] || 'You are a helpful character.'}${conversationContext}\n\nUser says: "${userMessage}". Respond in character authentically, remembering the conversation context. Keep it under 150 words.`;
-    
+
     try {
       const response = await axios.post(API_CONFIG.GEMINI_URL, {
         contents: [{ parts: [{ text: prompt }] }]
@@ -342,9 +452,9 @@ Speak precisely, be methodical, show your intelligence. Use phrases like "I am t
         headers: { 'Content-Type': 'application/json' },
         timeout: 10000
       });
-      
+
       const reply = response.data.candidates[0].content.parts[0].text.trim();
-      
+
       return {
         success: true,
         reply,
@@ -353,7 +463,7 @@ Speak precisely, be methodical, show your intelligence. Use phrases like "I am t
       };
     } catch (error) {
       console.error('Character response error:', error.response?.data || error.message);
-      
+
       // Generate contextual fallback responses
       const generateFallback = (char, msg) => {
         const keywords = msg.toLowerCase();
@@ -371,18 +481,18 @@ Speak precisely, be methodical, show your intelligence. Use phrases like "I am t
             default: [`I see. ${Math.random() > 0.5 ? 'Elaborate' : 'Continue'}.`, `${Math.random() > 0.5 ? 'Interesting' : 'Noted'}. What\'s your point?`]
           }
         };
-        
+
         const charData = responses[char] || { default: [`I understand. Tell me more.`, `That\'s interesting. Continue.`] };
-        
+
         let responseType = 'default';
         if (keywords.includes('song') || keywords.includes('music')) responseType = 'song';
         else if (keywords.includes('2+2') || keywords.includes('math')) responseType = 'math';
         else if (keywords.includes('hello') || keywords.includes('hi')) responseType = 'hello';
-        
+
         const responseArray = charData[responseType] || charData.default;
         return responseArray[Math.floor(Math.random() * responseArray.length)];
       };
-      
+
       return {
         success: true,
         reply: generateFallback(character, userMessage),
@@ -417,8 +527,8 @@ Speak precisely, be methodical, show your intelligence. Use phrases like "I am t
         medium: 'frameworks like React/Node.js, databases, APIs, or software engineering practices',
         hard: 'system architecture, performance optimization, security, or advanced programming patterns'
       };
-      
-      return company === 'general' 
+
+      return company === 'general'
         ? `Generate a practical ${difficulty} level technical interview question about ${techTopics[difficulty] || techTopics.medium}. Focus on real-world development scenarios, NOT algorithm puzzles or data structure implementations like LRU cache. Ask about experience, best practices, or problem-solving approaches. Return only the question text.`
         : `Generate a practical ${difficulty} level technical interview question for ${company} company about ${techTopics[difficulty] || techTopics.medium}. Focus on real-world scenarios and practical knowledge, NOT coding challenges or algorithm problems. Return only the question text.`;
     } else if (type === 'english') {
@@ -431,7 +541,7 @@ Speak precisely, be methodical, show your intelligence. Use phrases like "I am t
 
   buildCVBasedPrompt(profile, difficulty) {
     const { experience, skills, projects, technologies } = profile;
-    
+
     const skillsText = skills.slice(0, 3).join(', ');
     const techText = technologies.slice(0, 3).join(', ');
     const projectText = projects.length > 0 ? projects[0] : 'your projects';

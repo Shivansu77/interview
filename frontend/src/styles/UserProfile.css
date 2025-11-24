@@ -1,25 +1,22 @@
-/* User Profile Styles */
+/* User Profile Styles - Minimal Theme */
 .user-profile {
   position: relative;
-  color: white;
+  color: var(--text-primary);
 }
 
 .user-profile-info {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 16px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
+  padding: 6px 12px;
+  background: transparent;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .user-profile-info:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(139, 92, 246, 0.4);
+  background: var(--bg-secondary);
 }
 
 .user-profile-avatar {
@@ -27,36 +24,37 @@
 }
 
 .user-profile-picture {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  border: 2px solid rgba(139, 92, 246, 0.5);
+  border: 1px solid var(--border-medium);
   object-fit: cover;
 }
 
 .user-profile-placeholder {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
-  font-size: 16px;
-  border: 2px solid rgba(139, 92, 246, 0.5);
+  font-weight: 500;
+  font-size: 14px;
+  border: 1px solid var(--border-medium);
 }
 
 .user-profile-greeting {
   font-size: 14px;
   font-weight: 500;
-  flex: 1;
+  color: var(--text-primary);
 }
 
 .user-profile-arrow {
-  font-size: 12px;
-  opacity: 0.7;
-  transition: transform 0.3s ease;
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-left: 4px;
 }
 
 .user-profile-dropdown {
@@ -64,43 +62,48 @@
   top: 100%;
   right: 0;
   margin-top: 8px;
-  background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  padding: 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 4px;
   min-width: 200px;
   z-index: 1000;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-lg);
 }
 
 .dropdown-item {
-  padding: 12px 16px;
-  border-radius: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all 0.2s ease;
   font-size: 14px;
+  color: var(--text-primary);
 }
 
 .dropdown-item:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--bg-secondary);
 }
 
 .dropdown-divider {
   height: 1px;
-  background: rgba(255, 255, 255, 0.1);
-  margin: 8px 0;
+  background: var(--border-light);
+  margin: 4px 0;
 }
 
 .user-profile-logout-button {
   width: 100%;
-  padding: 10px 16px;
-  font-size: 13px;
-  background: linear-gradient(135deg, #ef4444, #dc2626);
+  padding: 10px 12px;
+  font-size: 14px;
+  background: transparent;
+  color: #ef4444;
+  /* Red for logout */
   border: none;
-  margin-top: 4px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
 }
 
 .user-profile-logout-button:hover {
-  background: linear-gradient(135deg, #f87171, #ef4444);
+  background: #fef2f2;
+  /* Light red bg */
 }

@@ -3,15 +3,20 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import Navbar from './Navbar';
 import AuthModal from './AuthModal';
-import UserProfile from './UserProfile';
+import { ArrowRight, Sparkles } from 'lucide-react';
+import {
+  InterviewVisual,
+  LearningVisual,
+  EnglishVisual,
+  VocabularyVisual,
+  CharactersVisual
+} from './BentoVisuals';
 
 const Dashboard: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
-
-  
 
   useEffect(() => {
     const handleAuthEvent = (e: any) => {
@@ -22,245 +27,121 @@ const Dashboard: React.FC = () => {
     return () => window.removeEventListener('openAuth', handleAuthEvent);
   }, []);
 
+  const bentoItems = [
+    {
+      title: "Interview Practice",
+      description: "Master technical and behavioral interviews with real-time AI feedback.",
+      visual: <InterviewVisual />,
+      path: "/interview",
+      className: "span-2 row-span-2"
+    },
+    {
+      title: "Learning Paths",
+      description: "Structured curriculum from beginner to expert.",
+      visual: <LearningVisual />,
+      path: "/learn",
+      className: "span-1 row-span-2" // Tall item
+    },
+    {
+      title: "English Mastery",
+      description: "Refine pronunciation and communication.",
+      visual: <EnglishVisual />,
+      path: "/english",
+      className: "span-1"
+    },
+    {
+      title: "Vocabulary",
+      description: "Expand your professional lexicon.",
+      visual: <VocabularyVisual />,
+      path: "/vocabulary",
+      className: "span-1"
+    },
+    {
+      title: "AI Characters",
+      description: "Roleplay with diverse AI personas.",
+      visual: <CharactersVisual />,
+      path: "/chat",
+      className: "span-2"
+    }
+  ];
+
   return (
-    <div style={{ minHeight: '100vh', color: '#fff' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
       <Navbar />
 
-      {/* Hero Section */}
-      <div style={{
-        textAlign: 'center',
-        padding: '80px 20px 60px',
-        maxWidth: '800px',
-        margin: '0 auto'
-      }}>
-        <h1 className="space-title" style={{
-          fontSize: '48px',
-          fontWeight: '300',
-          lineHeight: '1.2',
-          marginBottom: '20px'
-        }}>
-          🚀 AI Interview Platform
-        </h1>
-        <p className="space-text-muted" style={{
-          fontSize: '20px',
-          marginBottom: '40px',
-          lineHeight: '1.5'
-        }}>
-          {user ? 'Choose your mission and start improving your skills' : 'Master your interview skills with AI-powered practice sessions'}
-        </p>
-        {!user && (
-          <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', marginBottom: '40px' }}>
-            <button
-              onClick={() => { setAuthMode('login'); setShowAuthModal(true); }}
-              className="space-button"
-              style={{
-                background: 'transparent',
-                border: '2px solid rgba(129, 140, 248, 0.6)',
-                padding: '12px 24px',
-                fontSize: '16px',
-                fontWeight: '500'
-              }}
-            >
-              Login
-            </button>
-            <button
-              onClick={() => { setAuthMode('register'); setShowAuthModal(true); }}
-              className="space-button"
-              style={{
-                padding: '12px 24px',
-                fontSize: '16px',
-                fontWeight: '500'
-              }}
-            >
-              Get Started
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Features Grid */}
-      <div style={{
-        padding: '0 50px 50px',
-        maxWidth: '1200px',
-        margin: '0 auto'
-      }}>
-
+      <main className="container">
+        {/* Hero Section */}
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '30px'
+          textAlign: 'center',
+          padding: '100px 20px 60px',
+          maxWidth: '800px',
+          margin: '0 auto'
         }}>
-            {/* Interview Practice */}
-            <div
-              onClick={() => user ? navigate('/interview') : setShowAuthModal(true)}
-              className="space-card"
-              style={{
-                padding: '30px',
-                textAlign: 'center',
-                transition: 'all 0.3s',
-                cursor: 'pointer'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'translateY(-5px)';
-                e.currentTarget.style.borderColor = 'rgba(129, 140, 248, 0.6)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.borderColor = 'rgba(100, 116, 139, 0.2)';
-              }}
-            >
-              <div style={{ marginBottom: '20px' }}>
-                <img 
-                  src="/practice.jpg" 
-                  alt="Interview Practice" 
-                  style={{
-                    width: '80px',
-                    height: '80px',
-                    borderRadius: '50%',
-                    objectFit: 'cover'
-                  }}
-                />
-              </div>
-              <h3 className="space-text" style={{ fontSize: '20px', marginBottom: '15px' }}>
-                🚀 Interview Practice
-              </h3>
-              <p className="space-text-muted" style={{ lineHeight: '1.5' }}>
-                Practice technical and behavioral interviews with AI feedback
-              </p>
-            </div>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '6px 12px',
+            borderRadius: '100px',
+            backgroundColor: 'var(--bg-secondary)',
+            marginBottom: '24px',
+            fontSize: '14px',
+            fontWeight: '500',
+            color: 'var(--text-secondary)'
+          }}>
+            <Sparkles size={14} />
+            <span>AI-Powered Career Acceleration</span>
+          </div>
 
-            <div
-              onClick={() => user ? navigate('/learn') : setShowAuthModal(true)}
-              className="space-card"
-              style={{
-                padding: '30px',
-                textAlign: 'center',
-                transition: 'all 0.3s',
-                cursor: 'pointer'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'translateY(-5px)';
-                e.currentTarget.style.borderColor = 'rgba(129, 140, 248, 0.6)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.borderColor = 'rgba(100, 116, 139, 0.2)';
-              }}
-            >
-              <div style={{ marginBottom: '20px' }}>
-                <img 
-                  src="/learningpath.jpg" 
-                  alt="Learning Paths" 
-                  style={{
-                    width: '80px',
-                    height: '80px',
-                    borderRadius: '50%',
-                    objectFit: 'cover'
-                  }}
-                />
-              </div>
-              <h3 className="space-text" style={{ fontSize: '20px', marginBottom: '15px' }}>
-                🛸 Learning Paths
-              </h3>
-              <p className="space-text-muted" style={{ lineHeight: '1.5' }}>
-                Structured learning with hands-on practice
-              </p>
-            </div>
+          <h1 className="minimal-title" style={{ marginBottom: '24px' }}>
+            Master your interview <br />
+            <span style={{ color: 'var(--text-tertiary)' }}>before it happens.</span>
+          </h1>
 
-            <div
-              onClick={() => user ? navigate('/english') : setShowAuthModal(true)}
-              className="space-card"
-              style={{
-                padding: '30px',
-                textAlign: 'center',
-                transition: 'all 0.3s',
-                cursor: 'pointer'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'translateY(-5px)';
-                e.currentTarget.style.borderColor = 'rgba(129, 140, 248, 0.6)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.borderColor = 'rgba(100, 116, 139, 0.2)';
-              }}
-            >
-              <div style={{ fontSize: '48px', marginBottom: '20px' }}><img src="/mic.png" alt="English Practice" style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover' }} />  </div>
-              <h3 className="space-text" style={{ fontSize: '20px', marginBottom: '15px' }}>
-                🌌 English Practice
-              </h3>
-              <p className="space-text-muted" style={{ lineHeight: '1.5' }}>
-                Improve pronunciation and communication skills
-              </p>
-            </div>
+          <p className="minimal-subtitle" style={{ marginBottom: '40px' }}>
+            {user
+              ? 'Welcome back. Ready to continue your journey?'
+              : 'Join thousands of professionals using AI to land their dream jobs. Practice interviews, improve English, and upskill with personalized feedback.'}
+          </p>
 
-            <div
-              onClick={() => user ? navigate('/vocabulary') : setShowAuthModal(true)}
-              className="space-card"
-              style={{
-                padding: '30px',
-                textAlign: 'center',
-                transition: 'all 0.3s',
-                cursor: 'pointer'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'translateY(-5px)';
-                e.currentTarget.style.borderColor = 'rgba(129, 140, 248, 0.6)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.borderColor = 'rgba(100, 116, 139, 0.2)';
-              }}
-            >
-              <div style={{ fontSize: '48px', marginBottom: '20px' }}><img src="/vocab.png" alt="Vocabulary Builder" style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover' }} /></div>
-              <h3 className="space-text" style={{ fontSize: '20px', marginBottom: '15px' }}>
-                ✨ Vocabulary Builder
-              </h3>
-              <p className="space-text-muted" style={{ lineHeight: '1.5' }}>
-                Expand your professional vocabulary
-              </p>
+          {!user && (
+            <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+              <button
+                onClick={() => { setAuthMode('register'); setShowAuthModal(true); }}
+                className="minimal-button-primary"
+              >
+                Get Started <ArrowRight size={16} />
+              </button>
+              <button
+                onClick={() => { setAuthMode('login'); setShowAuthModal(true); }}
+                className="minimal-button-secondary"
+              >
+                Log in
+              </button>
             </div>
-
-            <div
-              onClick={() => user ? navigate('/chat') : setShowAuthModal(true)}
-              className="space-card"
-              style={{
-                padding: '30px',
-                textAlign: 'center',
-                transition: 'all 0.3s',
-                cursor: 'pointer'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'translateY(-5px)';
-                e.currentTarget.style.borderColor = 'rgba(129, 140, 248, 0.6)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.borderColor = 'rgba(100, 116, 139, 0.2)';
-              }}
-            >
-              <div style={{ marginBottom: '20px' }}>
-                <img 
-                  src="/character.jpg" 
-                  alt="AI Character" 
-                  style={{
-                    width: '80px',
-                    height: '80px',
-                    borderRadius: '50%',
-                    objectFit: 'cover'
-                  }}
-                />
-              </div>
-              <h3 className="space-text" style={{ fontSize: '20px', marginBottom: '15px' }}>
-                🤖 AI Characters
-              </h3>
-              <p className="space-text-muted" style={{ lineHeight: '1.5' }}>
-                Chat with AI characters for practice
-              </p>
-            </div>
+          )}
         </div>
-      </div>
-      
+
+        {/* Bento Grid */}
+        <div className="bento-grid">
+          {bentoItems.map((item, index) => (
+            <div
+              key={index}
+              onClick={() => user ? navigate(item.path) : setShowAuthModal(true)}
+              className={`bento-item ${item.className || ''}`}
+            >
+              <div className="visual-container">
+                {item.visual}
+              </div>
+              <div className="bento-content">
+                <h3 className="bento-title">{item.title}</h3>
+                <p className="bento-description">{item.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </main>
+
       {showAuthModal && (
         <AuthModal
           mode={authMode}
