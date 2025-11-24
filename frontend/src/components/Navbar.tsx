@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import UserProfile from './UserProfile';
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
@@ -105,22 +106,7 @@ const Navbar: React.FC = () => {
         </button>
         
         {user ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <span className="space-text-muted" style={{ fontSize: '13px' }}>
-              {user?.name}
-            </span>
-            <button
-              onClick={handleLogout}
-              className="space-button"
-              style={{
-                padding: '6px 12px',
-                fontSize: '13px',
-                fontWeight: '500'
-              }}
-            >
-              Logout
-            </button>
-          </div>
+          <UserProfile />
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <button

@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import UserProfile from './UserProfile';
 
 interface EnglishPracticeProps {
   onBack: () => void;
@@ -23,6 +24,8 @@ const EnglishPractice: React.FC<EnglishPracticeProps> = ({ onBack }) => {
     "Effective communication requires clear pronunciation, proper grammar, and confident delivery.",
     "I believe that consistent practice and dedication are key to mastering any skill."
   ];
+
+  
 
   const startRecording = async () => {
     try {
@@ -160,12 +163,16 @@ const EnglishPractice: React.FC<EnglishPracticeProps> = ({ onBack }) => {
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', padding: '20px 0' }}>
         <h1 className="space-title" style={{ fontSize: '32px', fontWeight: '300', margin: 0 }}>🌌 English Communication Lab</h1>
-        <button onClick={onBack} className="space-button" style={{
-          padding: '10px 16px',
-          fontWeight: '500'
-        }}>
-          ← Back
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <button onClick={onBack} className="space-button" style={{
+            padding: '10px 16px',
+            fontWeight: '500',
+            marginRight: '20px'
+          }}>
+            ← Back
+          </button>
+          <UserProfile />
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>

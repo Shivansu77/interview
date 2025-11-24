@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import Navbar from './Navbar';
 import AuthModal from './AuthModal';
+import UserProfile from './UserProfile';
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -10,10 +11,7 @@ const Dashboard: React.FC = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  
 
   useEffect(() => {
     const handleAuthEvent = (e: any) => {
@@ -38,10 +36,10 @@ const Dashboard: React.FC = () => {
         <h1 className="space-title" style={{
           fontSize: '48px',
           fontWeight: '300',
-          marginBottom: '20px',
-          lineHeight: '1.2'
+          lineHeight: '1.2',
+          marginBottom: '20px'
         }}>
-          {user ? `Welcome back, ${user.name}!` : '🚀 AI Interview Platform'}
+          🚀 AI Interview Platform
         </h1>
         <p className="space-text-muted" style={{
           fontSize: '20px',
