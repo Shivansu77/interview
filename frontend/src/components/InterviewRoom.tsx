@@ -18,10 +18,10 @@ interface InterviewRoomProps {
   userId: string;
   interviewType: string;
   company: string;
-  profile?: CVProfile;
+  config?: InterviewConfig;
 }
 
-const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interviewType, company, profile }) => {
+const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interviewType, company, config }) => {
   const [currentQuestion, setCurrentQuestion] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [eyeContactScore, setEyeContactScore] = useState(0);
@@ -37,7 +37,7 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
   const [overallResults, setOverallResults] = useState<any>(null);
   const [showWelcome, setShowWelcome] = useState(true);
   const [showModeSelector, setShowModeSelector] = useState(true);
-  const [interviewConfig, setInterviewConfig] = useState<InterviewConfig | null>(null);
+  const [interviewConfig, setInterviewConfig] = useState<InterviewConfig | null>(config || null);
   const [maxQuestions, setMaxQuestions] = useState(5);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -49,7 +49,7 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const speakQuestion = useCallback((text: string) => {
-    if (!speechSynthesis) return;
+    if (!speechSynthesis || !text) return;
 
     const cleanText = cleanTextForSpeech(text);
     console.log('🔊 Speaking cleaned text:', cleanText);
@@ -98,13 +98,18 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
         })
       });
       const data = await response.json();
-      setCurrentQuestion(data.question);
 
-      // Always speak the question automatically
-      setTimeout(() => {
-        console.log('🤖 Auto-speaking question:', data.question);
-        speakQuestion(data.question);
-      }, 500);
+      if (data.question) {
+        setCurrentQuestion(data.question);
+
+        // Always speak the question automatically
+        setTimeout(() => {
+          console.log('🤖 Auto-speaking question:', data.question);
+          speakQuestion(data.question);
+        }, 500);
+      } else {
+        console.error('No question received from backend:', data);
+      }
     } catch (error) {
       console.error('Error generating question:', error);
     }
@@ -170,6 +175,7 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
   };
 
   const cleanTextForSpeech = (text: string): string => {
+    if (!text) return '';
     return text
       .replace(/\*\*(.*?)\*\*/g, '$1')
       .replace(/\*(.*?)\*/g, '$1')
@@ -211,12 +217,54 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
       console.log('Analysis received:', analysisData);
       setAnalysis(analysisData);
 
-      // AI speaks feedback after analysis
-      if (analysisData.feedback) {
-        setTimeout(() => {
-          const feedbackText = analysisData.feedback;
-          speakQuestion(feedbackText);
-        }, 1000);
+      // Generate and speak NATURAL feedback (not the technical analysis)
+      if (analysisData) {
+        try {
+          // Request natural feedback from backend
+          const feedbackResponse = await fetch('http://localhost:5003/api/ai/generate-natural-feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ analysisData })
+          });
+
+          if (feedbackResponse.ok) {
+            const { naturalFeedback } = await feedbackResponse.json();
+
+            // Speak the natural, conversational feedback
+            setTimeout(() => {
+              console.log('🗣️ Speaking natural feedback:', naturalFeedback);
+              speakQuestion(naturalFeedback);
+            }, 1000);
+          } else {
+            // Fallback: create simple natural feedback on frontend
+            const overallScore = (analysisData.contentScore + analysisData.clarityScore +
+              analysisData.completenessScore + analysisData.fluencyScore) / 4;
+            let simpleFeedback = overallScore >= 7
+              ? 'Great job on that answer! '
+              : overallScore >= 5
+                ? 'Thanks for your answer. '
+                : 'I can see you\'re working on this. ';
+
+            // Add one key insight
+            if (analysisData.fluencyMetrics?.fillerWordCount > 3) {
+              simpleFeedback += `I noticed a few filler words. Try to speak more deliberately next time.`;
+            } else if (analysisData.contentScore >= 7) {
+              simpleFeedback += `Your technical understanding came through well. Keep it up!`;
+            } else {
+              simpleFeedback += `Think about adding more specific examples in your next answer.`;
+            }
+
+            setTimeout(() => {
+              speakQuestion(simpleFeedback);
+            }, 1000);
+          }
+        } catch (feedbackError) {
+          console.error('Natural feedback error:', feedbackError);
+          // Fallback to simple encouraging message
+          setTimeout(() => {
+            speakQuestion('Thanks for your answer. Let\'s continue to the next question.');
+          }, 1000);
+        }
       }
 
       // Store score for overall calculation
@@ -987,7 +1035,98 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
                       </div>
                       <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Completeness</div>
                     </div>
+
+                    <div style={{
+                      backgroundColor: 'var(--bg-primary)',
+                      padding: '15px',
+                      borderRadius: '8px',
+                      textAlign: 'center',
+                      border: '1px solid ' + (analysis.fluencyScore >= 7 ? '#16a34a' : analysis.fluencyScore >= 5 ? '#ca8a04' : '#dc2626')
+                    }}>
+                      <div style={{ fontSize: '24px', fontWeight: 'bold', color: analysis.fluencyScore >= 7 ? '#16a34a' : analysis.fluencyScore >= 5 ? '#ca8a04' : '#dc2626' }}>
+                        {analysis.fluencyScore}/10
+                      </div>
+                      <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Fluency</div>
+                    </div>
                   </div>
+
+                  {/* Fluency Metrics - NEW */}
+                  {analysis.fluencyMetrics && (
+                    <div className="analysis-card" style={{ marginBottom: '20px', padding: '20px' }}>
+                      <h4 style={{ color: 'var(--text-primary)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px' }}>
+                        <Activity size={18} /> Speech Analysis
+                      </h4>
+
+                      {/* Fluency Meter */}
+                      <div style={{ marginBottom: '16px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                          <span style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-secondary)' }}>Overall Fluency</span>
+                          <span style={{ fontSize: '14px', fontWeight: '600', color: analysis.fluencyScore >= 7 ? '#16a34a' : analysis.fluencyScore >= 5 ? '#ca8a04' : '#dc2626' }}>
+                            {analysis.fluencyScore >= 8 ? 'Excellent' : analysis.fluencyScore >= 6 ? 'Good' : analysis.fluencyScore >= 4 ? 'Fair' : 'Needs Work'}
+                          </span>
+                        </div>
+                        <div className="fluency-meter">
+                          <div className="fluency-meter-fill" style={{ width: `${Math.min(100, analysis.fluencyScore * 10)}%` }}></div>
+                        </div>
+                      </div>
+
+                      {/* Metrics Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
+                        {analysis.fluencyMetrics.fillerWordCount !== undefined && (
+                          <div style={{
+                            backgroundColor: analysis.fluencyMetrics.fillerWordCount > 3 ? '#fee2e2' : '#f0fdf4',
+                            padding: '12px',
+                            borderRadius: '8px',
+                            border: `1px solid ${analysis.fluencyMetrics.fillerWordCount > 3 ? '#fca5a5' : '#86efac'}`
+                          }}>
+                            <div style={{ fontSize: '20px', fontWeight: '600', color: analysis.fluencyMetrics.fillerWordCount > 3 ? '#dc2626' : '#16a34a' }}>
+                              {analysis.fluencyMetrics.fillerWordCount}
+                            </div>
+                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Filler Words</div>
+                            {analysis.fluencyMetrics.detectedFillers && analysis.fluencyMetrics.detectedFillers.length > 0 && (
+                              <div style={{ fontSize: '11px', marginTop: '4px', color: 'var(--text-tertiary)' }}>
+                                {analysis.fluencyMetrics.detectedFillers.slice(0, 2).map((f: any) => f.word).join(', ')}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {analysis.fluencyMetrics.wordsPerMinute && (
+                          <div style={{
+                            backgroundColor: analysis.fluencyMetrics.wordsPerMinute >= 120 && analysis.fluencyMetrics.wordsPerMinute <= 160 ? '#f0fdf4' : '#fef3c7',
+                            padding: '12px',
+                            borderRadius: '8px',
+                            border: `1px solid ${analysis.fluencyMetrics.wordsPerMinute >= 120 && analysis.fluencyMetrics.wordsPerMinute <= 160 ? '#86efac' : '#fcd34d'}`
+                          }}>
+                            <div style={{ fontSize: '20px', fontWeight: '600', color: analysis.fluencyMetrics.wordsPerMinute >= 120 && analysis.fluencyMetrics.wordsPerMinute <= 160 ? '#16a34a' : '#ca8a04' }}>
+                              {analysis.fluencyMetrics.wordsPerMinute}
+                            </div>
+                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Words/Min</div>
+                            <div style={{ fontSize: '11px', marginTop: '4px', color: 'var(--text-tertiary)' }}>
+                              {analysis.fluencyMetrics.wordsPerMinute < 100 ? 'Too slow' : analysis.fluencyMetrics.wordsPerMinute > 180 ? 'Too fast' : 'Good pace'}
+                            </div>
+                          </div>
+                        )}
+
+                        {analysis.fluencyMetrics.repeatedWords && analysis.fluencyMetrics.repeatedWords.length > 0 && (
+                          <div style={{
+                            backgroundColor: analysis.fluencyMetrics.repeatedWords.length > 2 ? '#fee2e2' : '#f0fdf4',
+                            padding: '12px',
+                            borderRadius: '8px',
+                            border: `1px solid ${analysis.fluencyMetrics.repeatedWords.length > 2 ? '#fca5a5' : '#86efac'}`
+                          }}>
+                            <div style={{ fontSize: '20px', fontWeight: '600', color: analysis.fluencyMetrics.repeatedWords.length > 2 ? '#dc2626' : '#16a34a' }}>
+                              {analysis.fluencyMetrics.repeatedWords.length}
+                            </div>
+                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Repeated Words</div>
+                            <div style={{ fontSize: '11px', marginTop: '4px', color: 'var(--text-tertiary)' }}>
+                              {analysis.fluencyMetrics.repeatedWords.length > 2 ? 'Reduce repetition' : 'Minimal'}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Feedback */}
                   <div style={{
@@ -1029,6 +1168,46 @@ const InterviewRoom: React.FC<InterviewRoomProps> = ({ sessionId, userId, interv
                     </h4>
                     <p style={{ fontSize: '16px', lineHeight: '1.5', color: '#14532d' }}>{analysis.betterAnswer}</p>
                   </div>
+
+                  {/* How You Could Answer This - NEW */}
+                  {analysis.improvedAnswer && (
+                    <div style={{
+                      backgroundColor: '#fefce8',
+                      padding: '18px',
+                      borderRadius: '8px',
+                      marginTop: '15px',
+                      border: '2px solid #facc15',
+                      boxShadow: '0 2px 8px rgba(250, 204, 21, 0.1)'
+                    }}>
+                      <h4 style={{ color: '#854d0e', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: '600' }}>
+                        <MessageSquare size={18} /> How You Could Answer This
+                      </h4>
+                      <div style={{
+                        backgroundColor: '#fffbeb',
+                        padding: '14px',
+                        borderRadius: '6px',
+                        border: '1px solid #fde047'
+                      }}>
+                        <p style={{ fontSize: '15px', lineHeight: '1.7', color: '#713f12', margin: 0, whiteSpace: 'pre-wrap' }}>
+                          {analysis.improvedAnswer}
+                        </p>
+                      </div>
+                      <div style={{
+                        marginTop: '10px',
+                        fontSize: '13px',
+                        color: '#a16207',
+                        fontStyle: 'italic',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}>
+                        <Sparkles size={14} />
+                        {analysis.contentScore >= 4
+                          ? 'This builds on your response with enhanced structure and technical depth.'
+                          : 'Here\'s a strong example answer to guide your future responses.'}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Speech Analysis */}
                   {analysis.speechAnalysis && (

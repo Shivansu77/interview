@@ -7,7 +7,7 @@ const VocabularyPage: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#000' }}>
+    <div className="page-transition" style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
       <Navbar />
       <VocabularyChallenge onBack={() => navigate('/dashboard')} />
     </div>

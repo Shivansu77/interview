@@ -100,7 +100,7 @@ const VocabularyChallenge: React.FC<VocabularyProps> = ({ onBack }) => {
 
   const searchWordDefinition = async () => {
     if (!searchWord.trim()) return;
-    
+
     setIsSearching(true);
     try {
       const response = await fetch(`http://localhost:5003/api/english/vocabulary/search/${searchWord.trim()}`);
@@ -117,21 +117,21 @@ const VocabularyChallenge: React.FC<VocabularyProps> = ({ onBack }) => {
   const speakWord = (text: string) => {
     if ('speechSynthesis' in window) {
       speechSynthesis.cancel();
-      
+
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 0.8;
       utterance.pitch = 1;
       utterance.volume = 1;
-      
+
       const voices = speechSynthesis.getVoices();
-      const englishVoice = voices.find(voice => 
+      const englishVoice = voices.find(voice =>
         voice.lang.startsWith('en') && voice.name.includes('Google')
       ) || voices.find(voice => voice.lang.startsWith('en'));
-      
+
       if (englishVoice) {
         utterance.voice = englishVoice;
       }
-      
+
       speechSynthesis.speak(utterance);
     } else {
       alert('Speech synthesis not supported in this browser');
@@ -139,124 +139,81 @@ const VocabularyChallenge: React.FC<VocabularyProps> = ({ onBack }) => {
   };
 
   return (
-    <div style={{
-      maxWidth: '1200px',
-      margin: '0 auto',
-      padding: '20px',
-      backgroundColor: 'rgba(255, 255, 255, 0.05)',
-      borderRadius: '16px',
-      color: 'white',
-      backdropFilter: 'blur(10px)',
-      border: '1px solid rgba(255, 255, 255, 0.1)'
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', padding: '20px 0' }}>
-        <h1 style={{ color: '#10b981', fontSize: '28px', fontWeight: 'bold', margin: 0 }}>📚 Vocabulary Challenge</h1>
-        <button onClick={onBack} style={{
-          padding: '12px 20px',
-          backgroundColor: '#3b82f6',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          cursor: 'pointer',
-          fontWeight: '500',
-          transition: 'all 0.2s',
-          boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
-        }}>
+    <div className="container fade-in">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+        <h1 className="minimal-title" style={{ fontSize: '2.5rem', margin: 0 }}>Vocabulary Challenge</h1>
+        <button onClick={onBack} className="minimal-button-secondary">
           ← Back
         </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
         {/* Daily Challenge */}
-        <div style={{
-          backgroundColor: '#2a2a2a',
-          padding: '20px',
-          borderRadius: '12px',
-          border: '1px solid #444'
-        }}>
-          <h2 style={{ color: '#4CAF50', marginBottom: '20px' }}>🌟 Daily Challenge</h2>
+        <div className="minimal-card" style={{ padding: '32px' }}>
+          <h2 className="minimal-subtitle" style={{ marginBottom: '24px', color: 'var(--text-primary)', fontWeight: 600 }}>
+            🌟 Daily Challenge
+          </h2>
           {isInitialLoading ? (
-            <div style={{ textAlign: 'center', padding: '40px' }}>
+            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
               <div style={{ fontSize: '24px', marginBottom: '10px' }}>📚</div>
               <div>Loading vocabulary...</div>
             </div>
           ) : dailyChallenge ? (
-            <div>
-              <div style={{ marginBottom: '20px' }}>
-                <h3 style={{ color: '#FF9800' }}>📚 Word of the Day</h3>
-                <div style={{ backgroundColor: '#333', padding: '15px', borderRadius: '8px', marginTop: '10px' }}>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#4CAF50' }}>
+            <div className="fade-in">
+              <div style={{ marginBottom: '32px' }}>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '12px', color: 'var(--accent-highlight)' }}>📚 Word of the Day</h3>
+                <div style={{ backgroundColor: 'var(--bg-secondary)', padding: '20px', borderRadius: '12px' }}>
+                  <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)' }}>
                     {dailyChallenge.vocabulary?.word}
                   </div>
-                  <div style={{ color: '#ccc', marginTop: '5px' }}>
+                  <div style={{ color: 'var(--text-secondary)', marginTop: '4px', fontFamily: 'monospace' }}>
                     {dailyChallenge.vocabulary?.pronunciation}
                   </div>
-                  <div style={{ marginTop: '10px' }}>
+                  <div style={{ marginTop: '12px', lineHeight: '1.6' }}>
                     {dailyChallenge.vocabulary?.definition}
                   </div>
                   <button
                     onClick={() => speakWord(dailyChallenge.vocabulary?.word || '')}
-                    style={{
-                      marginTop: '10px',
-                      padding: '8px 16px',
-                      backgroundColor: '#2196F3',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer'
-                    }}
+                    className="minimal-button-secondary"
+                    style={{ marginTop: '16px', padding: '6px 12px', fontSize: '0.85rem' }}
                   >
                     🔊 Pronounce
                   </button>
                 </div>
               </div>
-              
-              <div style={{ marginBottom: '20px' }}>
-                <h3 style={{ color: '#FF9800' }}>💭 Idiom of the Day</h3>
-                <div style={{ backgroundColor: '#333', padding: '15px', borderRadius: '8px', marginTop: '10px' }}>
-                  <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#4CAF50' }}>
+
+              <div style={{ marginBottom: '32px' }}>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '12px', color: 'var(--accent-highlight)' }}>💭 Idiom of the Day</h3>
+                <div style={{ backgroundColor: 'var(--bg-secondary)', padding: '20px', borderRadius: '12px' }}>
+                  <div style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)' }}>
                     {dailyChallenge.idiom?.phrase}
                   </div>
-                  <div style={{ marginTop: '10px' }}>
+                  <div style={{ marginTop: '12px', lineHeight: '1.6' }}>
                     {dailyChallenge.idiom?.definition}
                   </div>
                   <button
                     onClick={() => speakWord(dailyChallenge.idiom?.phrase || '')}
-                    style={{
-                      marginTop: '10px',
-                      padding: '8px 16px',
-                      backgroundColor: '#2196F3',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer'
-                    }}
+                    className="minimal-button-secondary"
+                    style={{ marginTop: '16px', padding: '6px 12px', fontSize: '0.85rem' }}
                   >
                     🔊 Pronounce
                   </button>
                 </div>
               </div>
-              
+
               <div>
-                <h3 style={{ color: '#FF9800' }}>📝 Sentence Practice</h3>
-                <div style={{ backgroundColor: '#333', padding: '15px', borderRadius: '8px', marginTop: '10px' }}>
-                  <div style={{ fontSize: '16px', fontStyle: 'italic', color: '#4CAF50' }}>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '12px', color: 'var(--accent-highlight)' }}>📝 Sentence Practice</h3>
+                <div style={{ backgroundColor: 'var(--bg-secondary)', padding: '20px', borderRadius: '12px' }}>
+                  <div style={{ fontSize: '16px', fontStyle: 'italic', color: 'var(--text-primary)' }}>
                     "{dailyChallenge.sentence?.text}"
                   </div>
-                  <div style={{ marginTop: '10px', color: '#ccc' }}>
+                  <div style={{ marginTop: '12px', color: 'var(--text-secondary)' }}>
                     {dailyChallenge.sentence?.definition}
                   </div>
                   <button
                     onClick={() => speakWord(dailyChallenge.sentence?.text || '')}
-                    style={{
-                      marginTop: '10px',
-                      padding: '8px 16px',
-                      backgroundColor: '#2196F3',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer'
-                    }}
+                    className="minimal-button-secondary"
+                    style={{ marginTop: '16px', padding: '6px 12px', fontSize: '0.85rem' }}
                   >
                     🔊 Pronounce
                   </button>
@@ -264,36 +221,29 @@ const VocabularyChallenge: React.FC<VocabularyProps> = ({ onBack }) => {
               </div>
             </div>
           ) : (
-            <div style={{ textAlign: 'center', padding: '20px', color: '#999' }}>
+            <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-tertiary)' }}>
               Failed to load daily challenge
             </div>
           )}
         </div>
 
         {/* Random Word Generator */}
-        <div style={{
-          backgroundColor: '#2a2a2a',
-          padding: '20px',
-          borderRadius: '12px',
-          border: '1px solid #444'
-        }}>
-          <h2 style={{ color: '#4CAF50', marginBottom: '20px' }}>🎲 Random Generator</h2>
-          
-          <div style={{ marginBottom: '20px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+        <div className="minimal-card" style={{ padding: '32px' }}>
+          <h2 className="minimal-subtitle" style={{ marginBottom: '24px', color: 'var(--text-primary)', fontWeight: 600 }}>
+            🎲 Random Generator
+          </h2>
+
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
               {wordTypes.map((type) => (
                 <button
                   key={type.value}
                   onClick={() => handleTypeChange(type.value)}
+                  className={selectedType === type.value ? 'minimal-button-primary' : 'minimal-button-secondary'}
                   style={{
-                    padding: '12px',
-                    backgroundColor: selectedType === type.value ? '#4CAF50' : '#333',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    transition: 'all 0.3s'
+                    padding: '10px',
+                    fontSize: '13px',
+                    justifyContent: 'center'
                   }}
                 >
                   {type.icon} {type.label.split(' ')[1]}
@@ -303,54 +253,40 @@ const VocabularyChallenge: React.FC<VocabularyProps> = ({ onBack }) => {
           </div>
 
           {isLoading ? (
-            <div style={{ textAlign: 'center', padding: '40px' }}>
-              <div style={{ fontSize: '24px', marginBottom: '10px' }}>🎲</div>
+            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+              <div className="pulse-indicator" style={{ fontSize: '24px', marginBottom: '10px' }}>🎲</div>
               <div>Generating word...</div>
             </div>
           ) : randomWord ? (
-            <div style={{ backgroundColor: '#333', padding: '20px', borderRadius: '8px' }}>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#4CAF50', marginBottom: '10px' }}>
+            <div className="fade-in" style={{ backgroundColor: 'var(--bg-secondary)', padding: '24px', borderRadius: '12px' }}>
+              <div style={{ fontSize: '32px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
                 {randomWord.word}
               </div>
               {randomWord.pronunciation && (
-                <div style={{ color: '#ccc', marginBottom: '10px' }}>
+                <div style={{ color: 'var(--text-secondary)', marginBottom: '16px', fontFamily: 'monospace' }}>
                   Pronunciation: {randomWord.pronunciation}
                 </div>
               )}
-              <div style={{ marginBottom: '15px' }}>
+              <div style={{ marginBottom: '24px', lineHeight: '1.6', fontSize: '1.1rem' }}>
                 {randomWord.definition}
               </div>
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ display: 'flex', gap: '12px' }}>
                 <button
                   onClick={() => speakWord(randomWord.word)}
-                  style={{
-                    padding: '10px 16px',
-                    backgroundColor: '#2196F3',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer'
-                  }}
+                  className="minimal-button-secondary"
                 >
                   🔊 Pronounce
                 </button>
                 <button
                   onClick={() => fetchRandomWord(selectedType)}
-                  style={{
-                    padding: '10px 16px',
-                    backgroundColor: '#FF9800',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer'
-                  }}
+                  className="minimal-button-primary"
                 >
                   🎲 New Word
                 </button>
               </div>
             </div>
           ) : (
-            <div style={{ textAlign: 'center', padding: '20px', color: '#999' }}>
+            <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-tertiary)' }}>
               Failed to load word
             </div>
           )}
@@ -358,69 +294,58 @@ const VocabularyChallenge: React.FC<VocabularyProps> = ({ onBack }) => {
       </div>
 
       {/* Dictionary Search */}
-      <div style={{
-        marginTop: '30px',
-        backgroundColor: '#2a2a2a',
-        padding: '20px',
-        borderRadius: '12px',
-        border: '1px solid #444'
-      }}>
-        <h2 style={{ color: '#4CAF50', marginBottom: '20px' }}>🔍 Dictionary Search</h2>
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+      <div className="minimal-card" style={{ marginTop: '32px', padding: '32px' }}>
+        <h2 className="minimal-subtitle" style={{ marginBottom: '24px', color: 'var(--text-primary)', fontWeight: 600 }}>
+          🔍 Dictionary Search
+        </h2>
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
           <input
             type="text"
             value={searchWord}
             onChange={(e) => setSearchWord(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && searchWordDefinition()}
             placeholder="Enter a word to search..."
-            style={{
-              flex: 1,
-              padding: '12px',
-              backgroundColor: '#333',
-              color: 'white',
-              border: '1px solid #555',
-              borderRadius: '6px',
-              fontSize: '16px'
-            }}
+            className="minimal-input"
+            style={{ flex: 1 }}
           />
           <button
             onClick={searchWordDefinition}
             disabled={isSearching || !searchWord.trim()}
-            style={{
-              padding: '12px 20px',
-              backgroundColor: isSearching ? '#666' : '#4CAF50',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: isSearching ? 'not-allowed' : 'pointer'
-            }}
+            className="minimal-button-primary"
           >
-            {isSearching ? '🔍' : '🔍'} {isSearching ? 'Searching...' : 'Search'}
+            {isSearching ? 'Searching...' : 'Search'}
           </button>
         </div>
-        
+
         {searchResult && (
-          <div style={{ backgroundColor: '#333', padding: '20px', borderRadius: '8px' }}>
+          <div className="fade-in" style={{ backgroundColor: 'var(--bg-secondary)', padding: '24px', borderRadius: '12px' }}>
             {searchResult.success ? (
               <div>
-                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#4CAF50', marginBottom: '10px' }}>
+                <div style={{ fontSize: '32px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
                   {searchResult.word}
                 </div>
                 {searchResult.phonetic && (
-                  <div style={{ color: '#ccc', marginBottom: '10px' }}>
+                  <div style={{ color: 'var(--text-secondary)', marginBottom: '16px', fontFamily: 'monospace' }}>
                     Pronunciation: {searchResult.phonetic}
                   </div>
                 )}
                 {searchResult.meanings && searchResult.meanings.map((meaning: any, index: number) => (
-                  <div key={index} style={{ marginBottom: '15px' }}>
-                    <div style={{ color: '#FF9800', fontWeight: 'bold' }}>
+                  <div key={index} style={{ marginBottom: '24px' }}>
+                    <div style={{
+                      color: 'var(--accent-highlight)',
+                      fontWeight: 600,
+                      marginBottom: '8px',
+                      textTransform: 'uppercase',
+                      fontSize: '0.85rem',
+                      letterSpacing: '0.05em'
+                    }}>
                       {meaning.partOfSpeech}
                     </div>
                     {meaning.definitions && meaning.definitions.slice(0, 2).map((def: any, defIndex: number) => (
-                      <div key={defIndex} style={{ marginLeft: '20px', marginTop: '5px' }}>
+                      <div key={defIndex} style={{ marginLeft: '16px', marginTop: '8px', lineHeight: '1.6' }}>
                         • {def.definition}
                         {def.example && (
-                          <div style={{ fontStyle: 'italic', color: '#ccc', marginTop: '3px' }}>
+                          <div style={{ fontStyle: 'italic', color: 'var(--text-secondary)', marginTop: '4px' }}>
                             Example: "{def.example}"
                           </div>
                         )}
@@ -430,21 +355,14 @@ const VocabularyChallenge: React.FC<VocabularyProps> = ({ onBack }) => {
                 ))}
                 <button
                   onClick={() => speakWord(searchResult.word)}
-                  style={{
-                    marginTop: '10px',
-                    padding: '10px 16px',
-                    backgroundColor: '#2196F3',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer'
-                  }}
+                  className="minimal-button-secondary"
+                  style={{ marginTop: '8px' }}
                 >
                   🔊 Pronounce
                 </button>
               </div>
             ) : (
-              <div style={{ color: '#f44336' }}>
+              <div className="state-error" style={{ padding: '16px', borderRadius: '8px' }}>
                 {searchResult.error || 'Word not found'}
               </div>
             )}

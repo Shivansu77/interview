@@ -3,10 +3,10 @@ const interviewService = require('../services/interviewService');
 // Start Interview Session
 const startSession = (req, res) => {
   try {
-    const { userId, type, company, difficulty } = req.body;
-    
-    const result = interviewService.startSession(userId, type, company, difficulty);
-    
+    const { userId, type, company, difficulty, interviewConfig } = req.body;
+
+    const result = interviewService.startSession(userId, type, company, difficulty, interviewConfig);
+
     res.json(result);
   } catch (error) {
     console.error('Start session error:', error);
@@ -18,9 +18,9 @@ const startSession = (req, res) => {
 const completeInterview = (req, res) => {
   try {
     const { results, questionScores } = req.body;
-    
+
     const result = interviewService.completeInterview(results, questionScores);
-    
+
     res.json(result);
   } catch (error) {
     console.error('Complete interview error:', error);
@@ -32,9 +32,9 @@ const completeInterview = (req, res) => {
 const getResults = (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const result = interviewService.getResults(id);
-    
+
     res.json(result);
   } catch (error) {
     console.error('Get results error:', error);
@@ -46,7 +46,7 @@ const getResults = (req, res) => {
 const getHistory = (req, res) => {
   try {
     const history = interviewService.getHistory();
-    
+
     res.json(history);
   } catch (error) {
     console.error('Get history error:', error);

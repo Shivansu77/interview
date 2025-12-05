@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import InterviewRoom from '../components/InterviewRoom';
 import Navbar from '../components/Navbar';
 import AnimatedBlob from '../components/AnimatedBlob';
+import InterviewModeSelector from '../components/InterviewModeSelector';
 
 const InterviewPage: React.FC = () => {
   const { user } = useAuth();
@@ -11,10 +12,19 @@ const InterviewPage: React.FC = () => {
   const [interviewType, setInterviewType] = useState('technical');
   const [isLoading, setIsLoading] = useState(false);
   const [isInterviewActive, setIsInterviewActive] = useState(false);
+  const [interviewConfig, setInterviewConfig] = useState<any>(null);
 
-  const startInterview = async (type: string) => {
+  const startInterview = async (config: any) => {
     try {
       setIsLoading(true);
+      setInterviewConfig(config);
+
+      // Determine type based on config mode
+      let type = 'technical';
+      if (config.mode === 'cv') type = 'technical'; // CV interviews are technical by default
+      else if (config.mode === 'role') type = 'technical';
+      else if (config.mode === 'practice') type = 'technical';
+
       setInterviewType(type);
 
       const response = await fetch('http://localhost:5003/api/interview/start-session', {
@@ -27,7 +37,8 @@ const InterviewPage: React.FC = () => {
           userId: user?.id,
           type,
           company: selectedCompany,
-          difficulty: 'medium'
+          difficulty: 'medium',
+          interviewConfig: config
         })
       });
 
@@ -45,12 +56,19 @@ const InterviewPage: React.FC = () => {
   const endInterview = () => {
     setIsInterviewActive(false);
     setSessionId('');
+    setInterviewConfig(null);
   };
 
   if (isInterviewActive) {
     return (
       <div style={{ minHeight: '100vh', padding: '20px' }}>
-        <InterviewRoom sessionId={sessionId} userId={user?.id || ''} interviewType={interviewType} company={selectedCompany} />
+        <InterviewRoom
+          sessionId={sessionId}
+          userId={user?.id || ''}
+          interviewType={interviewType}
+          company={selectedCompany}
+          config={interviewConfig}
+        />
         <button
           onClick={endInterview}
           className="space-button"
@@ -134,85 +152,7 @@ const InterviewPage: React.FC = () => {
           </select>
         </div>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '24px',
-          maxWidth: '950px',
-          margin: '0 auto'
-        }}>
-          <button
-            onClick={() => startInterview('general')}
-            disabled={isLoading}
-            className="bento-item"
-            style={{
-              padding: '30px',
-              textAlign: 'center',
-              cursor: isLoading ? 'not-allowed' : 'pointer',
-              border: '1px solid var(--border-light)',
-              background: 'var(--bg-primary)',
-              transition: 'all 0.2s',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '12px'
-            }}
-          >
-            <div style={{ fontSize: '40px' }}>🌐</div>
-            <div style={{ fontSize: '19px', fontWeight: '600', color: 'var(--text-primary)' }}>General Interview</div>
-            <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
-              Behavioral & soft skills questions
-            </div>
-          </button>
-
-          <button
-            onClick={() => startInterview('technical')}
-            disabled={isLoading}
-            className="bento-item"
-            style={{
-              padding: '30px',
-              textAlign: 'center',
-              cursor: isLoading ? 'not-allowed' : 'pointer',
-              border: '1px solid var(--border-light)',
-              background: 'var(--bg-primary)',
-              transition: 'all 0.2s',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '12px'
-            }}
-          >
-            <div style={{ fontSize: '40px' }}>💻</div>
-            <div style={{ fontSize: '19px', fontWeight: '600', color: 'var(--text-primary)' }}>Technical Interview</div>
-            <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
-              Coding & system design challenges
-            </div>
-          </button>
-
-          <button
-            onClick={() => startInterview('english')}
-            disabled={isLoading}
-            className="bento-item"
-            style={{
-              padding: '30px',
-              textAlign: 'center',
-              cursor: isLoading ? 'not-allowed' : 'pointer',
-              border: '1px solid var(--border-light)',
-              background: 'var(--bg-primary)',
-              transition: 'all 0.2s',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '12px'
-            }}
-          >
-            <div style={{ fontSize: '40px' }}>💬</div>
-            <div style={{ fontSize: '19px', fontWeight: '600', color: 'var(--text-primary)' }}>English Interview</div>
-            <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
-              Communication & language skills
-            </div>
-          </button>
-        </div>
+        <InterviewModeSelector onStartInterview={startInterview} />
       </div>
     </div>
   );

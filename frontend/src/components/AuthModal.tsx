@@ -34,11 +34,18 @@ const AuthModal: React.FC<AuthModalProps> = ({ mode, onClose, onSwitchMode, onSu
     setError('');
 
     try {
+      console.log('Auth attempt:', { mode, email: formData.email });
+      
       if (mode === 'register') {
+        if (!formData.fullName.trim()) {
+          throw new Error('Please enter your full name');
+        }
         await register(formData.fullName, formData.email, formData.password);
       } else {
         await login(formData.email, formData.password);
       }
+      
+      console.log('Auth successful');
       onClose();
       if (onSuccess) {
         onSuccess();
@@ -46,7 +53,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ mode, onClose, onSwitchMode, onSu
         navigate('/dashboard');
       }
     } catch (err: any) {
-      setError(err.message || 'Something went wrong');
+      console.error('Auth error:', err);
+      setError(err.message || 'Connection failed. Please check if the server is running.');
     } finally {
       setIsLoading(false);
     }

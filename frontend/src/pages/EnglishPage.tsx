@@ -7,9 +7,9 @@ const EnglishPage: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div style={{ minHeight: '100vh' }}>
+    <div className="page-transition" style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
       <Navbar />
-      <div className="space-card" style={{ margin: '20px', padding: '20px' }}>
+      <div className="container" style={{ paddingTop: '40px', paddingBottom: '40px' }}>
         <EnglishPractice onBack={() => navigate('/dashboard')} />
       </div>
     </div>

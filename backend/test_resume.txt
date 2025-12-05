@@ -1,0 +1,22 @@
+
+    John Doe
+    Senior Python Developer
+    
+    Experience:
+    5 years working with Python, Django, and Flask.
+    Specialized in backend API development and data processing.
+    
+    Skills:
+    - Python
+    - Django
+    - PostgreSQL
+    - Redis
+    - AWS
+    
+    Projects:
+    - E-commerce Backend: Built a scalable API handling 10k req/s using Django REST Framework.
+    - Data Pipeline: Created an ETL pipeline processing 1TB data daily.
+    
+    Education:
+    BS Computer Science, Tech University
+    

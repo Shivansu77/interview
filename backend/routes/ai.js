@@ -4,6 +4,7 @@ const {
   generateQuestion,
   analyzeAnswer,
   analyzeSpeech,
+  generateNaturalFeedback,
   characterChat,
   speechToText,
   textToSpeech,
@@ -19,6 +20,9 @@ router.post('/analyze-answer', analyzeAnswer);
 
 // Analyze Speech Pronunciation
 router.post('/analyze-speech', analyzeSpeech);
+
+// Generate Natural Feedback for Audio
+router.post('/generate-natural-feedback', generateNaturalFeedback);
 
 // Character Chat
 router.post('/character-chat', characterChat);
@@ -45,7 +49,7 @@ router.post('/speech-to-text-fallback', (req, res) => {
 
 router.post('/speech-to-text-test', (req, res) => {
   const { audioData } = req.body;
-  
+
   if (!audioData || audioData.length < 1000) {
     return res.json({
       success: false,
@@ -54,7 +58,7 @@ router.post('/speech-to-text-test', (req, res) => {
       confidence: 0
     });
   }
-  
+
   res.json({
     success: true,
     transcript: 'Test audio processed successfully',

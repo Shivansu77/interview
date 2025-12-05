@@ -1,6 +1,6 @@
 // API Configuration
 const API_CONFIG = {
-  GEMINI_URL: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyCnVsLg1_mxqRzEWo74dxe5ASlSRNpf-uQ`,
+  GEMINI_URL: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GOOGLE_CLOUD_API_KEY}`,
   SPEECHACE_URL: 'https://api.speechace.co/api/scoring/text/v9.9/json',
   LANGUAGETOOL_URL: 'https://api.languagetoolplus.com/v2/check',
   DICTIONARY_URL: 'https://api.dictionaryapi.dev/api/v2/entries/en',

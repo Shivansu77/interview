@@ -14,7 +14,7 @@ const EnglishPractice: React.FC<EnglishPracticeProps> = ({ onBack }) => {
   const [wordInfo, setWordInfo] = useState<any>(null);
   const [transcription, setTranscription] = useState('');
   const [recordingStep, setRecordingStep] = useState<'ready' | 'recording' | 'processing' | 'complete'>('ready');
-  
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
@@ -25,14 +25,12 @@ const EnglishPractice: React.FC<EnglishPracticeProps> = ({ onBack }) => {
     "I believe that consistent practice and dedication are key to mastering any skill."
   ];
 
-  
-
   const startRecording = async () => {
     try {
       setRecordingStep('recording');
       setTranscription('');
       setAssessment(null);
-      
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorderRef.current = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       audioChunksRef.current = [];
@@ -68,25 +66,22 @@ const EnglishPractice: React.FC<EnglishPracticeProps> = ({ onBack }) => {
 
   const processRecording = async (audioBlob: Blob) => {
     try {
-      // Convert audio to base64
       const reader = new FileReader();
       reader.onloadend = async () => {
         const audioData = reader.result?.toString().split(',')[1];
-        
-        // First, get speech-to-text transcription
+
         const transcriptResponse = await fetch('http://localhost:5003/api/ai/speech-to-text', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ audioData })
         });
-        
+
         const transcriptResult = await transcriptResponse.json();
-        
+
         if (transcriptResult.success && transcriptResult.transcript) {
           setTranscription(transcriptResult.transcript);
           setPracticeText(transcriptResult.transcript);
-          
-          // Then get AI analysis of the transcribed text
+
           setIsAnalyzing(true);
           const assessmentResponse = await fetch('http://localhost:5003/api/english/assess/comprehensive', {
             method: 'POST',
@@ -96,7 +91,7 @@ const EnglishPractice: React.FC<EnglishPracticeProps> = ({ onBack }) => {
               audioData: audioData
             })
           });
-          
+
           const assessmentResult = await assessmentResponse.json();
           setAssessment(assessmentResult.assessment);
           setRecordingStep('complete');
@@ -117,7 +112,7 @@ const EnglishPractice: React.FC<EnglishPracticeProps> = ({ onBack }) => {
 
   const checkGrammar = async () => {
     if (!practiceText.trim()) return;
-    
+
     setIsAnalyzing(true);
     try {
       const response = await fetch('http://localhost:5003/api/english/grammar/check', {
@@ -125,7 +120,7 @@ const EnglishPractice: React.FC<EnglishPracticeProps> = ({ onBack }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: practiceText })
       });
-      
+
       const result = await response.json();
       setAssessment((prev: any) => ({
         ...prev,
@@ -151,57 +146,41 @@ const EnglishPractice: React.FC<EnglishPracticeProps> = ({ onBack }) => {
   };
 
   return (
-    <div style={{
-      maxWidth: '1200px',
-      margin: '0 auto',
-      padding: '20px',
-      backgroundColor: 'rgba(255, 255, 255, 0.05)',
-      borderRadius: '16px',
-      color: 'white',
-      backdropFilter: 'blur(10px)',
-      border: '1px solid rgba(255, 255, 255, 0.1)'
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', padding: '20px 0' }}>
-        <h1 className="space-title" style={{ fontSize: '32px', fontWeight: '300', margin: 0 }}>🌌 English Communication Lab</h1>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <button onClick={onBack} className="space-button" style={{
-            padding: '10px 16px',
-            fontWeight: '500',
-            marginRight: '20px'
-          }}>
+    <div className="container fade-in">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+        <h1 className="minimal-title" style={{ fontSize: '2.5rem', margin: 0 }}>English Communication Lab</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <button onClick={onBack} className="minimal-button-secondary">
             ← Back
           </button>
           <UserProfile />
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
         {/* Practice Section */}
-        <div>
-          <h3 className="space-text" style={{ marginBottom: '20px', fontSize: '20px' }}>🚀 Practice Mission</h3>
-          
+        <div className="minimal-card" style={{ padding: '32px' }}>
+          <h3 className="minimal-subtitle" style={{ marginBottom: '24px', color: 'var(--text-primary)', fontWeight: 600 }}>
+            🚀 Practice Mission
+          </h3>
+
           {/* Sample Texts */}
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ color: '#ccc', fontSize: '14px', marginBottom: '10px', display: 'block' }}>
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: 'var(--text-secondary)' }}>
               Choose a practice sentence:
             </label>
-            <select
-              onChange={(e) => setPracticeText(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '10px',
-                backgroundColor: '#2a2a2a',
-                color: 'white',
-                border: '2px solid #4CAF50',
-                borderRadius: '8px',
-                marginBottom: '15px'
-              }}
-            >
-              <option value="">Select a practice text...</option>
-              {practiceTexts.map((text, index) => (
-                <option key={index} value={text}>{text.substring(0, 50)}...</option>
-              ))}
-            </select>
+            <div className="select-wrapper">
+              <select
+                onChange={(e) => setPracticeText(e.target.value)}
+                className="minimal-input"
+                style={{ width: '100%' }}
+              >
+                <option value="">Select a practice text...</option>
+                {practiceTexts.map((text, index) => (
+                  <option key={index} value={text}>{text.substring(0, 50)}...</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Text Input */}
@@ -209,86 +188,63 @@ const EnglishPractice: React.FC<EnglishPracticeProps> = ({ onBack }) => {
             value={practiceText}
             onChange={(e) => setPracticeText(e.target.value)}
             placeholder="Type your own text or select from above..."
+            className="minimal-input"
             style={{
               width: '100%',
               height: '120px',
-              padding: '15px',
-              backgroundColor: '#2a2a2a',
-              color: 'white',
-              border: '2px solid #4CAF50',
-              borderRadius: '8px',
-              fontSize: '16px',
-              resize: 'vertical'
+              resize: 'vertical',
+              fontFamily: 'inherit',
+              lineHeight: '1.6'
             }}
           />
 
           {/* Controls */}
           {/* Recording Status */}
           {recordingStep !== 'ready' && (
-            <div style={{
-              marginTop: '20px',
-              padding: '15px',
-              backgroundColor: recordingStep === 'recording' ? 'rgba(244, 67, 54, 0.1)' : 
-                             recordingStep === 'processing' ? 'rgba(255, 152, 0, 0.1)' : 
-                             'rgba(76, 175, 80, 0.1)',
-              borderRadius: '10px',
-              border: `2px solid ${recordingStep === 'recording' ? '#f44336' : 
-                                   recordingStep === 'processing' ? '#FF9800' : 
-                                   '#4CAF50'}`,
-              textAlign: 'center'
-            }}>
-              <div style={{
-                color: recordingStep === 'recording' ? '#f44336' : 
-                       recordingStep === 'processing' ? '#FF9800' : 
-                       '#4CAF50',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                marginBottom: '8px'
+            <div className={`state-${recordingStep === 'recording' ? 'error' :
+                recordingStep === 'processing' ? 'warning' :
+                  'success'
+              }`} style={{
+                marginTop: '24px',
+                padding: '16px',
+                borderRadius: '12px',
+                textAlign: 'center',
+                fontWeight: 500
               }}>
-                {recordingStep === 'recording' && '🔴 Recording... Speak clearly'}
-                {recordingStep === 'processing' && '⏳ Processing your speech...'}
-                {recordingStep === 'complete' && '✅ Analysis complete!'}
-              </div>
+              {recordingStep === 'recording' && '🔴 Recording... Speak clearly'}
+              {recordingStep === 'processing' && '⏳ Processing your speech...'}
+              {recordingStep === 'complete' && '✅ Analysis complete!'}
             </div>
           )}
 
           {/* Transcription Display */}
           {transcription && (
-            <div style={{
-              marginTop: '20px',
-              padding: '15px',
-              backgroundColor: '#2a2a2a',
-              borderRadius: '10px',
-              border: '2px solid #2196F3'
+            <div className="state-info" style={{
+              marginTop: '24px',
+              padding: '20px',
+              borderRadius: '12px',
             }}>
-              <h4 style={{ color: '#2196F3', marginBottom: '10px' }}>🎤 What you said:</h4>
-              <p style={{ fontSize: '16px', lineHeight: '1.5', color: 'white', fontStyle: 'italic' }}>
+              <h4 style={{ margin: '0 0 8px 0', fontWeight: 600 }}>🎤 What you said:</h4>
+              <p style={{ margin: 0, fontStyle: 'italic', lineHeight: '1.6' }}>
                 "{transcription}"
               </p>
             </div>
           )}
 
-          <div style={{ marginTop: '20px', textAlign: 'center' }}>
+          <div style={{ marginTop: '32px', display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
             <button
               onClick={isRecording ? stopRecording : startRecording}
               disabled={recordingStep === 'processing'}
+              className={isRecording ? "minimal-button-primary" : "minimal-button-primary"}
               style={{
-                padding: '15px 30px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                borderRadius: '50px',
-                border: 'none',
-                backgroundColor: isRecording ? '#f44336' : 
-                               recordingStep === 'processing' ? '#666' : '#4CAF50',
-                color: 'white',
-                cursor: recordingStep === 'processing' ? 'not-allowed' : 'pointer',
-                marginRight: '15px',
-                boxShadow: isRecording ? '0 0 20px rgba(244, 67, 54, 0.5)' : '0 0 20px rgba(76, 175, 80, 0.3)'
+                backgroundColor: isRecording ? '#ef4444' : undefined,
+                borderColor: isRecording ? '#ef4444' : undefined,
+                flex: 1
               }}
             >
-              {isRecording ? '🛑 Stop Recording' : 
-               recordingStep === 'processing' ? '⏳ Processing...' : 
-               '🎤 Start Recording'}
+              {isRecording ? '🛑 Stop Recording' :
+                recordingStep === 'processing' ? '⏳ Processing...' :
+                  '🎤 Start Recording'}
             </button>
 
             {recordingStep === 'complete' && (
@@ -299,16 +255,7 @@ const EnglishPractice: React.FC<EnglishPracticeProps> = ({ onBack }) => {
                   setPracticeText('');
                   setAssessment(null);
                 }}
-                style={{
-                  padding: '15px 30px',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  borderRadius: '8px',
-                  border: 'none',
-                  backgroundColor: '#FF9800',
-                  color: 'white',
-                  cursor: 'pointer'
-                }}
+                className="minimal-button-secondary"
               >
                 🔄 Record Again
               </button>
@@ -318,17 +265,7 @@ const EnglishPractice: React.FC<EnglishPracticeProps> = ({ onBack }) => {
               <button
                 onClick={checkGrammar}
                 disabled={isAnalyzing}
-                style={{
-                  padding: '15px 30px',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  borderRadius: '8px',
-                  border: 'none',
-                  backgroundColor: '#2196F3',
-                  color: 'white',
-                  cursor: isAnalyzing ? 'not-allowed' : 'pointer',
-                  marginLeft: '15px'
-                }}
+                className="minimal-button-secondary"
               >
                 ✓ Check Grammar Only
               </button>
@@ -336,34 +273,21 @@ const EnglishPractice: React.FC<EnglishPracticeProps> = ({ onBack }) => {
           </div>
 
           {/* Word Lookup */}
-          <div style={{ marginTop: '30px' }}>
-            <h4 style={{ color: '#FF9800', marginBottom: '15px' }}>📚 Vocabulary Helper</h4>
-            <div style={{ display: 'flex', gap: '10px' }}>
+          <div style={{ marginTop: '40px', paddingTop: '32px', borderTop: '1px solid var(--border-light)' }}>
+            <h4 style={{ marginBottom: '16px', fontWeight: 600 }}>📚 Vocabulary Helper</h4>
+            <div style={{ display: 'flex', gap: '12px' }}>
               <input
                 type="text"
                 value={selectedWord}
                 onChange={(e) => setSelectedWord(e.target.value)}
                 placeholder="Enter a word to look up..."
-                style={{
-                  flex: 1,
-                  padding: '10px',
-                  backgroundColor: '#2a2a2a',
-                  color: 'white',
-                  border: '2px solid #FF9800',
-                  borderRadius: '8px'
-                }}
+                className="minimal-input"
+                style={{ flex: 1 }}
               />
               <button
                 onClick={() => lookupWord(selectedWord)}
                 disabled={!selectedWord.trim()}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#FF9800',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: selectedWord.trim() ? 'pointer' : 'not-allowed'
-                }}
+                className="minimal-button-secondary"
               >
                 🔍 Look Up
               </button>
@@ -372,77 +296,83 @@ const EnglishPractice: React.FC<EnglishPracticeProps> = ({ onBack }) => {
         </div>
 
         {/* Results Section */}
-        <div>
-          <h3 className="space-text" style={{ marginBottom: '20px', fontSize: '20px' }}>📊 Mission Analysis</h3>
-          
+        <div className="minimal-card" style={{ padding: '32px' }}>
+          <h3 className="minimal-subtitle" style={{ marginBottom: '24px', color: 'var(--text-primary)', fontWeight: 600 }}>
+            📊 Mission Analysis
+          </h3>
+
           {isAnalyzing && (
             <div style={{
               textAlign: 'center',
-              padding: '40px',
-              backgroundColor: '#2a2a2a',
-              borderRadius: '10px',
-              border: '2px solid #FF9800'
+              padding: '60px 20px',
+              color: 'var(--text-secondary)'
             }}>
-              <div style={{ fontSize: '48px', marginBottom: '15px' }}>🤖</div>
-              <div style={{ color: '#FF9800', fontSize: '18px' }}>Analyzing your speech...</div>
+              <div className="pulse-indicator" style={{ fontSize: '48px', marginBottom: '16px' }}>🤖</div>
+              <div>Analyzing your speech...</div>
+            </div>
+          )}
+
+          {!isAnalyzing && !assessment && !wordInfo && (
+            <div style={{
+              textAlign: 'center',
+              padding: '60px 20px',
+              color: 'var(--text-tertiary)'
+            }}>
+              <div style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.5 }}>📊</div>
+              <div>Start recording or check grammar to see analysis results here.</div>
             </div>
           )}
 
           {assessment && (
-            <div style={{
-              backgroundColor: '#2a2a2a',
-              padding: '20px',
-              borderRadius: '10px',
-              border: '2px solid #4CAF50'
-            }}>
-              <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-                <div style={{ fontSize: '48px', fontWeight: 'bold', color: '#4CAF50' }}>
-                  {assessment.overallScore}/100
+            <div className="fade-in">
+              <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+                <div className="animated-score" style={{
+                  fontSize: '64px',
+                  fontWeight: 800,
+                  color: 'var(--text-primary)',
+                  lineHeight: 1
+                }}>
+                  {assessment.overallScore}
+                  <span style={{ fontSize: '24px', color: 'var(--text-tertiary)', fontWeight: 400 }}>/100</span>
                 </div>
-                <div style={{ color: '#ccc' }}>Overall Score</div>
+                <div style={{ color: 'var(--text-secondary)', marginTop: '8px' }}>Overall Score</div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
-                <div style={{ textAlign: 'center', padding: '15px', backgroundColor: '#1a1a1a', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#4CAF50' }}>
-                    {assessment.pronunciationScore}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '32px' }}>
+                {[
+                  { label: 'Pronunciation', score: assessment.pronunciationScore, color: 'text-primary' },
+                  { label: 'Grammar', score: assessment.grammarScore, color: 'accent-highlight' },
+                  { label: 'Fluency', score: assessment.fluencyScore, color: 'text-primary' },
+                  { label: 'Vocabulary', score: assessment.vocabularyScore, color: 'text-primary' }
+                ].map((item, i) => (
+                  <div key={i} style={{
+                    textAlign: 'center',
+                    padding: '16px',
+                    backgroundColor: 'var(--bg-secondary)',
+                    borderRadius: '12px'
+                  }}>
+                    <div style={{ fontSize: '24px', fontWeight: 700, marginBottom: '4px' }}>
+                      {item.score}
+                    </div>
+                    <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{item.label}</div>
                   </div>
-                  <div style={{ fontSize: '12px', color: '#ccc' }}>Pronunciation</div>
-                </div>
-                <div style={{ textAlign: 'center', padding: '15px', backgroundColor: '#1a1a1a', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#2196F3' }}>
-                    {assessment.grammarScore}
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#ccc' }}>Grammar</div>
-                </div>
-                <div style={{ textAlign: 'center', padding: '15px', backgroundColor: '#1a1a1a', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#FF9800' }}>
-                    {assessment.fluencyScore}
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#ccc' }}>Fluency</div>
-                </div>
-                <div style={{ textAlign: 'center', padding: '15px', backgroundColor: '#1a1a1a', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#9C27B0' }}>
-                    {assessment.vocabularyScore}
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#ccc' }}>Vocabulary</div>
-                </div>
+                ))}
               </div>
 
-              <div style={{ backgroundColor: '#1a1a1a', padding: '15px', borderRadius: '8px' }}>
-                <h4 style={{ color: '#4CAF50', marginBottom: '10px' }}>💡 Feedback</h4>
+              <div className="natural-feedback" style={{ marginBottom: '24px' }}>
+                <h4 style={{ margin: '0 0 16px 0', fontWeight: 600 }}>💡 Feedback</h4>
                 {Object.entries(assessment.feedback || {}).map(([key, value]) => (
-                  <div key={key} style={{ marginBottom: '5px', fontSize: '14px' }}>
-                    <strong style={{ textTransform: 'capitalize', color: '#FF9800' }}>{key}:</strong> {value as string}
+                  <div key={key} style={{ marginBottom: '8px', fontSize: '15px' }}>
+                    <strong style={{ textTransform: 'capitalize' }}>{key}:</strong> {value as string}
                   </div>
                 ))}
               </div>
 
               {assessment.improvements && assessment.improvements.length > 0 && (
-                <div style={{ backgroundColor: '#1a1a1a', padding: '15px', borderRadius: '8px', marginTop: '15px' }}>
-                  <h4 style={{ color: '#f44336', marginBottom: '10px' }}>🎯 Areas to Improve</h4>
+                <div className="state-warning" style={{ padding: '20px', borderRadius: '12px' }}>
+                  <h4 style={{ margin: '0 0 12px 0', fontWeight: 600, color: '#92400e' }}>🎯 Areas to Improve</h4>
                   {assessment.improvements.map((improvement: string, index: number) => (
-                    <div key={index} style={{ fontSize: '14px', marginBottom: '5px', color: '#ccc' }}>
+                    <div key={index} style={{ marginBottom: '6px', fontSize: '14px' }}>
                       • {improvement}
                     </div>
                   ))}
@@ -452,34 +382,34 @@ const EnglishPractice: React.FC<EnglishPracticeProps> = ({ onBack }) => {
           )}
 
           {wordInfo && (
-            <div style={{
-              backgroundColor: '#2a2a2a',
-              padding: '20px',
-              borderRadius: '10px',
-              border: '2px solid #FF9800',
-              marginTop: '20px'
+            <div className="fade-in" style={{
+              marginTop: '32px',
+              padding: '24px',
+              backgroundColor: 'var(--bg-secondary)',
+              borderRadius: '16px',
+              border: '1px solid var(--border-medium)'
             }}>
-              <h4 style={{ color: '#FF9800', marginBottom: '15px' }}>📖 {wordInfo.word}</h4>
-              
+              <h4 style={{ fontSize: '24px', margin: '0 0 16px 0' }}>📖 {wordInfo.word}</h4>
+
               {wordInfo.pronunciation && (
-                <div style={{ marginBottom: '15px' }}>
-                  <strong style={{ color: '#4CAF50' }}>Pronunciation:</strong> {wordInfo.pronunciation.all || 'N/A'}
+                <div style={{ marginBottom: '16px' }}>
+                  <strong>Pronunciation:</strong> <span style={{ fontFamily: 'monospace', background: 'var(--bg-tertiary)', padding: '2px 6px', borderRadius: '4px' }}>{wordInfo.pronunciation.all || 'N/A'}</span>
                 </div>
               )}
 
               {wordInfo.definitions && wordInfo.definitions.length > 0 && (
-                <div style={{ marginBottom: '15px' }}>
-                  <strong style={{ color: '#4CAF50' }}>Definition:</strong>
-                  <div style={{ marginTop: '5px', color: '#ccc' }}>
+                <div style={{ marginBottom: '16px' }}>
+                  <strong>Definition:</strong>
+                  <div style={{ marginTop: '4px', color: 'var(--text-secondary)' }}>
                     {wordInfo.definitions[0].definition}
                   </div>
                 </div>
               )}
 
               {wordInfo.synonyms && wordInfo.synonyms.length > 0 && (
-                <div style={{ marginBottom: '15px' }}>
-                  <strong style={{ color: '#4CAF50' }}>Synonyms:</strong>
-                  <div style={{ marginTop: '5px', color: '#ccc' }}>
+                <div style={{ marginBottom: '16px' }}>
+                  <strong>Synonyms:</strong>
+                  <div style={{ marginTop: '4px', color: 'var(--text-secondary)' }}>
                     {wordInfo.synonyms.slice(0, 5).join(', ')}
                   </div>
                 </div>
@@ -487,8 +417,8 @@ const EnglishPractice: React.FC<EnglishPracticeProps> = ({ onBack }) => {
 
               {wordInfo.examples && wordInfo.examples.length > 0 && (
                 <div>
-                  <strong style={{ color: '#4CAF50' }}>Example:</strong>
-                  <div style={{ marginTop: '5px', color: '#ccc', fontStyle: 'italic' }}>
+                  <strong>Example:</strong>
+                  <div style={{ marginTop: '4px', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
                     "{wordInfo.examples[0]}"
                   </div>
                 </div>

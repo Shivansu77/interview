@@ -24,101 +24,67 @@ const LearnSection: React.FC<LearnSectionProps> = ({ userId }) => {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      backgroundColor: 'rgba(255, 255, 255, 0.05)',
-      color: 'white',
-      padding: '20px'
-    }}>
-      <div style={{
-        maxWidth: '1200px',
-        margin: '0 auto',
-        width: '100%'
-      }}>
-        {/* Header */}
+    <div className="container" style={{ paddingTop: '40px', paddingBottom: '40px' }}>
+      {/* Header */}
+      <div className="minimal-card" style={{ padding: '32px', marginBottom: '32px' }}>
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '30px',
-          padding: '24px',
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-          borderRadius: '16px',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
+          alignItems: 'flex-start',
           flexWrap: 'wrap',
-          gap: '20px'
+          gap: '24px'
         }}>
           <div>
-            <h1 style={{ color: '#10b981', margin: 0, fontSize: '28px', fontWeight: 'bold' }}>📚 Learn & Practice</h1>
-            <p style={{ color: 'rgba(255, 255, 255, 0.8)', margin: '8px 0 0 0', fontSize: '16px' }}>
-              Master interview skills with AI-powered practice sessions
+            <h1 className="minimal-title" style={{ fontSize: '2.5rem', marginBottom: '12px' }}>
+              Learn & Practice
+            </h1>
+            <p className="minimal-subtitle" style={{ margin: 0, maxWidth: '100%' }}>
+              Master interview skills with AI-powered practice sessions tailored to your field.
             </p>
           </div>
-          
+
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <select
-              value={learningField}
-              onChange={(e) => setLearningField(e.target.value as 'webdev' | 'datascience' | 'ml' | 'behavioral')}
-              style={{
-                padding: '12px 16px',
-                borderRadius: '8px',
-                border: '1px solid rgba(16, 185, 129, 0.5)',
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                color: 'white',
-                fontSize: '14px',
-                backdropFilter: 'blur(10px)',
-                cursor: 'pointer'
-              }}
-            >
-              <option value="webdev" style={{ color: '#111827' }}>🌐 Web Development</option>
-              <option value="datascience" style={{ color: '#111827' }}>📈 Data Science</option>
-              <option value="ml" style={{ color: '#111827' }}>🤖 Machine Learning</option>
-              <option value="behavioral" style={{ color: '#111827' }}>💬 Behavioral</option>
-            </select>
-            
-            <select
-              value={level}
-              onChange={(e) => setLevel(e.target.value as 'beginner' | 'intermediate' | 'advanced')}
-              style={{
-                padding: '12px 16px',
-                borderRadius: '8px',
-                border: '1px solid rgba(251, 146, 60, 0.5)',
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                color: 'white',
-                fontSize: '14px',
-                backdropFilter: 'blur(10px)',
-                cursor: 'pointer'
-              }}
-            >
-              <option value="beginner" style={{ color: '#111827' }}>🌱 Beginner</option>
-              <option value="intermediate" style={{ color: '#111827' }}>🚀 Intermediate</option>
-              <option value="advanced" style={{ color: '#111827' }}>⭐ Advanced</option>
-            </select>
-            
+            <div className="select-wrapper">
+              <select
+                value={learningField}
+                onChange={(e) => setLearningField(e.target.value as 'webdev' | 'datascience' | 'ml' | 'behavioral')}
+                className="minimal-input"
+                style={{ paddingRight: '32px' }}
+              >
+                <option value="webdev">🌐 Web Development</option>
+                <option value="datascience">📈 Data Science</option>
+                <option value="ml">🤖 Machine Learning</option>
+                <option value="behavioral">💬 Behavioral</option>
+              </select>
+            </div>
+
+            <div className="select-wrapper">
+              <select
+                value={level}
+                onChange={(e) => setLevel(e.target.value as 'beginner' | 'intermediate' | 'advanced')}
+                className="minimal-input"
+                style={{ paddingRight: '32px' }}
+              >
+                <option value="beginner">🌱 Beginner</option>
+                <option value="intermediate">🚀 Intermediate</option>
+                <option value="advanced">⭐ Advanced</option>
+              </select>
+            </div>
+
             {currentView === 'practice' && (
               <button
                 onClick={handleBackToRoadmap}
-                style={{
-                  padding: '12px 20px',
-                  backgroundColor: '#3b82f6',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  transition: 'all 0.2s',
-                  boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
-                }}
+                className="minimal-button-secondary"
               >
                 ← Back to Roadmap
               </button>
             )}
           </div>
         </div>
+      </div>
 
-        {/* Content */}
+      {/* Content */}
+      <div className="fade-in">
         {currentView === 'roadmap' ? (
           <LearningRoadmap
             field={learningField}

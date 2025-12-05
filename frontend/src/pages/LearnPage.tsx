@@ -7,7 +7,7 @@ const LearnPage: React.FC = () => {
   const { user } = useAuth();
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#000' }}>
+    <div className="page-transition" style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
       <Navbar />
       <LearnSection userId={user?.id || ''} />
     </div>

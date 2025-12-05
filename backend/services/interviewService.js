@@ -6,25 +6,26 @@ class InterviewService {
     this.activeSessions = {};
   }
 
-  startSession(userId, type, company, difficulty) {
+  startSession(userId, type, company, difficulty, interviewConfig = null) {
     const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     this.activeSessions[sessionId] = {
       userId,
       type,
       company,
       difficulty,
+      interviewConfig,
       startedAt: new Date().toISOString(),
       questionCount: 0
     };
-    
+
     console.log('Interview session started:', {
       sessionId,
       userId,
       type,
       company
     });
-    
+
     return {
       success: true,
       sessionId,
@@ -39,15 +40,15 @@ class InterviewService {
       questionScores: questionScores,
       createdAt: new Date().toISOString()
     };
-    
+
     this.interviewResults.push(interviewData);
-    
+
     console.log('Interview completed:', {
       overallScore: results.overallScore,
       focusAreas: results.focusAreas,
       totalQuestions: results.totalQuestions
     });
-    
+
     return {
       success: true,
       message: 'Interview results saved successfully',
@@ -84,7 +85,7 @@ class InterviewService {
     const avgFluency = scores.reduce((sum, s) => sum + s.fluencyScore, 0) / scores.length;
     const avgEyeContact = scores.reduce((sum, s) => sum + s.eyeContactScore, 0) / scores.length;
     const overallScore = (avgContent + avgClarity + avgCompleteness + avgFluency) / 4;
-    
+
     // Determine focus areas
     const focusAreas = [];
     if (avgContent < 6) focusAreas.push('Technical Knowledge');
@@ -92,7 +93,7 @@ class InterviewService {
     if (avgCompleteness < 6) focusAreas.push('Answer Completeness');
     if (avgFluency < 6) focusAreas.push('Speaking Fluency');
     if (avgEyeContact < 60) focusAreas.push('Eye Contact');
-    
+
     return {
       overallScore: Math.round(overallScore * 10) / 10,
       contentScore: Math.round(avgContent * 10) / 10,

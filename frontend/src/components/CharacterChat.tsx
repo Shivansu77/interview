@@ -1,47 +1,45 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import AIAssistant from './AIAssistant';
 
-
-
 // Professional character data with enhanced styling
 const CHARACTERS = [
-  { 
-    name: 'Jesse Pinkman', 
-    voice: 'male', 
-    accent: 'american', 
+  {
+    name: 'Jesse Pinkman',
+    voice: 'male',
+    accent: 'american',
     avatar: '/jessepinkman.jpeg',
     color: '#ff6b6b',
     description: 'Chemistry Expert'
   },
-  { 
-    name: 'Walter White', 
-    voice: 'male', 
-    accent: 'american', 
+  {
+    name: 'Walter White',
+    voice: 'male',
+    accent: 'american',
     avatar: '/WalterWhite.webp',
     color: '#4ecdc4',
     description: 'Science Teacher'
   },
-  { 
-    name: 'Cillian Murphy', 
-    voice: 'male', 
-    accent: 'irish', 
+  {
+    name: 'Cillian Murphy',
+    voice: 'male',
+    accent: 'irish',
     avatar: '🎭',
     color: '#45b7d1',
     description: 'Actor & Artist'
   },
-  { 
-    name: 'Tom Holland', 
-    voice: 'male', 
-    accent: 'british', 
+  {
+    name: 'Tom Holland',
+    voice: 'male',
+    accent: 'british',
     avatar: '🕷️',
     color: '#f39c12',
     description: 'British Actor'
   },
-  { 
-    name: 'Deadpool', 
-    voice: 'male', 
-    accent: 'american', 
-    avatar: '🦸♂️',
+  {
+    name: 'Deadpool',
+    voice: 'male',
+    accent: 'american',
+    avatar: '🦸‍♂️',
     color: '#e74c3c',
     description: 'Anti-Hero'
   }
@@ -67,14 +65,6 @@ const CharacterChat: React.FC = () => {
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
 
-  const characters = [
-    { name: 'Jesse Pinkman', voice: 'male', accent: 'american', avatar: '🧑‍🔬' },
-    { name: 'Walter White', voice: 'male', accent: 'american', avatar: '👨‍🏫' },
-    { name: 'Cillian Murphy', voice: 'male', accent: 'irish', avatar: '🎭' },
-    { name: 'Tom Holland', voice: 'male', accent: 'british', avatar: '🕷️' },
-    { name: 'Deadpool', voice: 'male', accent: 'american', avatar: '🦸‍♂️' }
-  ];
-
   const userId = 'user123';
 
   useEffect(() => {
@@ -85,36 +75,27 @@ const CharacterChat: React.FC = () => {
     // Initialize speech synthesis voices
     const initVoices = () => {
       const voices = speechSynthesis.getVoices();
-      console.log('Total voices available:', voices.length);
-      
       if (voices.length > 0) {
-        console.log('Available voices:', voices.map(v => `${v.name} (${v.lang})`));
-        
         // Test voice functionality
         const testVoice = voices.find(v => v.lang.startsWith('en')) || voices[0];
-        console.log('Test voice selected:', testVoice?.name);
-      } else {
-        console.log('No voices loaded yet, waiting...');
       }
     };
-    
+
     // Load voices immediately
     initVoices();
-    
+
     // Also listen for voice changes
     speechSynthesis.onvoiceschanged = () => {
-      console.log('Voices changed, reloading...');
       initVoices();
     };
-    
+
     // Force voice loading
     if (speechSynthesis.getVoices().length === 0) {
-      console.log('Forcing voice load...');
       const utterance = new SpeechSynthesisUtterance('');
       speechSynthesis.speak(utterance);
       speechSynthesis.cancel();
     }
-    
+
     return () => {
       speechSynthesis.cancel();
       if (recordingTimerRef.current) {
@@ -150,7 +131,7 @@ const CharacterChat: React.FC = () => {
 
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
-    
+
     recognition.continuous = false;
     recognition.interimResults = false;
     recognition.lang = 'en-US';
@@ -159,7 +140,7 @@ const CharacterChat: React.FC = () => {
     recognition.onstart = () => {
       setIsRecording(true);
       setRecordingTime(0);
-      
+
       recordingTimerRef.current = setInterval(() => {
         setRecordingTime(prev => {
           if (prev >= 30) {
@@ -204,40 +185,38 @@ const CharacterChat: React.FC = () => {
     }
   };
 
-
-
   const getCharacterVoice = (characterName: string) => {
     const voices = speechSynthesis.getVoices();
-    
+
     // Prioritize male voices for all characters
     const maleVoices = [
       'Daniel', 'Aaron', 'Fred', 'Arthur', 'Gordon', 'Albert',
       'Eddy', 'Grandpa', 'Junior', 'Alex'
     ];
-    
+
     // Find best male voice
-    let preferredVoice = voices.find(voice => 
+    let preferredVoice = voices.find(voice =>
       maleVoices.some(male => voice.name.includes(male)) && voice.lang.startsWith('en')
     );
-    
+
     // Character-specific voice preferences
     if (characterName === 'Tom Holland') {
-      preferredVoice = voices.find(voice => 
+      preferredVoice = voices.find(voice =>
         (voice.name.includes('Daniel') || voice.name.includes('Arthur')) && voice.lang.includes('GB')
       ) || preferredVoice;
     } else if (characterName === 'Cillian Murphy') {
-      preferredVoice = voices.find(voice => 
+      preferredVoice = voices.find(voice =>
         voice.name.includes('Daniel') && voice.lang.includes('GB')
       ) || preferredVoice;
     }
-    
+
     // Fallback to any English male voice
     if (!preferredVoice) {
-      preferredVoice = voices.find(voice => 
+      preferredVoice = voices.find(voice =>
         voice.lang.startsWith('en') && !voice.name.toLowerCase().includes('female')
       );
     }
-    
+
     return preferredVoice || voices.find(voice => voice.lang.startsWith('en')) || voices[0];
   };
 
@@ -264,38 +243,27 @@ const CharacterChat: React.FC = () => {
   };
 
   const speakMessage = (text: string, characterName: string, forceSpeak = false) => {
-    console.log('Speaking:', text, 'Character:', characterName, 'Voice Mode:', voiceMode);
-    
-    if (!text) {
-      console.log('No text to speak');
-      return;
-    }
-    
+    if (!text) return;
+
     // Check if we should speak based on voice mode or force flag
-    if (!voiceMode && !forceSpeak) {
-      console.log('Voice mode is off and not forced, skipping speak');
-      return;
-    }
-    
+    if (!voiceMode && !forceSpeak) return;
+
     setIsSpeaking(true);
-    
+
     // Clean the text for natural speech
     const cleanText = cleanTextForSpeech(text);
-    console.log('Cleaned text:', cleanText);
-    
+
     if (!cleanText) {
       setIsSpeaking(false);
       return;
     }
-    
+
     // Use browser TTS directly for reliability
     const utterance = new SpeechSynthesisUtterance(cleanText);
     const voice = getCharacterVoice(characterName);
-    
-    console.log('Selected voice:', voice?.name, voice?.lang);
-    
+
     utterance.voice = voice;
-    
+
     // Character-specific voice settings for male voices
     const settings = {
       'Jesse Pinkman': { rate: 0.9, pitch: 1.1, volume: 1 },
@@ -304,33 +272,21 @@ const CharacterChat: React.FC = () => {
       'Cillian Murphy': { rate: 0.8, pitch: 0.9, volume: 1 },
       'Deadpool': { rate: 0.95, pitch: 1.1, volume: 1 }
     };
-    
+
     const config = settings[characterName as keyof typeof settings] || { rate: 0.8, pitch: 1.0, volume: 1 };
-    
+
     utterance.rate = config.rate;
     utterance.pitch = config.pitch;
     utterance.volume = config.volume;
-    
-    utterance.onstart = () => {
-      console.log('Speech started');
-      setIsSpeaking(true);
-    };
-    
-    utterance.onend = () => {
-      console.log('Speech ended');
-      setIsSpeaking(false);
-    };
-    
-    utterance.onerror = (event) => {
-      console.error('Speech error:', event.error);
-      setIsSpeaking(false);
-    };
-    
+
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+
     speechSynthRef.current = utterance;
-    
+
     // Small delay to ensure voices are loaded
     setTimeout(() => {
-      console.log('Starting speech synthesis');
       speechSynthesis.speak(utterance);
     }, 100);
   };
@@ -362,11 +318,11 @@ const CharacterChat: React.FC = () => {
 
       const data = await response.json();
       const replyText = data.reply;
-      
+
       // Simulate typing delay then start character typing animation
       setTimeout(() => {
         setLoading(false);
-        
+
         // Add typing message
         const typingMessage: Message = {
           sender: 'character' as const,
@@ -374,25 +330,25 @@ const CharacterChat: React.FC = () => {
           timestamp: new Date(),
           isTyping: true
         };
-        
+
         setMessages(prev => [...prev, typingMessage]);
-        
+
         // Start speaking immediately if voice mode is on
         if (voiceMode) {
           speakMessage(replyText, selectedCharacter);
         }
-        
+
         // Type out message character by character
         let currentText = '';
         let charIndex = 0;
-        
+
         const typeInterval = setInterval(() => {
           if (charIndex < replyText.length) {
             currentText += replyText[charIndex];
             charIndex++;
-            
-            setMessages(prev => 
-              prev.map(msg => 
+
+            setMessages(prev =>
+              prev.map(msg =>
                 msg.isTyping && msg.sender === 'character'
                   ? { ...msg, text: currentText }
                   : msg
@@ -401,8 +357,8 @@ const CharacterChat: React.FC = () => {
           } else {
             // Typing complete
             clearInterval(typeInterval);
-            setMessages(prev => 
-              prev.map(msg => 
+            setMessages(prev =>
+              prev.map(msg =>
                 msg.isTyping && msg.sender === 'character'
                   ? { ...msg, isTyping: false }
                   : msg
@@ -411,7 +367,7 @@ const CharacterChat: React.FC = () => {
           }
         }, 30); // Typing speed
       }, 1000);
-      
+
       await fetch('http://localhost:5003/api/ai/character-chat/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -434,12 +390,6 @@ const CharacterChat: React.FC = () => {
     setInputMessage('');
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -447,460 +397,196 @@ const CharacterChat: React.FC = () => {
     }
   };
 
-
-
   return (
-    <div style={{
-      maxWidth: '1000px',
-      margin: '0 auto',
-      padding: '30px 20px',
-      backgroundColor: 'transparent',
-      color: '#fff',
-      minHeight: '80vh',
-      position: 'relative'
-    }}>
-      {/* AI Assistant */}
+    <div className="container fade-in">
       <AIAssistant
         position="bottom-right"
         size={80}
         isListening={isRecording}
         isThinking={loading}
       />
-      <div style={{
-        textAlign: 'center',
-        marginBottom: '40px'
-      }}>
-        <h1 style={{
-          fontSize: '36px',
-          fontWeight: '300',
-          marginBottom: '10px',
-          background: 'linear-gradient(135deg, #667eea, #764ba2, #f093fb)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          letterSpacing: '2px'
-        }}>
-          🚀 SPACE CHAT
+
+      <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+        <h1 className="minimal-title" style={{ fontSize: '2.5rem', margin: 0 }}>
+          AI Persona Chat
         </h1>
-        <p style={{
-          fontSize: '16px',
-          color: 'rgba(255,255,255,0.7)',
-          marginBottom: '30px',
-          fontWeight: '300'
-        }}>
-          Connect with AI entities across the cosmos
+        <p className="minimal-subtitle" style={{ marginTop: '8px' }}>
+          Connect with AI personalities for immersive conversations
         </p>
       </div>
-      
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '20px',
-        padding: '15px 20px',
-        backgroundColor: 'rgba(15, 23, 42, 0.8)',
-        borderRadius: '16px',
-        border: '1px solid rgba(100, 116, 139, 0.3)',
-        backdropFilter: 'blur(20px)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+
+      <div className="minimal-card" style={{ padding: '24px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <div style={{
-            width: '50px',
-            height: '50px',
+            width: '56px',
+            height: '56px',
             borderRadius: '50%',
             overflow: 'hidden',
-            border: '2px solid #fff'
+            border: '2px solid var(--border-medium)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'var(--bg-secondary)',
+            fontSize: '24px'
           }}>
             {selectedCharacter === 'Jesse Pinkman' ? (
-              <img 
-                src="/jessepinkman.jpeg" 
-                alt="Jesse Pinkman"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover'
-                }}
-              />
+              <img src="/jessepinkman.jpeg" alt="Jesse" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : selectedCharacter === 'Walter White' ? (
-              <img 
-                src="/WalterWhite.webp" 
-                alt="Walter White"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover'
-                }}
-              />
+              <img src="/WalterWhite.webp" alt="Walter" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
-              <div style={{
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '24px',
-                backgroundColor: '#333'
-              }}>
-                {CHARACTERS.find(c => c.name === selectedCharacter)?.avatar || '🧪'}
-              </div>
+              CHARACTERS.find(c => c.name === selectedCharacter)?.avatar || '🎭'
             )}
           </div>
           <div>
-            <h2 style={{ margin: '0', color: '#fff' }}>Current Chat</h2>
-            <p style={{ margin: '5px 0 0 0', color: '#ccc', fontSize: '14px' }}>
-              Chatting with {selectedCharacter}
+            <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+              {selectedCharacter}
+            </h2>
+            <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+              {CHARACTERS.find(c => c.name === selectedCharacter)?.description || 'AI Personality'}
             </p>
           </div>
         </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <select 
-            value={selectedCharacter} 
-            onChange={(e) => setSelectedCharacter(e.target.value)}
-            style={{
-              padding: '10px 15px',
-              borderRadius: '8px',
-              border: '1px solid #333',
-              backgroundColor: '#000',
-              color: '#fff',
-              fontSize: '14px',
-              minWidth: '180px'
-            }}
-          >
-            {CHARACTERS.map(char => (
-              <option key={char.name} value={char.name}>
-                {char.name === 'Jesse Pinkman' ? '🧪' : char.name === 'Walter White' ? '👨🏫' : char.avatar} {char.name}
-              </option>
-            ))}
-          </select>
-          
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div className="select-wrapper">
+            <select
+              value={selectedCharacter}
+              onChange={(e) => setSelectedCharacter(e.target.value)}
+              className="minimal-input"
+              style={{ minWidth: '200px' }}
+            >
+              {CHARACTERS.map(char => (
+                <option key={char.name} value={char.name}>
+                  {char.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <button
             onClick={() => {
               const newVoiceMode = !voiceMode;
               setVoiceMode(newVoiceMode);
-              if (!newVoiceMode) {
-                stopSpeaking();
-              }
-              console.log('Voice mode toggled:', newVoiceMode);
+              if (!newVoiceMode) stopSpeaking();
             }}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '20px',
-              border: `1px solid ${voiceMode ? '#fff' : '#333'}`,
-              backgroundColor: voiceMode ? '#fff' : 'transparent',
-              color: voiceMode ? '#000' : '#fff',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontSize: '12px',
-              fontWeight: 'bold',
-              transition: 'all 0.3s ease',
-              position: 'relative',
-              minWidth: '90px',
-              justifyContent: 'center',
-              height: '36px'
-            }}
+            className={`minimal-button-${voiceMode ? 'primary' : 'secondary'}`}
+            style={{ minWidth: '100px' }}
           >
-            <div style={{
-              position: 'absolute',
-              left: voiceMode ? '3px' : 'calc(100% - 21px)',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: '18px',
-              height: '18px',
-              backgroundColor: '#fff',
-              borderRadius: '50%',
-              transition: 'all 0.3s ease'
-            }} />
-            <span style={{ marginLeft: voiceMode ? '16px' : '0', marginRight: voiceMode ? '0' : '16px' }}>
-              {voiceMode ? 'ON' : 'OFF'}
-            </span>
+            {voiceMode ? '🔊 Voice ON' : '🔇 Voice OFF'}
           </button>
         </div>
       </div>
 
-      <div style={{
-        backgroundColor: 'rgba(15, 23, 42, 0.6)',
-        borderRadius: '16px',
-        padding: '20px',
-        marginBottom: '15px',
-        minHeight: '350px',
-        maxHeight: '450px',
-        overflowY: 'auto',
-        border: '1px solid rgba(100, 116, 139, 0.2)',
-        backdropFilter: 'blur(20px)'
+      <div className="minimal-card" style={{
+        height: '500px',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden'
       }}>
-        {messages.map((msg, index) => (
-          <div key={index} style={{
-            display: 'flex',
-            justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start',
-            marginBottom: '15px'
-          }}>
-            <div style={{
-              maxWidth: '70%',
-              padding: '15px',
-              borderRadius: '12px',
-              backgroundColor: msg.sender === 'user' ? '#fff' : '#111',
-              color: msg.sender === 'user' ? '#000' : '#fff'
+        <div style={{
+          flex: 1,
+          padding: '24px',
+          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '20px'
+        }}>
+          {messages.map((msg, index) => (
+            <div key={index} style={{
+              display: 'flex',
+              justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start',
             }}>
-              {msg.sender === 'character' && (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  marginBottom: '8px',
-                  paddingBottom: '8px',
-                  borderBottom: '1px solid #333'
-                }}>
+              <div style={{
+                maxWidth: '75%',
+                padding: '16px 20px',
+                borderRadius: '16px',
+                backgroundColor: msg.sender === 'user' ? 'var(--accent-color)' : 'var(--bg-secondary)',
+                color: msg.sender === 'user' ? 'var(--bg-primary)' : 'var(--text-primary)',
+                borderBottomRightRadius: msg.sender === 'user' ? '4px' : '16px',
+                borderBottomLeftRadius: msg.sender === 'character' ? '4px' : '16px',
+                boxShadow: 'var(--shadow-sm)'
+              }}>
+                {msg.sender === 'character' && (
                   <div style={{
-                    width: '30px',
-                    height: '30px',
-                    borderRadius: '50%',
-                    overflow: 'hidden',
-                    border: '1px solid #fff'
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '8px',
+                    paddingBottom: '8px',
+                    borderBottom: '1px solid var(--border-light)'
                   }}>
-                    {selectedCharacter === 'Jesse Pinkman' ? (
-                      <img 
-                        src="/jessepinkman.jpeg" 
-                        alt="Jesse Pinkman"
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover'
-                        }}
-                      />
-                    ) : selectedCharacter === 'Walter White' ? (
-                      <img 
-                        src="/WalterWhite.webp" 
-                        alt="Walter White"
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover'
-                        }}
-                      />
-                    ) : (
-                      <div style={{
-                        width: '100%',
-                        height: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '16px',
-                        backgroundColor: '#333'
-                      }}>
-                        {CHARACTERS.find(c => c.name === selectedCharacter)?.avatar || '🎭'}
-                      </div>
-                    )}
+                    <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{selectedCharacter}</span>
+                    <button
+                      onClick={() => speakMessage(msg.text, selectedCharacter, true)}
+                      disabled={isSpeaking}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: '1rem',
+                        padding: '0 4px',
+                        opacity: 0.7
+                      }}
+                    >
+                      {isSpeaking ? '🔊' : '▶️'}
+                    </button>
                   </div>
-                  <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{selectedCharacter}</span>
-                  <button
-                    onClick={() => speakMessage(msg.text, selectedCharacter, true)}
-                    disabled={isSpeaking}
-                    style={{
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      border: 'none',
-                      backgroundColor: '#fff',
-                      color: '#000',
-                      cursor: 'pointer',
-                      fontSize: '12px'
-                    }}
-                  >
-                    {isSpeaking ? '🔊' : '▶️'}
-                  </button>
-                </div>
-              )}
-              <div style={{ lineHeight: '1.5', minHeight: '20px' }}>
-                <span>{msg.text}</span>
-                {msg.isTyping && (
-                  <span style={{
-                    display: 'inline-block',
-                    width: '2px',
-                    height: '16px',
-                    backgroundColor: '#fff',
-                    marginLeft: '2px',
-                    animation: 'blink 1s infinite'
-                  }} />
                 )}
-              </div>
-              <div style={{
-                fontSize: '11px',
-                color: '#ccc',
-                marginTop: '8px',
-                textAlign: 'right'
-              }}>
-                {new Date(msg.timestamp).toLocaleTimeString()}
-              </div>
-            </div>
-          </div>
-        ))}
-        {loading && (
-          <div style={{
-            display: 'flex',
-            justifyContent: 'flex-start',
-            marginBottom: '15px'
-          }}>
-            <div style={{
-              padding: '15px',
-              borderRadius: '12px',
-              backgroundColor: '#111',
-              color: '#fff'
-            }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px'
-              }}>
-                <div style={{
-                  width: '30px',
-                  height: '30px',
-                  borderRadius: '50%',
-                  overflow: 'hidden',
-                  border: '1px solid #fff'
-                }}>
-                  {selectedCharacter === 'Jesse Pinkman' ? (
-                    <img 
-                      src="/jessepinkman.jpeg" 
-                      alt="Jesse Pinkman"
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover'
-                      }}
-                    />
-                  ) : selectedCharacter === 'Walter White' ? (
-                    <img 
-                      src="/WalterWhite.webp" 
-                      alt="Walter White"
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover'
-                      }}
-                    />
-                  ) : (
-                    <div style={{
-                      width: '100%',
-                      height: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '16px',
-                      backgroundColor: '#333'
-                    }}>
-                      {CHARACTERS.find(c => c.name === selectedCharacter)?.avatar || '🎭'}
-                    </div>
+                <div style={{ lineHeight: '1.6' }}>
+                  {msg.text}
+                  {msg.isTyping && (
+                    <span className="typing-cursor">|</span>
                   )}
                 </div>
-                <span>Typing...</span>
+                <div style={{
+                  fontSize: '0.75rem',
+                  marginTop: '8px',
+                  opacity: 0.7,
+                  textAlign: 'right'
+                }}>
+                  {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </div>
               </div>
             </div>
-          </div>
-        )}
-        
-        {isSpeaking && (
-          <div style={{
-            textAlign: 'center',
-            padding: '10px',
-            backgroundColor: '#111',
-            borderRadius: '8px',
-            color: '#fff',
-            fontSize: '14px'
-          }}>
-            🔊 {selectedCharacter} is speaking...
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-      
-      <style>{`
-        @keyframes blink {
-          0%, 50% {
-            opacity: 1;
-          }
-          51%, 100% {
-            opacity: 0;
-          }
-        }
-      `}</style>
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
 
-      <div style={{
-        backgroundColor: 'rgba(15, 23, 42, 0.8)',
-        borderRadius: '16px',
-        padding: '20px',
-        border: '1px solid rgba(100, 116, 139, 0.3)',
-        backdropFilter: 'blur(20px)'
-      }}>
-        <textarea
-          value={inputMessage}
-          onChange={(e) => setInputMessage(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder={`Chat with ${selectedCharacter}...`}
-          rows={3}
-          disabled={isRecording}
-          style={{
-            width: 'calc(100% - 30px)',
-            padding: '15px',
-            borderRadius: '8px',
-            border: '1px solid #333',
-            backgroundColor: '#000',
-            color: '#fff',
-            fontSize: '14px',
-            resize: 'none',
-            marginBottom: '15px',
-            boxSizing: 'border-box'
-          }}
-        />
         <div style={{
-          display: 'flex',
-          gap: '10px',
-          justifyContent: 'space-between'
+          padding: '24px',
+          borderTop: '1px solid var(--border-light)',
+          backgroundColor: 'var(--bg-secondary)'
         }}>
-          <button 
-            onClick={isRecording ? stopRecording : startRecording}
-            disabled={loading}
-            style={{
-              padding: '12px 20px',
-              borderRadius: '8px',
-              border: isRecording ? 'none' : '1px solid #fff',
-              backgroundColor: isRecording ? '#fff' : 'transparent',
-              color: isRecording ? '#000' : '#fff',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: '14px',
-              fontWeight: 'bold',
-              flex: '1'
-            }}
-          >
-            {isRecording ? (
-              <>⏹️ Stop ({formatTime(recordingTime)})</>
-            ) : (
-              <>🎤 Record Voice</>
-            )}
-          </button>
-          <button 
-            onClick={sendMessage} 
-            disabled={loading || !inputMessage.trim() || isRecording}
-            style={{
-              padding: '12px 20px',
-              borderRadius: '8px',
-              border: 'none',
-              backgroundColor: '#fff',
-              color: '#000',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: '14px',
-              fontWeight: 'bold',
-              flex: '1'
-            }}
-          >
-            📤 Send Message
-          </button>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <input
+              type="text"
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Type your message..."
+              className="minimal-input"
+              style={{ flex: 1 }}
+              disabled={loading}
+            />
+            <button
+              onClick={isRecording ? stopRecording : startRecording}
+              className={`minimal-button-${isRecording ? 'primary' : 'secondary'}`}
+              style={{
+                backgroundColor: isRecording ? '#ef4444' : undefined,
+                borderColor: isRecording ? '#ef4444' : undefined,
+                color: isRecording ? 'white' : undefined
+              }}
+            >
+              {isRecording ? '🛑' : '🎤'}
+            </button>
+            <button
+              onClick={sendMessage}
+              disabled={!inputMessage.trim() || loading}
+              className="minimal-button-primary"
+            >
+              Send
+            </button>
+          </div>
         </div>
       </div>
     </div>

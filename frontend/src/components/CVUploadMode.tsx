@@ -12,6 +12,20 @@ const CVUploadMode: React.FC<CVUploadModeProps> = ({ onStartInterview, onBack })
   const [, setIsProcessing] = useState(false);
 
   const handleFileUpload = async (file: File) => {
+    // Validate file before upload
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    
+    if (file.size > maxSize) {
+      alert('File size too large. Please select a file smaller than 5MB.');
+      return;
+    }
+    
+    if (!allowedTypes.includes(file.type) && !file.name.toLowerCase().match(/\.(pdf|doc|docx)$/)) {
+      alert('Invalid file type. Please select a PDF, DOC, or DOCX file.');
+      return;
+    }
+
     setStep('processing');
     setIsProcessing(true);
 
@@ -19,27 +33,35 @@ const CVUploadMode: React.FC<CVUploadModeProps> = ({ onStartInterview, onBack })
       const formData = new FormData();
       formData.append('cv', file);
       
+      console.log('Uploading CV:', file.name, 'Size:', file.size, 'Type:', file.type);
+      
       const response = await fetch('http://localhost:5003/api/cv/parse', {
         method: 'POST',
         body: formData
       });
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
       const data = await response.json();
+      console.log('CV parse response:', data);
       
       if (data.success && data.profile) {
         setCvProfile(data.profile);
         setStep('confirm');
       } else {
-        throw new Error(data.error || 'Failed to parse CV');
+        throw new Error(data.message || data.error || 'Failed to parse CV');
       }
     } catch (error) {
       console.error('CV parsing error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      alert(`CV parsing failed: ${errorMessage}. Please try a different file or use manual setup.`);
+      
+      // Show user-friendly error message
+      if (errorMessage.includes('fetch')) {
+        alert('Unable to connect to server. Please check if the backend is running and try again.');
+      } else if (errorMessage.includes('413')) {
+        alert('File too large. Please select a smaller CV file.');
+      } else {
+        alert(`CV parsing failed: ${errorMessage}\n\nTip: Try using a different file format or use the manual setup option.`);
+      }
+      
       setStep('upload');
     } finally {
       setIsProcessing(false);
@@ -98,7 +120,29 @@ const CVUploadMode: React.FC<CVUploadModeProps> = ({ onStartInterview, onBack })
           </div>
           
           <div className="upload-note">
-            <p><strong>Note:</strong> Supports PDF and DOCX files. If upload fails, you can use the manual setup option.</p>
+            <p><strong>Note:</strong> Supports PDF, DOC, and DOCX files up to 5MB. If upload fails, you can use the manual setup option below.</p>
+          </div>
+          
+          <div className="manual-setup">
+            <button 
+              className="manual-setup-btn" 
+              onClick={() => {
+                // Create a basic profile for manual setup
+                const basicProfile: CVProfile = {
+                  name: 'Manual Setup',
+                  experience: '2-3 years in Software Development',
+                  skills: ['JavaScript', 'React', 'Node.js'],
+                  projects: ['Web Application', 'API Development'],
+                  education: 'Computer Science Degree',
+                  technologies: ['JavaScript', 'React', 'Node.js'],
+                  achievements: ['Built web applications', 'Worked in team environment']
+                };
+                setCvProfile(basicProfile);
+                setStep('edit');
+              }}
+            >
+              📝 Manual Setup Instead
+            </button>
           </div>
         </div>
 
@@ -200,6 +244,28 @@ const CVUploadMode: React.FC<CVUploadModeProps> = ({ onStartInterview, onBack })
             color: #856404;
             margin: 0;
             font-size: 0.9rem;
+          }
+          
+          .manual-setup {
+            margin-top: 1rem;
+            text-align: center;
+          }
+          
+          .manual-setup-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+          }
+          
+          .manual-setup-btn:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
           }
         `}</style>
       </div>

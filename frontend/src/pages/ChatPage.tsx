@@ -5,7 +5,7 @@ import Navbar from '../components/Navbar';
 const ChatPage: React.FC = () => {
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#000' }}>
+    <div className="page-transition">
       <Navbar />
       <CharacterChat />
     </div>

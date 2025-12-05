@@ -1,0 +1,14 @@
+
+> interview-ai-backend@1.0.0 start
+> node server.js
+
+Server running on port 5003
+Environment: development
+✅ MongoDB connected successfully
+Interview session started: {
+  sessionId: 'session_1764566666446_xe72v5n2c',
+  userId: 'test-user',
+  type: 'technical',
+  company: 'general'
+}
+Generated CV-based question: Based on your 5 years in React with expertise in R...

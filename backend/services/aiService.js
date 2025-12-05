@@ -14,11 +14,25 @@ class AIService {
 
     let prompt = this.buildPromptFromConfig(type, company, difficulty, interviewConfig);
 
-
     try {
       // Add session context to prevent duplicate questions
       const sessionKey = sessionId || 'default';
       const previousQuestions = this.sessionQuestions.get(sessionKey) || [];
+
+      // For CV mode, use direct prompts instead of API to ensure personalization
+      if (interviewConfig && interviewConfig.mode === 'cv' && interviewConfig.profile) {
+        const cvQuestion = this.generateCVQuestion(interviewConfig.profile, previousQuestions.length);
+
+        // Store the question
+        if (sessionId) {
+          const sessionQuestions = this.sessionQuestions.get(sessionKey) || [];
+          sessionQuestions.push(cvQuestion);
+          this.sessionQuestions.set(sessionKey, sessionQuestions);
+        }
+
+        console.log('Generated CV-based question:', cvQuestion.substring(0, 50) + '...');
+        return { question: cvQuestion, type: 'cv-based', company, context, source: 'cv-profile' };
+      }
 
       let enhancedPrompt = prompt;
       if (previousQuestions.length > 0) {
@@ -45,11 +59,127 @@ class AIService {
       return { question, type, company, context, source: 'api' };
     } catch (error) {
       console.error('Gemini API error:', error.response?.data || error.message);
-      return this.getFallbackQuestion(type, company, context, sessionId);
+      return this.getFallbackQuestion(type, company, context, sessionId, interviewConfig);
     }
   }
 
-  getFallbackQuestion(type, company, context, sessionId = null) {
+  // Generate CV-specific questions based on profile
+  generateCVQuestion(profile, questionIndex) {
+    const { experience, skills, projects, technologies, achievements } = profile;
+
+    const skillsText = skills.slice(0, 3).join(', ') || 'various technical skills';
+    const projectText = projects[0] || 'a significant project';
+    const techText = technologies.slice(0, 3).join(', ') || 'modern technologies';
+    const achievementText = achievements && achievements[0] ? achievements[0] : '';
+
+    // Create more specific question types based on CV content
+    const questionTypes = [
+      // Skill-based questions (2 questions)
+      `Based on your experience with ${skills[0] || 'software engineering'}, explain how you would approach a complex technical challenge. Provide a specific example involving ${skills[0] || 'your main tech stack'}.`,
+      `Your profile highlights proficiency in ${skillsText}. Walk me through a difficult technical decision you made involving ${skills[1] || skills[0] || 'these technologies'} and how you evaluated the trade-offs.`,
+
+      // Project-based questions (2 questions)
+      projectText.includes('your key technical projects')
+        ? `Can you describe one of your most significant technical projects? Focus on the most challenging aspect and how you overcame it.`
+        : `I see you worked on "${projectText}". Can you describe the most challenging technical aspect of this project and how you overcame it?`,
+
+      projectText.includes('your key technical projects')
+        ? `Tell me about the architecture and technology choices you made for a recent complex project. What would you do differently if you were to rebuild it today?`
+        : `Tell me about the architecture and technology choices you made for "${projectText}". What would you do differently if you were to rebuild it today?`,
+
+      // System design questions (2 questions)
+      `Given your background with ${techText}, how would you design a scalable system that handles high traffic? Walk me through your high-level architecture decisions.`,
+      `Design a system for a real-time application using ${technologies[0] || 'modern web technologies'}. Consider scalability, performance, and data consistency.`,
+
+      // Behavioral question (1 question)
+      `${achievementText && !achievementText.includes('impact') ? `Your CV mentions "${achievementText}". ` : ''}Tell me about a time when you had to lead a technical initiative or mentor other developers. How did you handle challenges and ensure success?`
+    ];
+
+    // Select question type based on question count in session
+    // Use provided index or fallback to session tracking
+    const indexToUse = questionIndex !== undefined ? questionIndex : (this.sessionQuestions.get('cv_questions') || []).length;
+    const currentQuestionIndex = indexToUse % questionTypes.length;
+
+    return questionTypes[currentQuestionIndex];
+  }
+  async extractProfileFromText(cvText) {
+    const prompt = `Analyze the following CV text and extract key information to create a structured candidate profile.
+    Focus on:
+    - **experience**: A concise summary of overall professional experience (e.g., "5 years as a Senior Software Engineer").
+    - **skills**: A list of 5-10 most prominent technical skills (e.g., ["JavaScript", "React", "Node.js", "AWS"]).
+    - **projects**: A list of 1-3 most significant projects mentioned, by name or brief description.
+    - **technologies**: A list of 5-10 key technologies/frameworks used (can overlap with skills but focus on tools).
+    - **achievements**: A list of 1-3 quantifiable achievements or significant contributions.
+
+    CV Text:
+    ${cvText}
+
+    Return ONLY valid JSON (no markdown, no extra text):
+    {
+      "experience": "...",
+      "skills": ["...", "..."],
+      "projects": ["...", "..."],
+      "technologies": ["...", "..."],
+      "achievements": ["...", "..."]
+    }`;
+
+    try {
+      const response = await axios.post(API_CONFIG.GEMINI_URL, {
+        contents: [{ parts: [{ text: prompt }] }]
+      }, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 20000 // Increased timeout for potentially longer processing
+      });
+
+      let profileText = response.data.candidates[0].content.parts[0].text.trim();
+      profileText = profileText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+      const profile = JSON.parse(profileText);
+
+      // Ensure arrays are arrays and not empty
+      profile.skills = Array.isArray(profile.skills) ? profile.skills : [];
+      profile.projects = Array.isArray(profile.projects) ? profile.projects : [];
+      profile.technologies = Array.isArray(profile.technologies) ? profile.technologies : [];
+      profile.achievements = Array.isArray(profile.achievements) ? profile.achievements : [];
+
+      return profile;
+
+    } catch (error) {
+      console.error('Error extracting profile from CV:', error.response?.data || error.message);
+
+      // Robust Regex Fallback for "Silicon Valley" quality even without API
+      const skillsRegex = /(?:skills|technologies|proficiencies|stack)[\s\S]{0,50}?:?[\s\S]{0,500}?(?=\n\n|\n[A-Z])/i;
+      const skillsMatch = cvText.match(skillsRegex);
+      let extractedSkills = [];
+      if (skillsMatch) {
+        extractedSkills = skillsMatch[0]
+          .replace(/(?:skills|technologies|proficiencies|stack)/i, '')
+          .split(/[,•\n]/)
+          .map(s => s.trim())
+          .filter(s => s.length > 2 && s.length < 30)
+          .slice(0, 10);
+      }
+
+      // Fallback skills if none found
+      if (extractedSkills.length === 0) {
+        const commonTech = ['JavaScript', 'React', 'Node.js', 'Python', 'Java', 'AWS', 'Docker', 'TypeScript', 'SQL', 'NoSQL'];
+        extractedSkills = commonTech.filter(tech => cvText.includes(tech));
+      }
+
+      // Extract potential project names (heuristic: capitalized words after "Project" or bullet points in project section)
+      // This is hard to do perfectly with regex, so we use a generic but professional fallback if specific ones aren't found
+
+      return {
+        experience: "your professional background",
+        skills: extractedSkills.length > 0 ? extractedSkills : ["software engineering", "problem solving"],
+        projects: ["your key technical projects", "system design implementations"],
+        technologies: extractedSkills.length > 0 ? extractedSkills : ["modern development tools"],
+        achievements: ["your impact on engineering velocity", "technical leadership"]
+      };
+    }
+  }
+
+  getFallbackQuestion(type, company, context, sessionId = null, interviewConfig = null) {
     const fallbackQuestions = {
       technical: [
         'What is your experience with JavaScript and how would you explain closures to a beginner?',
@@ -84,6 +214,20 @@ class AIService {
     // Filter out previously asked questions
     const availableQuestions = questions.filter(q => !previousQuestions.includes(q));
 
+    // For CV mode, use CV-specific fallback
+    if (interviewConfig && interviewConfig.mode === 'cv' && interviewConfig.profile) {
+      const cvQuestion = this.generateCVQuestion(interviewConfig.profile, previousQuestions.length);
+
+      if (sessionId) {
+        const sessionQuestions = this.sessionQuestions.get(sessionKey) || [];
+        sessionQuestions.push(cvQuestion);
+        this.sessionQuestions.set(sessionKey, sessionQuestions);
+      }
+
+      console.log('Using CV fallback question:', cvQuestion.substring(0, 50) + '...');
+      return { question: cvQuestion, type: 'cv-fallback', company, context, source: 'cv-fallback' };
+    }
+
     // If all questions have been used, reset the session
     if (availableQuestions.length === 0) {
       this.sessionQuestions.set(sessionKey, []);
@@ -117,7 +261,8 @@ class AIService {
         isAdequate: false,
         feedback: 'Content: 4/10 - Answer too brief, Clarity: 4/10 - Needs more detail, Completeness: 3/10 - Missing key information',
         corrections: 'Please provide a more detailed response with specific examples.',
-        betterAnswer: 'Try to elaborate on your thoughts with concrete examples and explanations.'
+        betterAnswer: 'Try to elaborate on your thoughts with concrete examples and explanations.',
+        improvedAnswer: 'Your answer was too brief to evaluate properly. For this question, you should provide a structured response: First, define the key concept clearly. Second, explain your approach or methodology with technical details. Third, provide a specific example from your experience. Finally, discuss the outcomes or lessons learned. Aim for 80-120 words with proper technical terminology.'
       };
     }
 
@@ -161,6 +306,11 @@ SCORING GUIDELINES:
 - Consider the answer's length and depth relative to the question
 - Look for specific examples, technical terms, and structured thinking
 
+IMPROVED ANSWER GENERATION:
+- If the answer is somewhat relevant (contentScore >= 4): Take the candidate's core idea and refine it into a professional, well-structured response. Keep their main points but enhance clarity, add technical depth, and improve structure.
+- If the answer is irrelevant or very poor (contentScore < 4): Provide a hypothetical strong answer to the question that demonstrates what a good response would look like.
+- The improved answer should be 80-150 words, well-structured, and include specific examples.
+
 Return ONLY valid JSON (no markdown, no extra text):
 {
   "contentScore": <number 1-10>,
@@ -171,7 +321,8 @@ Return ONLY valid JSON (no markdown, no extra text):
   "isAdequate": <boolean - true if answer meets minimum professional standards>,
   "feedback": "Content: X/10 - [specific, actionable feedback on technical accuracy]. Clarity: X/10 - [specific feedback on structure]. Completeness: X/10 - [specific feedback on coverage]",
   "corrections": "[Specific, actionable improvements: 1) ... 2) ... 3) ...]",
-  "betterAnswer": "[A concrete example of how to improve this specific answer, not generic advice]"
+  "betterAnswer": "[A concrete example of how to improve this specific answer, not generic advice]",
+  "improvedAnswer": "[Either a refined version of the candidate's answer if relevant, or a hypothetical strong answer if irrelevant. 80-150 words, well-structured with examples.]"
 }`;
 
     try {
@@ -196,7 +347,8 @@ Return ONLY valid JSON (no markdown, no extra text):
         isAdequate: Boolean(analysis.isAdequate),
         feedback: analysis.feedback || 'Content: 6/10 - Good effort, Clarity: 6/10 - Clear communication, Completeness: 6/10 - Covers main points',
         corrections: analysis.corrections || 'Consider adding more specific examples and technical details.',
-        betterAnswer: analysis.betterAnswer || 'Try structuring your answer with: 1) Main concept 2) Specific example 3) Why it matters'
+        betterAnswer: analysis.betterAnswer || 'Try structuring your answer with: 1) Main concept 2) Specific example 3) Why it matters',
+        improvedAnswer: analysis.improvedAnswer || 'To answer this question effectively, start with a clear definition, provide a specific technical example from your experience, explain the benefits and trade-offs, and conclude with lessons learned. Use proper technical terminology and structure your response in clear, logical steps.'
       };
     } catch (error) {
       console.error('Analysis Error:', error.response?.data || error.message);
@@ -228,7 +380,8 @@ Return ONLY valid JSON (no markdown, no extra text):
             isAdequate: Boolean(retryAnalysis.isAdequate),
             feedback: retryAnalysis.feedback || 'Content: 6/10 - Good effort, Clarity: 6/10 - Clear communication, Completeness: 6/10 - Covers main points',
             corrections: retryAnalysis.corrections || 'Consider adding more specific examples and technical details.',
-            betterAnswer: retryAnalysis.betterAnswer || 'Try structuring your answer with: 1) Main concept 2) Specific example 3) Why it matters'
+            betterAnswer: retryAnalysis.betterAnswer || 'Try structuring your answer with: 1) Main concept 2) Specific example 3) Why it matters',
+            improvedAnswer: retryAnalysis.improvedAnswer || 'To answer this question effectively, start with a clear definition, provide a specific technical example from your experience, explain the benefits and trade-offs, and conclude with lessons learned. Use proper technical terminology and structure your response in clear, logical steps.'
           };
         } catch (retryError) {
           console.error('Retry failed:', retryError.message);
@@ -305,15 +458,72 @@ Return ONLY valid JSON (no markdown, no extra text):
     if (hasExamples) completenessScore += 2;
     if (hasConclusion) completenessScore += 1;
 
-    // Calculate Fluency Score (1-10)
-    let fluencyScore = 2; // Base score
-    if (hasProperSentences) fluencyScore += 2;
-    if (wordCount >= 30) fluencyScore += 1;
-    if (sentenceCount >= 3) fluencyScore += 1;
+    // Advanced Fluency Analysis with detailed metrics
+    const fillerWords = ['um', 'uh', 'like', 'you know', 'sort of', 'kind of', 'basically', 'actually', 'literally', 'just', 'really'];
+    let fillerWordCount = 0;
+    const detectedFillers = [];
+
+    fillerWords.forEach(filler => {
+      const regex = new RegExp(`\\b${filler}\\b`, 'gi');
+      const matches = answer.match(regex);
+      if (matches) {
+        fillerWordCount += matches.length;
+        detectedFillers.push({ word: filler, count: matches.length });
+      }
+    });
+
+    // Detect repeated words/phrases
+    const wordFrequency = {};
+    words.forEach(word => {
+      const lowerWord = word.toLowerCase();
+      if (lowerWord.length > 3) { // Only track meaningful words
+        wordFrequency[lowerWord] = (wordFrequency[lowerWord] || 0) + 1;
+      }
+    });
+    const repeatedWords = Object.entries(wordFrequency)
+      .filter(([word, count]) => count > 2 && !['that', 'this', 'with', 'from', 'have', 'been', 'they', 'were', 'will'].includes(word))
+      .map(([word, count]) => ({ word, count }));
+
+    // Calculate speaking pace (assuming average speaking is 2-3 words per second)
+    const estimatedDuration = wordCount / 2.5; // seconds
+    const wordsPerMinute = Math.round((wordCount / estimatedDuration) * 60);
+
+    // Detect incomplete sentences
+    const incompleteSentences = sentences.filter(s => {
+      const trimmed = s.trim();
+      return !trimmed.endsWith('.') && !trimmed.endsWith('!') && !trimmed.endsWith('?');
+    }).length;
+
+    // Calculate Fluency Score (1-10) with realistic penalties
+    let fluencyScore = 5; // Start at average
+
+    // Penalties for fluency issues
+    if (fillerWordCount > 0) {
+      const fillerRatio = fillerWordCount / wordCount;
+      if (fillerRatio > 0.1) fluencyScore -= 3; // >10% filler words - major penalty
+      else if (fillerRatio > 0.05) fluencyScore -= 2; // >5% filler words
+      else if (fillerRatio > 0.02) fluencyScore -= 1; // >2% filler words
+    }
+
+    if (repeatedWords.length > 3) fluencyScore -= 1.5; // Excessive repetition
+    else if (repeatedWords.length > 1) fluencyScore -= 0.5;
+
+    if (incompleteSentences > 2) fluencyScore -= 1; // Too many incomplete thoughts
+    else if (incompleteSentences > 0) fluencyScore -= 0.5;
+
+    // Bonuses for fluency strengths
+    if (hasProperSentences) fluencyScore += 1.5;
+    if (wordCount >= 30) fluencyScore += 0.5;
+    if (sentenceCount >= 3) fluencyScore += 0.5;
+
     const avgWordLength = words.reduce((sum, w) => sum + w.length, 0) / words.length;
-    if (avgWordLength >= 4 && avgWordLength <= 7) fluencyScore += 2; // Good vocabulary
+    if (avgWordLength >= 4 && avgWordLength <= 7) fluencyScore += 1; // Good vocabulary
     if (techTermCount >= 2) fluencyScore += 1; // Professional vocabulary
-    if (!/\b(um|uh|like|you know)\b/i.test(answer)) fluencyScore += 1; // No filler words
+
+    // Pace bonus/penalty
+    if (wordsPerMinute >= 120 && wordsPerMinute <= 160) fluencyScore += 1; // Ideal pace
+    else if (wordsPerMinute < 100) fluencyScore -= 0.5; // Too slow
+    else if (wordsPerMinute > 180) fluencyScore -= 0.5; // Too fast
 
     // Cap scores at 10
     contentScore = Math.min(10, contentScore);
@@ -343,7 +553,28 @@ Return ONLY valid JSON (no markdown, no extra text):
     else if (completenessScore >= 4) completenessFeedback = 'Addresses basics but missing important aspects';
     else completenessFeedback = 'Incomplete answer. Add examples, explain benefits, mention challenges';
 
-    const feedback = `Content: ${contentScore}/10 - ${contentFeedback}. Clarity: ${clarityScore}/10 - ${clarityFeedback}. Completeness: ${completenessScore}/10 - ${completenessFeedback}`;
+    // Natural fluency feedback
+    let fluencyFeedback = '';
+    if (fluencyScore >= 8) {
+      fluencyFeedback = 'Excellent fluency! Your speech was clear and professional';
+    } else if (fluencyScore >= 6) {
+      const issues = [];
+      if (fillerWordCount > 0) issues.push(`${fillerWordCount} filler word${fillerWordCount > 1 ? 's' : ''}`);
+      if (repeatedWords.length > 0) issues.push('some word repetition');
+      fluencyFeedback = issues.length > 0
+        ? `Good fluency overall. Try reducing ${issues.join(' and ')} for more polish`
+        : 'Good fluency with clear speech patterns';
+    } else if (fluencyScore >= 4) {
+      const issues = [];
+      if (fillerWordCount > 3) issues.push(`${fillerWordCount} filler words (um, uh, like)`);
+      if (repeatedWords.length > 2) issues.push('excessive word repetition');
+      if (incompleteSentences > 1) issues.push('incomplete sentences');
+      fluencyFeedback = `Noticeable fluency issues: ${issues.join(', ')}. Practice speaking more deliberately`;
+    } else {
+      fluencyFeedback = 'Significant fluency issues detected. Focus on reducing filler words and completing your thoughts';
+    }
+
+    const feedback = `Content: ${contentScore}/10 - ${contentFeedback}. Clarity: ${clarityScore}/10 - ${clarityFeedback}. Completeness: ${completenessScore}/10 - ${completenessFeedback}. Fluency: ${fluencyScore}/10 - ${fluencyFeedback}`;
 
     // Generate specific corrections based on what's missing
     let corrections = [];
@@ -353,6 +584,8 @@ Return ONLY valid JSON (no markdown, no extra text):
     if (!hasExamples) corrections.push('Add a specific, concrete example from your experience or knowledge');
     if (sentenceCount < 3) corrections.push('Break down your answer into multiple clear sentences');
     if (!hasConclusion && wordCount >= 50) corrections.push('End with a brief conclusion or summary statement');
+    if (fillerWordCount > 3) corrections.push(`Reduce filler words (detected: ${detectedFillers.map(f => `"${f.word}"`).join(', ')})`);
+    if (repeatedWords.length > 2) corrections.push(`Avoid excessive repetition (repeated: ${repeatedWords.slice(0, 2).map(r => `"${r.word}"`).join(', ')})`);
 
     const correctionsText = corrections.length > 0
       ? corrections.map((c, i) => `${i + 1}) ${c}`).join('. ') + '.'
@@ -368,6 +601,28 @@ Return ONLY valid JSON (no markdown, no extra text):
       betterAnswerTemplate = `Structure your answer as: 1) State your main point clearly 2) Provide supporting details with technical terms 3) Give a specific example 4) Conclude with the impact or importance. Aim for clarity and completeness.`;
     }
 
+    // Generate improved answer based on content score
+    let improvedAnswerText = '';
+    if (contentScore >= 4) {
+      // Refine the user's answer
+      const userPoints = answer.split(/[.!?]+/).filter(s => s.trim().length > 0).slice(0, 3);
+      const mainIdea = userPoints[0] || 'the concept';
+      improvedAnswerText = `Building on your response about ${mainIdea.toLowerCase().trim()}, here's a more structured approach: `;
+
+      if (question.toLowerCase().includes('composition') && question.toLowerCase().includes('inheritance')) {
+        improvedAnswerText += `Composition is generally favored over inheritance when you need flexibility and want to avoid tight coupling. With composition, you build complex functionality by combining simpler, reusable components rather than creating rigid class hierarchies. For example, in a game development scenario, instead of creating a deep inheritance tree (GameObject -> Character -> Player -> Warrior), you'd use composition with components like HealthComponent, MovementComponent, and AttackComponent. This allows you to easily create new entity types by mixing components without modifying existing code. The key benefit is that composition follows the "has-a" relationship rather than "is-a," making your code more maintainable and testable.`;
+      } else {
+        improvedAnswerText += `First, clearly define the core concept with proper technical terminology. Second, explain the methodology or approach you would take, highlighting key considerations. Third, provide a specific, concrete example from real-world application or your experience. Finally, discuss the benefits, trade-offs, or lessons learned. This structure ensures completeness while maintaining clarity and demonstrating deep understanding.`;
+      }
+    } else {
+      // Provide hypothetical answer for irrelevant responses
+      if (question.toLowerCase().includes('composition') && question.toLowerCase().includes('inheritance')) {
+        improvedAnswerText = `Composition is favored over inheritance when you need greater flexibility and want to avoid the fragility of deep inheritance hierarchies. In object-oriented design, composition follows the "has-a" relationship rather than "is-a," allowing you to build complex functionality by combining simpler, reusable components. For example, in a game engine, instead of using inheritance (GameObject -> Character -> Enemy -> FlyingEnemy), you'd use composition with components like MovementComponent, RenderComponent, and CollisionComponent. This is critical in scenarios where entities need diverse behaviors—a flying enemy that can swim would require multiple inheritance, which many languages don't support. With composition, you simply attach SwimmingComponent and FlyingComponent to the same entity. This approach enhances maintainability, testability, and follows the SOLID principles, particularly the Single Responsibility Principle.`;
+      } else {
+        improvedAnswerText = `To answer this question effectively: First, provide a clear, concise definition of the main concept using appropriate technical terminology. Second, explain the key principles or methodology involved, highlighting important considerations and best practices. Third, give a specific, concrete example from real-world application or professional experience that illustrates the concept in action. Fourth, discuss the benefits, potential challenges, or trade-offs associated with this approach. Finally, conclude with lessons learned or why this matters in practical software development. This structured approach demonstrates both theoretical understanding and practical experience, which is what interviewers look for.`;
+      }
+    }
+
     return {
       contentScore,
       clarityScore,
@@ -378,10 +633,83 @@ Return ONLY valid JSON (no markdown, no extra text):
       feedback,
       corrections: correctionsText,
       betterAnswer: betterAnswerTemplate,
+      improvedAnswer: improvedAnswerText,
       spokenText: answer,
       wordCount,
-      technicalTerms: techTermCount
+      technicalTerms: techTermCount,
+      // Advanced fluency metrics
+      fluencyMetrics: {
+        fillerWordCount,
+        detectedFillers,
+        repeatedWords,
+        wordsPerMinute,
+        incompleteSentences,
+        avgWordLength: Math.round(avgWordLength * 10) / 10
+      }
     };
+  }
+
+  // Generate natural, conversational feedback for audio delivery
+  generateNaturalFeedback(analysisData) {
+    const { contentScore, clarityScore, completenessScore, fluencyScore, fluencyMetrics } = analysisData;
+    const overallScore = (contentScore + clarityScore + completenessScore + fluencyScore) / 4;
+
+    // Opening statements - varied and natural
+    const openings = overallScore >= 7
+      ? ['Great job on that answer!', 'Nice work!', 'That was solid!', 'Well done!', 'Good response!']
+      : overallScore >= 5
+        ? ['Thanks for your answer.', 'Okay, let\'s talk about your response.', 'Alright, I appreciate the effort.', 'Let me give you some feedback.']
+        : ['I can see you\'re working on this.', 'Let\'s work on improving that answer.', 'There\'s room for growth here.'];
+
+    const opening = openings[Math.floor(Math.random() * openings.length)];
+
+    // Build natural feedback paragraphs
+    let feedback = opening + ' ';
+
+    // Content feedback
+    if (contentScore >= 7) {
+      feedback += 'Your technical understanding really came through. ';
+    } else if (contentScore >= 5) {
+      feedback += 'You showed decent technical knowledge, but try to go deeper with more specific examples. ';
+    } else {
+      feedback += 'I\'d like to see more technical depth in your answer. Think about specific concepts and real-world applications. ';
+    }
+
+    // Fluency feedback - natural and encouraging
+    if (fluencyMetrics) {
+      if (fluencyMetrics.fillerWordCount > 5) {
+        feedback += `I noticed you used quite a few filler words like "um" and "uh" - about ${fluencyMetrics.fillerWordCount} times. `;
+        feedback += 'Take a breath before answering and speak more deliberately. It\'s totally okay to pause and think. ';
+      } else if (fluencyMetrics.fillerWordCount > 2) {
+        feedback += 'Watch out for a few filler words that crept in. ';
+      } else if (fluencyMetrics.fillerWordCount === 0) {
+        feedback += 'I loved how you spoke clearly without filler words - very professional! ';
+      }
+
+      if (fluencyMetrics.wordsPerMinute > 180) {
+        feedback += 'You were speaking pretty quickly. Slow down a bit to give the interviewer time to absorb your points. ';
+      } else if (fluencyMetrics.wordsPerMinute < 100) {
+        feedback += 'Try to pick up the pace slightly - you want to show energy and engagement. ';
+      }
+    }
+
+    // Clarity feedback
+    if (clarityScore >= 7) {
+      feedback += 'Your answer was well-structured and easy to follow. ';
+    } else {
+      feedback += 'Think about organizing your thoughts before speaking. Try the "First, Second, Finally" structure. ';
+    }
+
+    // Encouraging close
+    const closes = overallScore >= 7
+      ? ['Keep up the excellent work!', 'You\'re doing great!', 'This is the kind of answer that impresses interviewers.']
+      : overallScore >= 5
+        ? ['You\'re on the right track!', 'Keep practicing and you\'ll nail it!', 'With a bit more polish, this will be perfect.']
+        : ['Don\'t get discouraged - practice makes perfect!', 'Every attempt makes you better!', 'You\'re learning - that\'s what matters!'];
+
+    feedback += closes[Math.floor(Math.random() * closes.length)];
+
+    return feedback;
   }
 
   // Add method to analyze speech errors
@@ -417,7 +745,34 @@ Return ONLY valid JSON (no markdown, no extra text):
   // Generate character response for chat
   async generateCharacterResponse(userId, character, userMessage, chatHistory = []) {
     const characterPrompts = {
-      'Jesse Pinkman': `You are Jesse Bruce Pinkman from Breaking Bad. Born September 24, 1984, in Albuquerque, New Mexico. You're a former meth cook and distributor who worked with Walter White (Mr. White). You're from an upper middle-class family but got kicked out due to drug use. You're impulsive, hedonistic, streetwise, and use playful slang. You say "yo", "bitch", "cap'n", and speak casually. You're empathetic, protective of children, and horrified by violence. You love video games, rap/rock music, and drive lowriders. Your friends are Skinny Pete, Badger, and Combo. You graduated from J.P. Wynne High School where Walt was your chemistry teacher. You lived with your aunt Ginny until she died of lung cancer. You have a younger brother Jake. You're now in Alaska trying to start fresh. Respond as Jesse would - casual, emotional, using his slang, referencing his experiences with Walt, meth cooking, his trauma, but also his good heart.`,
+      'Jesse Pinkman': `You are Jesse Pinkman from Breaking Bad. You must respond EXACTLY like Jesse would:
+
+SPEECH PATTERNS:
+- Always use "yo", "bitch", "man", "dude" frequently
+- Say "cap'n" sometimes
+- Use casual, street slang
+- Be emotional and expressive
+- Speak like a young guy from Albuquerque
+
+PERSONALITY:
+- Loyal but impulsive
+- Good heart despite rough exterior  
+- Traumatized by experiences with Walt
+- Loves video games, music, cars
+- Protective of kids
+- Now trying to start fresh in Alaska
+
+RESPONSE RULES:
+- ALWAYS include "yo", "man", "bitch", or "dude" in every response
+- Be conversational and friendly
+- Reference your past when relevant (Walt, cooking, trauma)
+- Show your good nature
+- Keep responses under 100 words
+- Sound like a real person, not formal
+
+User message: "${userMessage}"
+
+Respond as Jesse Pinkman would, using his exact speech patterns:`,
       'Walter White': `You are Walter White/Heisenberg from Breaking Bad. You're a brilliant chemist, former high school teacher, and meth manufacturer. Core traits: Extremely intelligent and arrogant - you're a genius and never let anyone forget it. Condescending to those you see as less intelligent. Pragmatic and ruthless - ends justify means. Driven by ego and resentment, not family (though you claim otherwise). You resent Gray Matter partners who undervalued you. You're paternalistic toward Jesse, speaking like a disappointed teacher. You justify all actions and rationalize your descent into crime. 
 
 Response patterns based on user input:
@@ -469,10 +824,13 @@ Speak precisely, be methodical, show your intelligence. Use phrases like "I am t
         const keywords = msg.toLowerCase();
         const responses = {
           'Jesse Pinkman': {
-            song: [`Yo, I'm into some sick beats, man. Try "Fallacies" by Twaughthammer or some classic hip-hop, bitch!`, `Music? Hell yeah! I dig some Rage Against the Machine or maybe some old school rap, yo.`],
-            math: [`Dude, math? That's like... ${msg.includes('2+2') ? '4, obviously' : 'not my strong suit'}, man. I was better at chemistry, yo.`, `Bitch, numbers aren't really my thing. I mean, ${msg.includes('2+2') ? 'that\'s 4' : 'I can figure it out'}, but chemistry was more my jam.`],
-            hello: [`Yo, what's up, man? How you doing?`, `Hey there, bitch! What's going on?`, `Sup, dude? Good to see you!`],
-            default: [`Yo, ${Math.random() > 0.5 ? 'that\'s interesting' : 'I hear you'}, man. What else is on your mind?`, `Dude, ${Math.random() > 0.5 ? 'totally' : 'yeah'}, I get it. Tell me more, yo.`]
+            about: [`Yo, I'm Jesse Pinkman, bitch! Used to cook with Mr. White back in the day, but now I'm trying to start fresh up in Alaska, man. What's up?`, `Hey there, yo! I'm Jesse - been through some crazy stuff but I'm doing better now, dude. What do you wanna know?`],
+            yourself: [`Man, I'm Jesse Pinkman! I've been through hell and back, yo. Used to cook the best meth in New Mexico with my old chemistry teacher, but that life nearly destroyed me, bitch. Now I'm up in Alaska trying to build something better, you know?`, `Yo, that's a loaded question, dude! I'm Jesse - survived some seriously messed up stuff, lost friends, made mistakes... but I'm still here, man. Trying to be better than I was, yo.`],
+            song: [`Yo, I'm into some sick beats, man! Love me some hip-hop, rock, whatever gets the blood pumping, bitch!`, `Music? Hell yeah, dude! I dig everything from rap to metal, yo. Music keeps me sane, man.`],
+            math: [`Dude, math? That's like... ${msg.includes('2+2') ? '4, obviously' : 'not my strong suit'}, man. I was better at chemistry, yo.`, `Bitch, numbers aren't really my thing. I mean, ${msg.includes('2+2') ? 'that\'s 4' : 'I can figure it out'}, but chemistry was more my jam, dude.`],
+            hello: [`Yo, what's up, man? How you doing?`, `Hey there, bitch! What's going on?`, `Sup, dude? Good to see you!`, `Yo yo yo! What's happening, man?`],
+            how: [`I'm doing alright, yo. Some days are better than others, but I'm hanging in there, man.`, `Not bad, dude! Living the Alaska life now, trying to stay clean and build something good, yo.`, `I'm good, bitch! Way better than I used to be, that's for sure, man.`],
+            default: [`Yo, ${Math.random() > 0.5 ? 'that\'s interesting' : 'I hear you'}, man. What else you wanna talk about?`, `Dude, ${Math.random() > 0.5 ? 'totally' : 'yeah'}, I get it. Tell me more, yo.`, `Right on, bitch! What's on your mind?`]
           },
           'Walter White': {
             song: [`I don't have time for frivolous music discussions. Focus on what matters.`, `Music is a distraction. We have more important matters to discuss.`],
@@ -485,9 +843,12 @@ Speak precisely, be methodical, show your intelligence. Use phrases like "I am t
         const charData = responses[char] || { default: [`I understand. Tell me more.`, `That\'s interesting. Continue.`] };
 
         let responseType = 'default';
-        if (keywords.includes('song') || keywords.includes('music')) responseType = 'song';
+        if (keywords.includes('about yourself') || keywords.includes('tell me about') || keywords.includes('about you')) responseType = 'about';
+        else if (keywords.includes('yourself') && !keywords.includes('about')) responseType = 'yourself';
+        else if (keywords.includes('how are you') || keywords.includes('how you')) responseType = 'how';
+        else if (keywords.includes('song') || keywords.includes('music')) responseType = 'song';
         else if (keywords.includes('2+2') || keywords.includes('math')) responseType = 'math';
-        else if (keywords.includes('hello') || keywords.includes('hi')) responseType = 'hello';
+        else if (keywords.includes('hello') || keywords.includes('hi') || keywords.includes('hey')) responseType = 'hello';
 
         const responseArray = charData[responseType] || charData.default;
         return responseArray[Math.floor(Math.random() * responseArray.length)];
@@ -540,20 +901,18 @@ Speak precisely, be methodical, show your intelligence. Use phrases like "I am t
   }
 
   buildCVBasedPrompt(profile, difficulty) {
-    const { experience, skills, projects, technologies } = profile;
+    const { experience, skills, projects, technologies, achievements } = profile;
 
     const skillsText = skills.slice(0, 3).join(', ');
     const techText = technologies.slice(0, 3).join(', ');
     const projectText = projects.length > 0 ? projects[0] : 'your projects';
+    const achievementText = achievements && achievements.length > 0 ? achievements[0] : '';
 
-    const questionTypes = [
-      `Generate a skill-based question about ${skillsText} based on ${experience}. Ask about practical experience and real-world application. Return only the question text.`,
-      `Generate a project-based question about ${projectText} or similar work. Focus on challenges, decisions, and outcomes. Return only the question text.`,
-      `Generate a system design question related to ${techText} technologies. Ask about architecture, scalability, or best practices. Return only the question text.`,
-      `Generate a behavioral question about leadership, teamwork, or problem-solving in the context of ${experience}. Return only the question text.`
-    ];
+    // Select question type based on question count in session
+    const sessionKey = 'cv_questions';
+    const currentQuestionIndex = (this.sessionQuestions.get(sessionKey) || []).length % questionTypes.length;
 
-    return questionTypes[Math.floor(Math.random() * questionTypes.length)];
+    return questionTypes[currentQuestionIndex];
   }
 
   buildRoleBasedPrompt(role, level, difficulty) {
@@ -617,4 +976,5 @@ Speak precisely, be methodical, show your intelligence. Use phrases like "I am t
   }
 }
 
-module.exports = new AIService();
+const aiService = new AIService();
+module.exports = aiService;

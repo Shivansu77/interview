@@ -79,39 +79,63 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [fetchProfile]);
 
   const login = async (email: string, password: string) => {
-    const response = await fetch('http://localhost:5003/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
+    try {
+      console.log('Login request to:', 'http://localhost:5003/api/auth/login');
+      
+      const response = await fetch('http://localhost:5003/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
 
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.error || 'Login failed');
+      console.log('Login response status:', response.status);
+      const data = await response.json();
+      console.log('Login response data:', data);
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
+      }
+
+      setToken(data.token);
+      setUser(data.user);
+      localStorage.setItem('authToken', data.token);
+    } catch (error) {
+      console.error('Login error:', error);
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Cannot connect to server. Please make sure the backend is running on port 5003.');
+      }
+      throw error;
     }
-
-    setToken(data.token);
-    setUser(data.user);
-    localStorage.setItem('authToken', data.token);
   };
 
   const register = async (fullName: string, email: string, password: string) => {
-    const response = await fetch('http://localhost:5003/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: fullName, email, password })
-    });
+    try {
+      console.log('Register request to:', 'http://localhost:5003/api/auth/register');
+      
+      const response = await fetch('http://localhost:5003/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: fullName, email, password })
+      });
 
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.error || 'Registration failed');
+      console.log('Register response status:', response.status);
+      const data = await response.json();
+      console.log('Register response data:', data);
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Registration failed');
+      }
+
+      setToken(data.token);
+      setUser(data.user);
+      localStorage.setItem('authToken', data.token);
+    } catch (error) {
+      console.error('Register error:', error);
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Cannot connect to server. Please make sure the backend is running on port 5003.');
+      }
+      throw error;
     }
-
-    setToken(data.token);
-    setUser(data.user);
-    localStorage.setItem('authToken', data.token);
   };
 
 
