@@ -46,7 +46,7 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
   const recognitionRef = useRef<any>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const fetchQuestions = async () => {
+  const fetchQuestions = useCallback(async () => {
     try {
       setIsLoading(true);
       setShowAnswer(false);
@@ -59,9 +59,9 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [topic, field, level, selectedCompany]);
 
-  const fetchAnswer = async (question: string) => {
+  const fetchAnswer = useCallback(async (question: string) => {
     try {
       setIsLoadingAnswer(true);
       const response = await fetch('http://localhost:5003/api/learn/question/answer', {
@@ -82,7 +82,7 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
     } finally {
       setIsLoadingAnswer(false);
     }
-  };
+  }, [level, field, topic, selectedCompany]);
 
   useEffect(() => {
     fetchQuestions();
@@ -92,7 +92,8 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
         videoStream.getTracks().forEach(track => track.stop());
       }
     };
-  }, [topic, field, level, selectedCompany]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [topic, field, level, selectedCompany, fetchQuestions]);
 
   useEffect(() => {
     if (questions.length > 0 && currentQuestionIndex < questions.length) {
@@ -103,7 +104,7 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [questions, currentQuestionIndex]);
+  }, [questions, currentQuestionIndex, fetchAnswer]);
 
 
   const stopRecording = () => {
@@ -125,11 +126,6 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
     } catch (error) {
       console.error('Error accessing webcam:', error);
     }
-  };
-
-  const processSpokenText = (transcript: string) => {
-    // Just for visual feedback - no automatic progression
-    console.log('User spoke:', transcript);
   };
   
   const handleNextLine = () => {

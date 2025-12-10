@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import InterviewRoom from '../components/InterviewRoom';
 import Navbar from '../components/Navbar';
-import AnimatedBlob from '../components/AnimatedBlob';
 import InterviewModeSelector from '../components/InterviewModeSelector';
 
 const InterviewPage: React.FC = () => {
@@ -10,13 +9,11 @@ const InterviewPage: React.FC = () => {
   const [sessionId, setSessionId] = useState('');
   const [selectedCompany, setSelectedCompany] = useState('general');
   const [interviewType, setInterviewType] = useState('technical');
-  const [isLoading, setIsLoading] = useState(false);
   const [isInterviewActive, setIsInterviewActive] = useState(false);
   const [interviewConfig, setInterviewConfig] = useState<any>(null);
 
   const startInterview = async (config: any) => {
     try {
-      setIsLoading(true);
       setInterviewConfig(config);
 
       // Determine type based on config mode
@@ -48,8 +45,6 @@ const InterviewPage: React.FC = () => {
     } catch (error) {
       console.error('Error starting interview:', error);
       alert('Failed to start interview');
-    } finally {
-      setIsLoading(false);
     }
   };
 
