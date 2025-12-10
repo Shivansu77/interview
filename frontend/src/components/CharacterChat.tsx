@@ -58,7 +58,6 @@ const CharacterChat: React.FC = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [recordingTime, setRecordingTime] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voiceMode, setVoiceMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -75,9 +74,9 @@ const CharacterChat: React.FC = () => {
     // Initialize speech synthesis voices
     const initVoices = () => {
       const voices = speechSynthesis.getVoices();
+      // Ensure voices are loaded
       if (voices.length > 0) {
-        // Test voice functionality
-        const testVoice = voices.find(v => v.lang.startsWith('en')) || voices[0];
+        console.log('Speech voices loaded:', voices.length);
       }
     };
 
@@ -139,17 +138,11 @@ const CharacterChat: React.FC = () => {
 
     recognition.onstart = () => {
       setIsRecording(true);
-      setRecordingTime(0);
 
       recordingTimerRef.current = setInterval(() => {
-        setRecordingTime(prev => {
-          if (prev >= 30) {
-            recognition.stop();
-            return 30;
-          }
-          return prev + 1;
-        });
-      }, 1000);
+        // Auto-stop after 30 seconds
+        recognition.stop();
+      }, 30000);
     };
 
     recognition.onresult = (event: any) => {

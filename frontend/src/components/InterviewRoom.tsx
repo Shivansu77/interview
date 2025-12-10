@@ -2,11 +2,11 @@
 import * as React from 'react';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import io from 'socket.io-client';
-import { Mic, MicOff, Video, VideoOff, Send, Play, Pause, RotateCcw, Download, Share2, CheckCircle, AlertCircle, Clock, Volume2, VolumeX, ChevronRight, Sparkles, Eye, MessageSquare, Activity } from 'lucide-react';
+import { Mic, Send, Play, Pause, RotateCcw, Download, Share2, CheckCircle, AlertCircle, Clock, Volume2, VolumeX, ChevronRight, Sparkles, Eye, MessageSquare, Activity } from 'lucide-react';
 import MediaPipeFaceMonitor from './MediaPipeFaceMonitor';
 import VoiceRecorder from './VoiceRecorder';
 import ProfessionalAIBlob from './ProfessionalAIBlob';
-import InterviewModeSelector, { InterviewConfig, CVProfile } from './InterviewModeSelector';
+import InterviewModeSelector, { InterviewConfig } from './InterviewModeSelector';
 import { useAudioAnalyzer } from '../hooks/useAudioAnalyzer';
 
 

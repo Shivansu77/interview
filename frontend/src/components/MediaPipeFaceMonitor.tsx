@@ -20,6 +20,169 @@ const MediaPipeFaceMonitor: React.FC<MediaPipeFaceMonitorProps> = ({ onEyeContac
   const [isActive, setIsActive] = useState(false);
   const faceDetectionRef = useRef<any>(null);
 
+  const drawTargetingBrackets = useCallback((ctx: CanvasRenderingContext2D, width: number, height: number) => {
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const bracketSize = 30;
+    
+    ctx.strokeStyle = '#2196F3';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    
+    ctx.beginPath();
+    ctx.moveTo(centerX - bracketSize, centerY - bracketSize + 10);
+    ctx.lineTo(centerX - bracketSize, centerY - bracketSize);
+    ctx.lineTo(centerX - bracketSize + 10, centerY - bracketSize);
+    
+    ctx.moveTo(centerX + bracketSize - 10, centerY - bracketSize);
+    ctx.lineTo(centerX + bracketSize, centerY - bracketSize);
+    ctx.lineTo(centerX + bracketSize, centerY - bracketSize + 10);
+    
+    ctx.moveTo(centerX + bracketSize, centerY + bracketSize - 10);
+    ctx.lineTo(centerX + bracketSize, centerY + bracketSize);
+    ctx.lineTo(centerX + bracketSize - 10, centerY + bracketSize);
+    
+    ctx.moveTo(centerX - bracketSize + 10, centerY + bracketSize);
+    ctx.lineTo(centerX - bracketSize, centerY + bracketSize);
+    ctx.lineTo(centerX - bracketSize, centerY + bracketSize - 10);
+    
+    ctx.stroke();
+    
+    ctx.fillStyle = '#2196F3';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 3, 0, 2 * Math.PI);
+    ctx.fill();
+  }, []);
+
+  const startSimpleDetection = useCallback(() => {
+    const detectFace = () => {
+      if (videoRef.current && canvasRef.current) {
+        const canvas = canvasRef.current;
+        const video = videoRef.current;
+        const ctx = canvas.getContext('2d');
+        
+        if (ctx && video.readyState === 4) {
+          canvas.width = video.videoWidth || 640;
+          canvas.height = video.videoHeight || 480;
+          
+          ctx.save();
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          
+          const faceDetected = Math.random() > 0.1;
+          setFaceDetected(faceDetected);
+          
+          if (faceDetected) {
+            const baseScore = 72;
+            const timeVariation = Math.sin(Date.now() / 4000) * 18;
+            const randomFactor = (Math.random() - 0.5) * 10;
+            let eyeContactPercentage = baseScore + timeVariation + randomFactor;
+            eyeContactPercentage = Math.max(50, Math.min(95, Math.round(eyeContactPercentage)));
+            
+            setEyeContactScore(eyeContactPercentage);
+            onEyeContactUpdate(eyeContactPercentage);
+            
+            ctx.strokeStyle = '#00ff00';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(canvas.width * 0.3, canvas.height * 0.2, canvas.width * 0.4, canvas.height * 0.5);
+          } else {
+            setEyeContactScore(0);
+            onEyeContactUpdate(0);
+          }
+          
+          drawTargetingBrackets(ctx, canvas.width, canvas.height);
+          ctx.restore();
+        }
+      }
+      
+      requestAnimationFrame(detectFace);
+    };
+    
+    detectFace();
+  }, [onEyeContactUpdate, drawTargetingBrackets]);
+
+  const initializeSimpleCamera = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { width: 640, height: 480 } 
+      });
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      
+      setIsActive(true);
+      startSimpleDetection();
+    } catch (error) {
+      console.error('Simple camera initialization failed:', error);
+      setIsActive(false);
+    }
+  }, [startSimpleDetection]);
+
+  const onResults = useCallback((results: any) => {
+    const canvas = canvasRef.current;
+    const video = videoRef.current;
+    
+    if (!canvas || !video) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+
+    ctx.save();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    if (results.detections && results.detections.length > 0) {
+      setFaceDetected(true);
+      
+      const baseScore = 72;
+      const timeVariation = Math.sin(Date.now() / 4000) * 18;
+      const randomFactor = (Math.random() - 0.5) * 10;
+      let eyeContactPercentage = baseScore + timeVariation + randomFactor;
+      eyeContactPercentage = Math.max(50, Math.min(95, Math.round(eyeContactPercentage)));
+      
+      setEyeContactScore(eyeContactPercentage);
+      onEyeContactUpdate(eyeContactPercentage);
+
+      results.detections.forEach((detection: any) => {
+        if (detection.boundingBox) {
+          const bbox = detection.boundingBox;
+          // MediaPipe can return either min-based or center-based coordinates
+          let x, y, width, height;
+          
+          if (bbox.xMin !== undefined) {
+            // Min-based format
+            x = bbox.xMin * canvas.width;
+            y = bbox.yMin * canvas.height;
+            width = bbox.width * canvas.width;
+            height = bbox.height * canvas.height;
+          } else if (bbox.xCenter !== undefined) {
+            // Center-based format
+            width = bbox.width * canvas.width;
+            height = bbox.height * canvas.height;
+            x = bbox.xCenter * canvas.width - width / 2;
+            y = bbox.yCenter * canvas.height - height / 2;
+          } else {
+            return; // Skip if format is unknown
+          }
+
+          ctx.strokeStyle = '#00ff00';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(x, y, width, height);
+        }
+      });
+    } else {
+      setFaceDetected(false);
+      setEyeContactScore(0);
+      onEyeContactUpdate(0);
+    }
+
+    drawTargetingBrackets(ctx, canvas.width, canvas.height);
+    ctx.restore();
+  }, [onEyeContactUpdate, drawTargetingBrackets]);
+
   const initializeMediaPipe = useCallback(async () => {
     try {
       // Load MediaPipe scripts
@@ -69,158 +232,7 @@ const MediaPipeFaceMonitor: React.FC<MediaPipeFaceMonitorProps> = ({ onEyeContac
       // Fallback to simple camera
       initializeSimpleCamera();
     }
-  }, []);
-
-  const initializeSimpleCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { width: 640, height: 480 } 
-      });
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current?.play();
-          setIsActive(true);
-          startSimpleDetection();
-        };
-      }
-    } catch (error) {
-      console.error('Camera access failed:', error);
-      setIsActive(false);
-    }
-  };
-
-  const startSimpleDetection = () => {
-    const detectFace = () => {
-      if (videoRef.current && canvasRef.current) {
-        const canvas = canvasRef.current;
-        const video = videoRef.current;
-        const ctx = canvas.getContext('2d');
-        
-        if (ctx && video.readyState === 4) {
-          canvas.width = video.videoWidth || 640;
-          canvas.height = video.videoHeight || 480;
-          
-          ctx.save();
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          
-          const faceDetected = Math.random() > 0.1;
-          setFaceDetected(faceDetected);
-          
-          if (faceDetected) {
-            const baseScore = 72;
-            const timeVariation = Math.sin(Date.now() / 4000) * 18;
-            const randomFactor = (Math.random() - 0.5) * 10;
-            let eyeContactPercentage = baseScore + timeVariation + randomFactor;
-            eyeContactPercentage = Math.max(50, Math.min(95, Math.round(eyeContactPercentage)));
-            
-            setEyeContactScore(eyeContactPercentage);
-            onEyeContactUpdate(eyeContactPercentage);
-            
-            ctx.strokeStyle = '#00ff00';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(canvas.width * 0.3, canvas.height * 0.2, canvas.width * 0.4, canvas.height * 0.5);
-          } else {
-            setEyeContactScore(0);
-            onEyeContactUpdate(0);
-          }
-          
-          drawTargetingBrackets(ctx, canvas.width, canvas.height);
-          ctx.restore();
-        }
-      }
-      
-      requestAnimationFrame(detectFace);
-    };
-    
-    detectFace();
-  };
-
-  const onResults = (results: any) => {
-    const canvas = canvasRef.current;
-    const video = videoRef.current;
-    
-    if (!canvas || !video) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-
-    ctx.save();
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    if (results.detections && results.detections.length > 0) {
-      setFaceDetected(true);
-      
-      const baseScore = 72;
-      const timeVariation = Math.sin(Date.now() / 4000) * 18;
-      const randomFactor = (Math.random() - 0.5) * 10;
-      let eyeContactPercentage = baseScore + timeVariation + randomFactor;
-      eyeContactPercentage = Math.max(50, Math.min(95, Math.round(eyeContactPercentage)));
-      
-      setEyeContactScore(eyeContactPercentage);
-      onEyeContactUpdate(eyeContactPercentage);
-
-      results.detections.forEach((detection: any) => {
-        if (detection.boundingBox) {
-          const bbox = detection.boundingBox;
-          const x = bbox.xCenter * canvas.width - (bbox.width * canvas.width) / 2;
-          const y = bbox.yCenter * canvas.height - (bbox.height * canvas.height) / 2;
-          const width = bbox.width * canvas.width;
-          const height = bbox.height * canvas.height;
-
-          ctx.strokeStyle = '#00ff00';
-          ctx.lineWidth = 2;
-          ctx.strokeRect(x, y, width, height);
-        }
-      });
-    } else {
-      setFaceDetected(false);
-      setEyeContactScore(0);
-      onEyeContactUpdate(0);
-    }
-
-    drawTargetingBrackets(ctx, canvas.width, canvas.height);
-    ctx.restore();
-  };
-
-  const drawTargetingBrackets = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
-    const centerX = width / 2;
-    const centerY = height / 2;
-    const bracketSize = 30;
-    
-    ctx.strokeStyle = '#2196F3';
-    ctx.lineWidth = 3;
-    ctx.lineCap = 'round';
-    
-    ctx.beginPath();
-    ctx.moveTo(centerX - bracketSize, centerY - bracketSize + 10);
-    ctx.lineTo(centerX - bracketSize, centerY - bracketSize);
-    ctx.lineTo(centerX - bracketSize + 10, centerY - bracketSize);
-    ctx.stroke();
-    
-    ctx.beginPath();
-    ctx.moveTo(centerX + bracketSize - 10, centerY - bracketSize);
-    ctx.lineTo(centerX + bracketSize, centerY - bracketSize);
-    ctx.lineTo(centerX + bracketSize, centerY - bracketSize + 10);
-    ctx.stroke();
-    
-    ctx.beginPath();
-    ctx.moveTo(centerX - bracketSize, centerY + bracketSize - 10);
-    ctx.lineTo(centerX - bracketSize, centerY + bracketSize);
-    ctx.lineTo(centerX - bracketSize + 10, centerY + bracketSize);
-    ctx.stroke();
-    
-    ctx.beginPath();
-    ctx.moveTo(centerX + bracketSize - 10, centerY + bracketSize);
-    ctx.lineTo(centerX + bracketSize, centerY + bracketSize);
-    ctx.lineTo(centerX + bracketSize, centerY + bracketSize - 10);
-    ctx.stroke();
-  };
+  }, [onResults, initializeSimpleCamera]);
 
   useEffect(() => {
     initializeMediaPipe();
@@ -229,8 +241,12 @@ const MediaPipeFaceMonitor: React.FC<MediaPipeFaceMonitorProps> = ({ onEyeContac
       if (faceDetectionRef.current) {
         faceDetectionRef.current.close();
       }
-      if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
+      // Store ref value before cleanup to avoid stale reference issues
+      // This is the React-recommended pattern for cleanup functions
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- Storing ref value is the correct pattern
+      const video = videoRef.current;
+      if (video && video.srcObject) {
+        const stream = video.srcObject as MediaStream;
         stream.getTracks().forEach(track => track.stop());
       }
     };

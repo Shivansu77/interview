@@ -40,9 +40,13 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
         }
       }
       
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      // Store ref value before cleanup to avoid stale reference issues
+      // This is the React-recommended pattern for cleanup functions
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- Storing ref value is the correct pattern
+      const mediaRecorder = mediaRecorderRef.current;
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
         try {
-          mediaRecorderRef.current.stop();
+          mediaRecorder.stop();
         } catch (error) {
           console.log('Media recorder cleanup error:', error);
         }

@@ -5,12 +5,7 @@ import UserProfile from './UserProfile';
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
+  const { user } = useAuth();
 
   return (
     <nav className="minimal-nav">
