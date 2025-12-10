@@ -7,6 +7,22 @@ class AIService {
     this.sessionQuestions = new Map(); // Track questions per session
   }
 
+  // Helper method to make Gemini API calls with consistent error handling
+  async callGeminiAPI(prompt, timeout = 15000) {
+    try {
+      const response = await axios.post(API_CONFIG.GEMINI_URL, {
+        contents: [{ parts: [{ text: prompt }] }]
+      }, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout
+      });
+      return response.data.candidates[0].content.parts[0].text.trim();
+    } catch (error) {
+      console.error('Gemini API error:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
   async generateQuestion(type = 'technical', company = 'general', difficulty = 'medium', context = 'interview', sessionId = null, interviewConfig = null) {
     if (context !== 'interview') {
       throw new Error('Question generation only available during interview sessions');
@@ -39,14 +55,7 @@ class AIService {
         enhancedPrompt += `\n\nIMPORTANT: Do NOT ask any of these previously asked questions: ${previousQuestions.join(', ')}. Generate a completely different question.`;
       }
 
-      const response = await axios.post(API_CONFIG.GEMINI_URL, {
-        contents: [{ parts: [{ text: enhancedPrompt }] }]
-      }, {
-        headers: { 'Content-Type': 'application/json' },
-        timeout: 15000
-      });
-
-      const question = response.data.candidates[0].content.parts[0].text.trim();
+      const question = await this.callGeminiAPI(enhancedPrompt, 15000);
 
       // Store the question to prevent duplicates
       if (sessionId) {
@@ -124,14 +133,7 @@ class AIService {
     }`;
 
     try {
-      const response = await axios.post(API_CONFIG.GEMINI_URL, {
-        contents: [{ parts: [{ text: prompt }] }]
-      }, {
-        headers: { 'Content-Type': 'application/json' },
-        timeout: 20000 // Increased timeout for potentially longer processing
-      });
-
-      let profileText = response.data.candidates[0].content.parts[0].text.trim();
+      let profileText = await this.callGeminiAPI(prompt, 20000);
       profileText = profileText.replace(/```json/g, '').replace(/```/g, '').trim();
 
       const profile = JSON.parse(profileText);
@@ -326,14 +328,7 @@ Return ONLY valid JSON (no markdown, no extra text):
 }`;
 
     try {
-      const response = await axios.post(API_CONFIG.GEMINI_URL, {
-        contents: [{ parts: [{ text: analysisPrompt }] }]
-      }, {
-        headers: { 'Content-Type': 'application/json' },
-        timeout: 15000
-      });
-
-      let analysisText = response.data.candidates[0].content.parts[0].text.trim();
+      let analysisText = await this.callGeminiAPI(analysisPrompt, 15000);
       analysisText = analysisText.replace(/```json/g, '').replace(/```/g, '').trim();
 
       const analysis = JSON.parse(analysisText);
@@ -359,14 +354,7 @@ Return ONLY valid JSON (no markdown, no extra text):
         try {
           await new Promise(resolve => setTimeout(resolve, 3000));
 
-          const retryResponse = await axios.post(API_CONFIG.GEMINI_URL, {
-            contents: [{ parts: [{ text: analysisPrompt }] }]
-          }, {
-            headers: { 'Content-Type': 'application/json' },
-            timeout: 15000
-          });
-
-          let retryAnalysisText = retryResponse.data.candidates[0].content.parts[0].text.trim();
+          let retryAnalysisText = await this.callGeminiAPI(analysisPrompt, 15000);
           retryAnalysisText = retryAnalysisText.replace(/```json/g, '').replace(/```/g, '').trim();
 
           const retryAnalysis = JSON.parse(retryAnalysisText);
@@ -801,14 +789,7 @@ Speak precisely, be methodical, show your intelligence. Use phrases like "I am t
     const prompt = `${characterPrompts[character] || 'You are a helpful character.'}${conversationContext}\n\nUser says: "${userMessage}". Respond in character authentically, remembering the conversation context. Keep it under 150 words.`;
 
     try {
-      const response = await axios.post(API_CONFIG.GEMINI_URL, {
-        contents: [{ parts: [{ text: prompt }] }]
-      }, {
-        headers: { 'Content-Type': 'application/json' },
-        timeout: 10000
-      });
-
-      const reply = response.data.candidates[0].content.parts[0].text.trim();
+      const reply = await this.callGeminiAPI(prompt, 10000);
 
       return {
         success: true,
