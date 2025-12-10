@@ -92,7 +92,8 @@ const SpeechPractice: React.FC<SpeechPracticeProps> = ({
         videoStream.getTracks().forEach(track => track.stop());
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // videoStream is intentionally not in deps - we only want to run this on mount/unmount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topic, field, level, selectedCompany, fetchQuestions]);
 
   useEffect(() => {

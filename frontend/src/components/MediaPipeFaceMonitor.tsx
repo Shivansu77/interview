@@ -149,10 +149,24 @@ const MediaPipeFaceMonitor: React.FC<MediaPipeFaceMonitorProps> = ({ onEyeContac
       results.detections.forEach((detection: any) => {
         if (detection.boundingBox) {
           const bbox = detection.boundingBox;
-          const x = bbox.xMin * canvas.width;
-          const y = bbox.yMin * canvas.height;
-          const width = bbox.width * canvas.width;
-          const height = bbox.height * canvas.height;
+          // MediaPipe can return either min-based or center-based coordinates
+          let x, y, width, height;
+          
+          if (bbox.xMin !== undefined) {
+            // Min-based format
+            x = bbox.xMin * canvas.width;
+            y = bbox.yMin * canvas.height;
+            width = bbox.width * canvas.width;
+            height = bbox.height * canvas.height;
+          } else if (bbox.xCenter !== undefined) {
+            // Center-based format
+            width = bbox.width * canvas.width;
+            height = bbox.height * canvas.height;
+            x = bbox.xCenter * canvas.width - width / 2;
+            y = bbox.yCenter * canvas.height - height / 2;
+          } else {
+            return; // Skip if format is unknown
+          }
 
           ctx.strokeStyle = '#00ff00';
           ctx.lineWidth = 2;
@@ -228,7 +242,8 @@ const MediaPipeFaceMonitor: React.FC<MediaPipeFaceMonitorProps> = ({ onEyeContac
         faceDetectionRef.current.close();
       }
       // Store ref value before cleanup to avoid stale reference issues
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+      // This is the React-recommended pattern for cleanup functions
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- Storing ref value is the correct pattern
       const video = videoRef.current;
       if (video && video.srcObject) {
         const stream = video.srcObject as MediaStream;
